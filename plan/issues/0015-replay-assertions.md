@@ -57,3 +57,29 @@ Collect every `assert` / `assert_state` entry into `TickFrame.assertions` as `As
       }
   }
   ```
+
+## Status (post-#0012)
+
+- The no-op tail of `apply_action`'s `match` is now `Remove | Assert | UseItemOn | SetSlot | SelectHotbar` (PlaceEach has been split out). Splitting `Assert` into its own arm using the skeleton above remains the right move; nothing else changes.
+- `~/flint/FlintCLI/FlintBenchmark/tests/non_breaking_cactus.json` is a good cross-fixture for #0015: it contains both `place_each` (now handled) and rich `assert` blocks. After this issue lands, a test that loads that fixture should produce frames with both `actions` (PlaceEach) and `assertions` populated.
+
+## Status (post-#0013)
+
+- The no-op tail of `apply_action`'s `match` is now `Assert | UseItemOn | SetSlot | SelectHotbar` (Remove has been split out). Splitting `Assert` into its own arm using the skeleton above remains the right move.
+- The `basic_placement` test fixture pattern (#0011) still holds: assert-only ticks like `at: 1` and `at: 3` in `~/flint/FlintCLI/example_tests/basic_placement.json` are currently dropped by `is_frame_empty`. After this issue lands they materialise as their own `TickFrame`s with `assertions` populated and empty `actions` / `block_diff`. The unit test `basic_placement_emits_place_actions_at_their_ticks` in `engine.rs` currently asserts `replay.frames.len() == 2` — that assertion will need to change to `4` once assertion ticks are no longer dropped.
+
+## Status (post-#0014)
+
+- `apply_action`'s signature changed:
+  ```rust
+  fn apply_action(
+      frame: &mut TickFrame,
+      action: &ActionType,
+      _snapshot: &mut PlayerSnapshot,
+      errors: &mut Vec<ReplayError>,
+  )
+  ```
+  The `Assert` arm doesn't need the snapshot (assertions are purely declarative — see this issue's "Implementation notes"). Leave `_snapshot` underscored on this arm; you don't need to touch it.
+- The no-op tail of the `match` is unchanged from post-#0013 (`Assert | UseItemOn | SetSlot | SelectHotbar`) — #0014 only added foundation, not new arms. Splitting `Assert` off using the post-#0011 skeleton remains correct.
+- A `replay::player` helper module exists for the player-action issues (#0037–#0039); assertions don't use it.
+- `compute`'s post-pass now also strips empty `inventory_diff`s before frame filtering. Asserts emit nothing on `inventory_diff`, so this is invisible to #0015 — just a heads-up if you're reading the surrounding code.

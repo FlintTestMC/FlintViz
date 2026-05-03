@@ -48,3 +48,39 @@ SetSlot {
 - Dispatch site is `apply_action` in `crates/flint-viz/src/replay/engine.rs`. `ActionType::SetSlot { .. }` currently sits in the no-op tail of that `match`; split it off.
 - Threading the running `PlayerSnapshot` through `apply_action` is part of #0014's foundation. Land #0014 first (it changes the `apply_action` signature to take `&mut PlayerSnapshot`) and build on top of that — don't refactor the signature here.
 - Use the existing `Replay.errors: Vec<ReplayError>` field (added in #0011) only for genuine engine-level rejections; `set_slot` is well-defined and shouldn't need it.
+
+## Status (post-#0014)
+
+- The foundation is in place: `apply_action` is now
+  ```rust
+  fn apply_action(
+      frame: &mut TickFrame,
+      action: &ActionType,
+      _snapshot: &mut PlayerSnapshot,
+      errors: &mut Vec<ReplayError>,
+  )
+  ```
+  in `crates/flint-viz/src/replay/engine.rs`. Rename `_snapshot` → `snapshot` when you split off the `SetSlot` arm. The snapshot is cloned from `initial_player` before the timeline loop and is mutated forward as deltas apply.
+- A `replay::player` module now exists at `crates/flint-viz/src/replay/player.rs` with the helper this issue should use — **don't reimplement it inline**:
+  ```rust
+  player::record_slot_change(snapshot, delta, slot, item);
+  ```
+  It captures `previous` from the snapshot, mutates the snapshot (insert/remove), and pushes a `SlotChange` onto `delta.slots` in one call. Get the `&mut PlayerDelta` via `player::inventory_diff_mut(frame)` (lazy get-or-init).
+- The empty-delta cleanup is already handled in `compute`'s post-pass: any `inventory_diff` whose `PlayerDelta::is_empty()` returns true is reset to `None` before frames are filtered. So you can call `inventory_diff_mut` unconditionally from the SetSlot arm; you do NOT need to undo it on no-op paths.
+- Suggested arm body (concise version, leveraging the helper):
+  ```rust
+  ActionType::SetSlot { slot, item, count } => {
+      frame.actions.push(ActionEvent::SetSlot {
+          slot: *slot,
+          item: item.clone(),
+          count: *count,
+      });
+      let new_item = item
+          .as_ref()
+          .map(|id| Item { id: id.clone(), count: *count, data: Default::default() });
+      let delta = player::inventory_diff_mut(frame);
+      player::record_slot_change(snapshot, delta, *slot, new_item);
+  }
+  ```
+- The no-op tail of the `match` is now `Assert | UseItemOn | SetSlot | SelectHotbar` (unchanged from post-#0013 — #0014 only added foundation, not a new arm). After this issue lands it shrinks to `Assert | UseItemOn | SelectHotbar`.
+- `Item`'s `data` field is `FxHashMap<String, String>` (re-exported from `flint_core`), not `HashMap`. `Default::default()` works for both, but use `FxHashMap::default()` if you'd rather be explicit.

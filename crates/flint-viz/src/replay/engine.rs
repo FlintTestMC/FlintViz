@@ -41,6 +41,7 @@ pub fn compute(spec: &TestSpec) -> Replay {
 
     let mut frames: BTreeMap<u32, TickFrame> = BTreeMap::new();
     let mut errors: Vec<ReplayError> = Vec::new();
+    let mut snapshot = initial_player.clone();
 
     for entry in &spec.timeline {
         for tick in entry.at.to_vec() {
@@ -51,7 +52,7 @@ pub fn compute(spec: &TestSpec) -> Replay {
                 inventory_diff: None,
                 assertions: Vec::new(),
             });
-            apply_action(frame, &entry.action_type, &mut errors);
+            apply_action(frame, &entry.action_type, &mut snapshot, &mut errors);
         }
     }
 
@@ -62,9 +63,18 @@ pub fn compute(spec: &TestSpec) -> Replay {
         max_tick,
         // Drop ticks that ended up empty — happens when every action on that
         // tick is from a variant the engine doesn't handle yet (e.g. `assert`
-        // before #0015 lands).
+        // before #0015 lands). Also drop a `PlayerDelta` that was lazily
+        // allocated but ended up empty, so empty deltas never reach the wire.
         frames: frames
             .into_values()
+            .map(|mut f| {
+                if let Some(delta) = &f.inventory_diff {
+                    if delta.is_empty() {
+                        f.inventory_diff = None;
+                    }
+                }
+                f
+            })
             .filter(|f| !is_frame_empty(f))
             .collect(),
         breakpoints: spec.breakpoints.clone(),
@@ -80,7 +90,12 @@ fn is_frame_empty(frame: &TickFrame) -> bool {
         && frame.inventory_diff.is_none()
 }
 
-fn apply_action(frame: &mut TickFrame, action: &ActionType, errors: &mut Vec<ReplayError>) {
+fn apply_action(
+    frame: &mut TickFrame,
+    action: &ActionType,
+    _snapshot: &mut PlayerSnapshot,
+    errors: &mut Vec<ReplayError>,
+) {
     match action {
         ActionType::Place { pos, block } => {
             frame.actions.push(ActionEvent::Place {
@@ -126,10 +141,23 @@ fn apply_action(frame: &mut TickFrame, action: &ActionType, errors: &mut Vec<Rep
                 });
             }
         }
-        // Variants below land in #0012–#0015, #0037–#0039.
-        ActionType::PlaceEach { .. }
-        | ActionType::Remove { .. }
-        | ActionType::Assert { .. }
+        ActionType::PlaceEach { blocks } => {
+            frame.actions.push(ActionEvent::PlaceEach {
+                placements: blocks.clone(),
+            });
+            for placement in blocks {
+                frame.block_diff.push(BlockChange::Set {
+                    pos: placement.pos,
+                    block: placement.block.clone(),
+                });
+            }
+        }
+        ActionType::Remove { pos } => {
+            frame.actions.push(ActionEvent::Remove { pos: *pos });
+            frame.block_diff.push(BlockChange::Remove { pos: *pos });
+        }
+        // Variants below land in #0014–#0015, #0037–#0039.
+        ActionType::Assert { .. }
         | ActionType::UseItemOn { .. }
         | ActionType::SetSlot { .. }
         | ActionType::SelectHotbar { .. } => {}
@@ -264,6 +292,197 @@ mod tests {
             assert_eq!(frame.actions.len(), 1);
             assert_eq!(frame.block_diff.len(), 1);
         }
+    }
+
+    #[test]
+    fn place_each_emits_event_and_one_set_per_placement() {
+        // Mirrors the first `place_each` entry in
+        // ~/flint/FlintCLI/FlintBenchmark/tests/non_breaking_cactus.json.
+        let spec = parse(
+            r#"{
+                "name": "non_breaking_cactus_excerpt",
+                "setup": { "cleanup": { "region": [[-2, -2, -2], [2, 3, 2]] } },
+                "timeline": [
+                    { "at": 0, "do": "place_each", "blocks": [
+                        { "pos": [ 0,  0,  0], "block": {"id": "minecraft:sand"} },
+                        { "pos": [ 1,  0, -1], "block": {"id": "minecraft:sand"} },
+                        { "pos": [-1, -1, -1], "block": {"id": "minecraft:stone"} },
+                        { "pos": [ 0,  1,  0], "block": {"id": "minecraft:cactus", "age": "0"} }
+                    ] }
+                ]
+            }"#,
+        );
+
+        let replay = compute(&spec);
+        assert!(replay.errors.is_empty());
+        assert_eq!(replay.frames.len(), 1);
+
+        let frame = &replay.frames[0];
+        assert_eq!(frame.tick, 0);
+        assert_eq!(frame.actions.len(), 1);
+        match &frame.actions[0] {
+            ActionEvent::PlaceEach { placements } => {
+                assert_eq!(placements.len(), 4);
+                assert_eq!(placements[0].pos, [0, 0, 0]);
+                assert_eq!(placements[0].block.id, "minecraft:sand");
+                assert_eq!(placements[3].block.id, "minecraft:cactus");
+                assert_eq!(
+                    placements[3].block.properties.get("age").map(String::as_str),
+                    Some("0")
+                );
+            }
+            other => panic!("expected PlaceEach, got {:?}", other),
+        }
+
+        assert_eq!(frame.block_diff.len(), 4);
+        let positions: Vec<[i32; 3]> = frame
+            .block_diff
+            .iter()
+            .map(|c| match c {
+                BlockChange::Set { pos, .. } => *pos,
+                BlockChange::Remove { pos } => *pos,
+            })
+            .collect();
+        assert_eq!(
+            positions,
+            vec![[0, 0, 0], [1, 0, -1], [-1, -1, -1], [0, 1, 0]]
+        );
+        match &frame.block_diff[3] {
+            BlockChange::Set { block, .. } => {
+                assert_eq!(block.id, "minecraft:cactus");
+                assert_eq!(block.properties.get("age").map(String::as_str), Some("0"));
+            }
+            other => panic!("expected Set, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn remove_emits_event_and_block_diff() {
+        let spec = parse(
+            r#"{
+                "name": "synthetic_remove",
+                "setup": { "cleanup": { "region": [[0, 0, 0], [3, 3, 3]] } },
+                "timeline": [
+                    { "at": 0, "do": "place", "pos": [1, 1, 1], "block": {"id": "minecraft:stone"} },
+                    { "at": 1, "do": "remove", "pos": [1, 1, 1] }
+                ]
+            }"#,
+        );
+
+        let replay = compute(&spec);
+        assert!(replay.errors.is_empty());
+        assert_eq!(replay.frames.len(), 2);
+
+        let f1 = &replay.frames[1];
+        assert_eq!(f1.tick, 1);
+        assert_eq!(f1.actions.len(), 1);
+        assert!(matches!(
+            &f1.actions[0],
+            ActionEvent::Remove { pos } if *pos == [1, 1, 1]
+        ));
+        assert_eq!(f1.block_diff.len(), 1);
+        assert!(matches!(
+            &f1.block_diff[0],
+            BlockChange::Remove { pos } if *pos == [1, 1, 1]
+        ));
+    }
+
+    #[test]
+    fn remove_at_position_with_no_recorded_block_still_emits_remove() {
+        // Per #0013 Outcome: removing an empty position emits a `Remove`
+        // (frontend treats it as "definitely empty after this tick").
+        let spec = parse(
+            r#"{
+                "name": "synthetic_remove_empty",
+                "setup": { "cleanup": { "region": [[0, 0, 0], [3, 3, 3]] } },
+                "timeline": [
+                    { "at": 5, "do": "remove", "pos": [2, 2, 2] }
+                ]
+            }"#,
+        );
+
+        let replay = compute(&spec);
+        assert!(replay.errors.is_empty());
+        assert_eq!(replay.frames.len(), 1);
+        let frame = &replay.frames[0];
+        assert_eq!(frame.tick, 5);
+        assert!(matches!(
+            &frame.actions[0],
+            ActionEvent::Remove { pos } if *pos == [2, 2, 2]
+        ));
+        assert!(matches!(
+            &frame.block_diff[0],
+            BlockChange::Remove { pos } if *pos == [2, 2, 2]
+        ));
+    }
+
+    #[test]
+    fn initial_player_falls_back_to_default_when_setup_player_absent() {
+        use flint_core::test_spec::GameMode;
+
+        let spec = parse(
+            r#"{
+                "name": "no_player_config",
+                "setup": { "cleanup": { "region": [[0, 0, 0], [1, 1, 1]] } },
+                "timeline": []
+            }"#,
+        );
+        let replay = compute(&spec);
+        assert!(replay.initial_player.inventory.is_empty());
+        assert_eq!(replay.initial_player.selected_hotbar, 1);
+        assert!(matches!(replay.initial_player.game_mode, GameMode::Creative));
+    }
+
+    #[test]
+    fn initial_player_mirrors_setup_player_field_by_field() {
+        use flint_core::test_spec::{GameMode, PlayerSlot};
+
+        let spec = parse(
+            r#"{
+                "name": "with_player_config",
+                "setup": {
+                    "cleanup": { "region": [[0, 0, 0], [1, 1, 1]] },
+                    "player": {
+                        "inventory": {
+                            "hotbar1": { "id": "minecraft:honeycomb", "count": 8 }
+                        },
+                        "selected_hotbar": 3,
+                        "game_mode": "Survival"
+                    }
+                },
+                "timeline": []
+            }"#,
+        );
+        let replay = compute(&spec);
+        assert_eq!(replay.initial_player.selected_hotbar, 3);
+        assert!(matches!(replay.initial_player.game_mode, GameMode::Survival));
+        let item = replay
+            .initial_player
+            .inventory
+            .get(&PlayerSlot::Hotbar1)
+            .expect("hotbar1 populated");
+        assert_eq!(item.id, "minecraft:honeycomb");
+        assert_eq!(item.count, 8);
+    }
+
+    #[test]
+    fn block_only_timeline_never_attaches_inventory_diff() {
+        // #0014 threads the snapshot through `apply_action` but the per-tick
+        // player arms (#0037–#0039) haven't landed yet. With only block
+        // actions on the timeline the inventory_diff post-pass must leave
+        // every frame's `inventory_diff` as None — never an empty delta.
+        let spec = parse(
+            r#"{
+                "name": "blocks_only",
+                "setup": { "cleanup": { "region": [[0, 0, 0], [3, 3, 3]] } },
+                "timeline": [
+                    { "at": 0, "do": "place", "pos": [0, 0, 0], "block": {"id": "minecraft:stone"} },
+                    { "at": 1, "do": "remove", "pos": [0, 0, 0] }
+                ]
+            }"#,
+        );
+        let replay = compute(&spec);
+        assert!(replay.frames.iter().all(|f| f.inventory_diff.is_none()));
     }
 
     #[test]

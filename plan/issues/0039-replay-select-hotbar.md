@@ -42,3 +42,28 @@ SelectHotbar {
 - A `Replay`-level error channel now exists: `Replay.errors: Vec<ReplayError { tick, message }>` (added in #0011 for oversize fills). Prefer pushing an out-of-range `select_hotbar` into `errors` over `tracing::warn!` — that earlier note about "no warning channel yet" is superseded. The frontend can surface the message inline at the offending tick.
 - Dispatch site is `apply_action` in `crates/flint-viz/src/replay/engine.rs`. `ActionType::SelectHotbar { .. }` sits in the no-op tail of the `match`; split it off.
 - Depends on #0014 having landed first — needs the running `PlayerSnapshot` (for `previous`) and the per-tick `PlayerDelta` plumbing.
+
+## Status (post-#0014)
+
+- The foundation is in place. `apply_action` now takes `_snapshot: &mut PlayerSnapshot, errors: &mut Vec<ReplayError>` — rename `_snapshot` → `snapshot` when you split off the `SelectHotbar` arm.
+- A `replay::player` helper module exists with **`record_hotbar_change(snapshot, delta, slot)`** — use it. The helper already implements the start-of-tick-`previous` rule from this issue's post-#0010 status (last write wins, but `previous` reflects the value at the start of the tick) so two `select_hotbar` entries on the same tick collapse correctly without bespoke logic.
+- Suggested arm body:
+  ```rust
+  ActionType::SelectHotbar { slot } => {
+      frame.actions.push(ActionEvent::SelectHotbar { slot: *slot });
+      if !(1..=9).contains(slot) {
+          errors.push(ReplayError {
+              tick: frame.tick,
+              message: format!(
+                  "select_hotbar at tick {} has slot {} out of range (1..=9); skipped",
+                  frame.tick, slot
+              ),
+          });
+          return;
+      }
+      let delta = player::inventory_diff_mut(frame);
+      player::record_hotbar_change(snapshot, delta, *slot);
+  }
+  ```
+- Test (mirroring this issue's Outcome) should also assert that selecting an in-range slot updates the running snapshot — easy to verify by adding a follow-up `set_slot` or by inspecting `replay.frames[i].inventory_diff.selected_hotbar`.
+- The empty-delta cleanup in `compute`'s post-pass means out-of-range entries (which return early without recording) won't leave a stale `inventory_diff` even if other actions on the same tick do nothing player-related.

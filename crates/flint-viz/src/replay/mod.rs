@@ -7,6 +7,7 @@
 pub mod aabb;
 pub mod engine;
 pub mod model;
+pub mod player;
 
 #[allow(unused_imports)] // re-exported for the engine modules landing in #0014+.
 pub use model::{

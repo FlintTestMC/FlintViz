@@ -31,3 +31,8 @@ Handle the `remove` action — single position or AABB region removal.
   ```
 - `aabb::iter_aabb` and `Aabb::volume` already exist in `replay/aabb.rs` from #0011 — leave them untouched here, they'll be used by region-removal if/when flint-core adds it.
 - No need to consult any prior block state when removing — the frontend treats `BlockChange::Remove` as authoritative ("definitely empty after this tick"), per this issue's Outcome.
+
+## Status (post-#0012)
+
+- The no-op tail of `apply_action`'s `match` has shrunk — it is now `ActionType::Remove | Assert | UseItemOn | SetSlot | SelectHotbar`. Split `Remove` out as described above; the remaining variants stay in the no-op tail until #0014/#0015/#0037–#0039.
+- Test convention is set: each new arm gets a unit test parsing inline JSON via `serde_json::from_str` against `TestSpec` and asserting on `frame.actions` + `frame.block_diff` (see `place_each_emits_event_and_one_set_per_placement` in `engine.rs` for the shape).
