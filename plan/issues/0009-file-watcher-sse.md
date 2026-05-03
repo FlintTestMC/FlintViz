@@ -21,3 +21,8 @@ Push file-change events to the frontend over SSE so editing a test on disk hot-r
 - `crates/flint-viz/src/watch.rs` (new)
 - `crates/flint-viz/src/api/events.rs` (new)
 - `crates/flint-viz/src/state.rs` (add broadcast sender)
+
+## Handoff from M1
+- `AppState::new(test_root)` is the only constructor today; extend its signature to accept (or build) the `tokio::sync::broadcast::Sender<FileEvent>` and update the call site in `main.rs::run_serve`. Spawn the watcher task in `run_serve` after `AppState` construction and before `axum::serve`.
+- The Vite dev proxy already forwards `/api/events` to the backend (`frontend/vite.config.ts`), so SSE is reachable from the frontend in dev without extra config. Don't gzip the SSE response — most reverse proxies (and `EventSource`) misbehave with it.
+- Add the `events` route to the api sub-router (see #0006 handoff for the router pattern). It needs `State<Arc<AppState>>` to subscribe to the broadcast.

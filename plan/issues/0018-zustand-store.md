@@ -33,3 +33,8 @@ Store shape:
 - `frontend/src/store/replay.ts`
 - `frontend/src/store/world.ts` — pure helpers `applyForward`, `applyReverse`
 - `frontend/src/store/__tests__/replay.test.ts`
+
+## Handoff from M1
+- Add `zustand` and `vitest` to `frontend/package.json` — neither is installed yet. For Vitest, add `vitest` (devDep) and a `test` script (`"test": "vitest run"`). No jsdom needed for the store tests (they're pure logic).
+- `tsconfig.app.json` has `noUncheckedIndexedAccess: true`. Map/Object lookups are `T | undefined`; selectors must reflect that in their return types.
+- Three.js (`three@^0.171`) is already installed and exports `Vector3` etc. if you want a richer `PosKey` than `"x,y,z"` — but the issue's string-key choice is fine and avoids GC pressure during scrubbing.
