@@ -38,3 +38,11 @@ Store shape:
 - Add `zustand` and `vitest` to `frontend/package.json` — neither is installed yet. For Vitest, add `vitest` (devDep) and a `test` script (`"test": "vitest run"`). No jsdom needed for the store tests (they're pure logic).
 - `tsconfig.app.json` has `noUncheckedIndexedAccess: true`. Map/Object lookups are `T | undefined`; selectors must reflect that in their return types.
 - Three.js (`three@^0.171`) is already installed and exports `Vector3` etc. if you want a richer `PosKey` than `"x,y,z"` — but the issue's string-key choice is fine and avoids GC pressure during scrubbing.
+
+## Status (post-#0010)
+
+- See #0017 "Replay wire shape (post-#0010)" for the canonical TS types — import `Replay`, `TickFrame`, `BlockChange`, `PlayerDelta`, `PlayerSnapshot`, `Block`, etc. from `frontend/src/api/types.ts` rather than redefining.
+- `Replay.frames` is **sparse** — only ticks with at least one event appear. When stepping `tick → tick+1`, walk frames whose `tick <= newTick` and `tick > oldTick`, in order. Don't iterate `0..max_tick`.
+- Forward apply: `BlockChange::Set` → `worldState.set(key, block)`; `BlockChange::Remove` → `worldState.delete(key)`. For `PlayerDelta`, apply `slots[]` (set/clear inventory entries), then `selected_hotbar` (`{slot}`), then `game_mode` (`{mode}`).
+- Reverse apply uses the `previous` field carried by every `SlotChange` / `HotbarChange` / `GameModeChange` — restore from those instead of rebuilding from `initial_player`. (Block reverse-scrub still rebuilds, since `BlockChange` carries no `previous` to keep the wire small. Acceptable: world rebuild is cheap unless tests get huge.)
+- `inventory_diff` is `PlayerDelta | null` and the `PlayerDelta` fields (`slots`, `selected_hotbar`, `game_mode`) are all *omitted* from JSON when empty (`skip_serializing_if`). Treat any missing field as "no change" — don't crash on `delta.slots === undefined`.

@@ -10,7 +10,7 @@ embed-frontend = ["dep:rust-embed", "dep:mime_guess"]
 [dependencies]
 axum = "0.8"
 clap = { version = "4", features = ["derive"] }
-flint-core = { git = "https://github.com/FlintTestMC/flint-core", rev = "b04ad23" }
+flint-core = { git = "https://github.com/FlintTestMC/flint-core", tag = "v1.1.3" }
 mime_guess = { version = "2", optional = true }
 notify = "6"
 rust-embed = { version = "8", optional = true }

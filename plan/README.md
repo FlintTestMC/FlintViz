@@ -139,6 +139,7 @@ The optional flint-steel runtime is staged in M8.
 - `~/flint/flint-core/src/timeline.rs` — `TimelineAggregate`, breakpoints
 - `~/flint/flint-core/src/loader.rs` — `TestLoader`
 - `~/flint/flint-core/src/results.rs` — `AssertionResult`, `AssertFailure` (M8 only)
-- `~/flint/FlintCLI/Cargo.toml` line 17 — flint-core git rev to pin to
+- `~/flint/FlintCLI/Cargo.toml` line 17 — flint-core git rev FlintCLI pins to (we no longer match it; see below)
+- `crates/flint-viz/Cargo.toml` — pinned to `tag = "v1.1.3"` since #0010 (FlintCLI's older `b04ad23` lacked `Item`, `PlayerSlot`, `BlockFace`, `GameMode`, and the `UseItemOn`/`SetSlot`/`SelectHotbar` action variants needed by M3 issues #0014/#0037–#0039).
 - `~/flint/FlintCLI/example_tests/basic_placement.json` — fixture for replay engine tests
 - `~/flint/FlintCLI/FlintBenchmark/tests/*.json` — broader fixture set

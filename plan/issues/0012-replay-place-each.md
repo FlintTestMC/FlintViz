@@ -15,3 +15,8 @@ Handle the `place_each` action — multiple positions paired with a single block
 
 ## Files
 - `crates/flint-viz/src/replay/engine.rs`
+
+## Status (post-#0010)
+
+- `flint_core::test_spec::ActionType::PlaceEach` shape (v1.1.3): `{ blocks: Vec<BlockPlacement> }` where `BlockPlacement { pos: [i32;3], block: Block }`.
+- Emit ONE `ActionEvent::PlaceEach { placements: Vec<BlockPlacement> }` per timeline entry (the field is renamed `placements` in our wire format) plus N `BlockChange::Set` entries (one per placement). Reuse `BlockPlacement` directly — it's re-exported through `flint_core::test_spec`.

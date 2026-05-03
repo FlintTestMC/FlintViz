@@ -34,5 +34,10 @@ UseItemOn {
 
 ## Files
 - `crates/flint-viz/src/replay/engine.rs` (dispatch on `ActionType::UseItemOn`)
-- `crates/flint-viz/src/replay/model.rs` (`ActionEvent::UseItemOn`, plus `BlockFace` re-export or mirror)
 - `crates/flint-viz/src/replay/player.rs` (helper: `resolve_active_item(snapshot, override)`)
+
+## Status (post-#0010)
+
+- `ActionEvent::UseItemOn { pos, face: BlockFace, item: Option<String>, resolved_item: Option<Item> }` is **already defined** in `replay/model.rs`. `BlockFace` comes directly from `flint_core::test_spec` (no local mirror); don't redefine.
+- This action emits **no** `BlockChange` and **no** `PlayerDelta` (so `inventory_diff` stays whatever the rest of the tick produces).
+- `resolve_active_item`: if `item.is_some()`, return `Some(Item::new(item))` (count 1, no data). Else look up `snapshot.inventory.get(&PlayerSlot::hotbar(snapshot.selected_hotbar)?)` and clone. If neither resolves, leave `resolved_item = None` — frontend will render the action with an "unknown item" badge.

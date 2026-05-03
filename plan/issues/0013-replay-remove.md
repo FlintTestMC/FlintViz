@@ -15,3 +15,7 @@ Handle the `remove` action — single position or AABB region removal.
 
 ## Files
 - `crates/flint-viz/src/replay/engine.rs`
+
+## Status (post-#0010)
+
+- `flint_core::test_spec::ActionType::Remove` (v1.1.3) is `{ pos: [i32;3] }` only — there is no AABB region form. The "single position or AABB" wording in this issue's Goal is therefore inaccurate; emit one `ActionEvent::Remove { pos }` + one `BlockChange::Remove { pos }` per entry. If a region-removal action is added to flint-core later, extend then.

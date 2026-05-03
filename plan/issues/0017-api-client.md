@@ -98,6 +98,82 @@ Notes:
 - The body is sent as-is (no JSON.stringify), so an empty editor sends `""` and gets a structured parse error back. That's the desired UX.
 - The replay engine is staged for M3; until then `replay` is always `null` even on a fully valid spec. Frontend code that consumes `replay` must guard for `null` and show a "replay not yet computed" placeholder.
 
+### Replay wire shape (post-#0010)
+
+The Rust types live at `crates/flint-viz/src/replay/model.rs` (re-exported from `crates/flint-viz/src/replay/mod.rs`). Wire format uses serde defaults — snake_case field names, internally tagged enums on `kind`. TS mirror:
+
+```ts
+export interface Replay {
+  name: string;
+  cleanup_region: Aabb | null;
+  initial_player: PlayerSnapshot;
+  max_tick: number;
+  frames: TickFrame[];           // sparse — only ticks with at least one event
+  breakpoints: number[];
+  source_map: SourceSpan[];      // empty until #0016 lands
+}
+
+export interface TickFrame {
+  tick: number;
+  actions: ActionEvent[];
+  block_diff: BlockChange[];
+  inventory_diff: PlayerDelta | null;
+  assertions: AssertionView[];
+}
+
+export type BlockChange =
+  | { kind: "set"; pos: [number, number, number]; block: Block }
+  | { kind: "remove"; pos: [number, number, number] };
+
+export type ActionEvent =
+  | { kind: "place"; pos: [number, number, number]; block: Block }
+  | { kind: "place_each"; placements: BlockPlacement[] }
+  | { kind: "fill"; region: Aabb; block: Block }
+  | { kind: "remove"; pos: [number, number, number] }
+  | { kind: "use_item_on"; pos: [number, number, number]; face: BlockFace; item: string | null; resolved_item: Item | null }
+  | { kind: "set_slot"; slot: PlayerSlot; item: string | null; count: number }
+  | { kind: "select_hotbar"; slot: number };
+
+export type AssertionView =
+  | { kind: "block"; position: [number, number, number]; expected: Block }
+  | { kind: "inventory"; slot: PlayerSlot; expected: Item | null }
+  | { kind: "other"; description: string };
+
+export interface PlayerDelta {
+  // All three fields are omitted (not null) when absent — code defensively.
+  slots?: SlotChange[];
+  selected_hotbar?: HotbarChange;
+  game_mode?: GameModeChange;
+}
+export interface SlotChange { slot: PlayerSlot; item: Item | null; previous: Item | null }
+export interface HotbarChange { slot: number; previous: number }
+export interface GameModeChange { mode: GameMode; previous: GameMode }
+
+export interface PlayerSnapshot {
+  inventory: Record<PlayerSlot, Item>;
+  selected_hotbar: number;       // 1..=9
+  game_mode: GameMode;
+}
+
+export interface SourceSpan { tick: number; event_index: number; json_pointer: string }
+export interface Aabb { min: [number, number, number]; max: [number, number, number] }
+
+// flint-core re-exports (v1.1.3)
+export type PlayerSlot =
+  | "hotbar1" | "hotbar2" | "hotbar3" | "hotbar4" | "hotbar5"
+  | "hotbar6" | "hotbar7" | "hotbar8" | "hotbar9"
+  | "off_hand" | "helmet" | "chestplate" | "leggings" | "boots";
+export type BlockFace = "top" | "bottom" | "north" | "south" | "east" | "west";
+export type GameMode = "Survival" | "Creative" | "Adventure" | "Spectator"; // PascalCase: GameMode has no rename_all
+export interface Block { id: string; [prop: string]: unknown }              // properties flattened onto the object
+export interface Item { id: string; count: number; [data: string]: unknown }// data fields flattened onto the object
+export interface BlockPlacement { pos: [number, number, number]; block: Block }
+```
+
+Notes:
+- Once #0011 changes `replay: null` → `replay: Replay | null` on the server, update `ReplayResponse.replay` in lockstep.
+- `flint-core` is now pinned to `tag = "v1.1.3"` (was `rev = "b04ad23"`); the `TestSpec` types referenced earlier in this doc are still accurate but now also include `Item`, `PlayerSlot`, `BlockFace`, `GameMode`, `PlayerConfig` (camelCase: `selectedHotbar`, `gameMode`), and the extra `ActionType` variants `UseItemOn`/`SetSlot`/`SelectHotbar`. Mirror them when typing `TimelineEntry` more strictly.
+
 ## Handoff from #0009 (SSE shape + reconnect semantics)
 `GET /api/events` is a long-lived `text/event-stream`. The server only emits one named event today:
 ```

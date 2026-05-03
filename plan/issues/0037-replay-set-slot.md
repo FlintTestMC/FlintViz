@@ -32,6 +32,13 @@ SetSlot {
 - For reverse-application: snapshot the previous slot value into `PlayerDelta::SetSlot.previous` so backward scrubbing in #0018 is O(1). If you'd rather keep deltas pure-forward, the frontend (#0018) rebuilds from `initial_player` whenever target tick < current — that's already the planned fallback.
 
 ## Files
-- `crates/flint-viz/src/replay/player.rs` (extend — `PlayerDelta::SetSlot` arm + handler)
+- `crates/flint-viz/src/replay/player.rs` (extend — append a `SlotChange` to `PlayerDelta.slots` + handler)
 - `crates/flint-viz/src/replay/engine.rs` (dispatch on `ActionType::SetSlot`)
-- `crates/flint-viz/src/replay/model.rs` (`ActionEvent::SetSlot`)
+
+## Status (post-#0010)
+
+- `ActionEvent::SetSlot { slot: PlayerSlot, item: Option<String>, count: u8 }` is **already defined** in `replay/model.rs`. Don't redefine.
+- The `PlayerDelta::SetSlot` enum variant referenced in this issue's Outcome **does not exist** — `PlayerDelta` is a struct (see #0014 "Status"). Append a `SlotChange { slot, item: Option<Item>, previous: Option<Item> }` to `delta.slots` instead.
+- `previous` is captured by reading the running `PlayerSnapshot.inventory` *before* applying the delta (snapshot is threaded through the engine).
+- For `item.is_some()`, build `Item { id: item.clone().unwrap(), count, data: Default::default() }`. For `item.is_none()`, the new value is `None` (clear the slot).
+- After a tick's slot writes, attach the `PlayerDelta` only if `!delta.is_empty()`; otherwise leave `inventory_diff = None`.
