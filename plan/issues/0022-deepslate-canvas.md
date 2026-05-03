@@ -1,0 +1,28 @@
+# 0022 — R3F scene + deepslate block-geometry adapter
+
+**Milestone:** M5
+**Depends on:** #0003
+
+## Goal
+Wire the R3F `<Canvas>` to a working block-rendering pipeline. We do **not** use deepslate's `StructureRenderer` — instead we use its lower-level utilities to load MC models and build a texture atlas, then expose a small adapter that turns a `(blockId, properties)` into an R3F-renderable mesh (geometry + material). This keeps everything declarative and lets overlays/highlights live in the same scene graph.
+
+## Outcome
+- Asset bundle (`assets/minecraft/{textures,models,blockstates}`) bundled as `frontend/public/mc-assets.zip`, fetched once at runtime.
+- A `BlockAdapter` module: given an MC block id + properties, returns `{ geometry: BufferGeometry, material: Material, transform: Matrix4 }` suitable for an R3F `<mesh>`.
+- A test harness page (`/__debug/blocks`) that renders a grid of representative blocks (stone, oak_stairs[facing=east], lever[powered=true], glass, redstone_wire, fence) to prove the adapter works.
+- One shared atlas material so all blocks share a draw-call-friendly material.
+
+## Implementation notes
+- Use deepslate's `BlockDefinition`, `BlockModel`, `TextureAtlas`, `BlockStateRegistry` to parse models from the asset zip.
+- Cache: `useMemo` per `(id, propsKey)` — same block state should reuse geometry.
+- Performance: many tests have hundreds of blocks. Plan to batch identical block states into `<instancedMesh>` (deferred to #0023; the adapter exposes the geometry/material so instancing is straightforward).
+- License note for the asset zip: see #0034 README.
+- Asset prep script `frontend/scripts/fetch-assets.ts` downloads vanilla 1.21.x client jar, extracts only the relevant subtrees, zips into `public/mc-assets.zip`. Run once locally.
+
+## Files
+- `frontend/src/world/CanvasShell.tsx` (extend with lights, default camera)
+- `frontend/src/world/blockAdapter.ts` (new) — deepslate → R3F geometry/material
+- `frontend/src/world/atlas.ts` (new) — async load + cache the atlas
+- `frontend/src/world/__debug__/BlockGallery.tsx` (new)
+- `frontend/scripts/fetch-assets.ts`
+- `frontend/public/mc-assets.zip`

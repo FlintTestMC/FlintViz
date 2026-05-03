@@ -1,7 +1,6 @@
 # Rust
 /target
 Cargo.lock.bak
-plan/*
 
 # Node
 node_modules

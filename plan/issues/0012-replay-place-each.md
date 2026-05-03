@@ -1,0 +1,17 @@
+# 0012 — Replay engine: `place_each`
+
+**Milestone:** M3
+**Depends on:** #0011
+
+## Goal
+Handle the `place_each` action — multiple positions paired with a single block, or position/block pairs.
+
+## Outcome
+- Engine produces correct `BlockChange`s for both forms (verify exact shape against `flint_core::test_spec::ActionType::PlaceEach` fields).
+- Unit test covers a `place_each` from `~/flint/FlintCLI/FlintBenchmark/tests/`.
+
+## Implementation notes
+- Match the exact field names in `flint-core`'s deserialization. Do not re-invent.
+
+## Files
+- `crates/flint-viz/src/replay/engine.rs`
