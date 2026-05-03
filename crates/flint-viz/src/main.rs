@@ -3,6 +3,8 @@ mod cli;
 #[cfg(feature = "embed-frontend")]
 mod embed;
 mod state;
+mod util;
+mod watch;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -42,6 +44,13 @@ async fn run_serve(
     tracing::info!("test root: {}", test_root.display());
 
     let state = AppState::new(test_root);
+
+    let _watcher = match watch::spawn(state.clone()) {
+        Ok(guard) => guard,
+        Err(err) => {
+            return Err(format!("failed to start file watcher: {err}").into());
+        }
+    };
 
     let api = Router::new()
         .route("/healthz", get(healthz))

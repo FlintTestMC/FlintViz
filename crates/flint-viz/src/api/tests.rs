@@ -16,6 +16,7 @@ use serde::Serialize;
 use walkdir::WalkDir;
 
 use crate::state::AppState;
+use crate::util::relative_id;
 
 pub fn router() -> Router<Arc<AppState>> {
     Router::new()
@@ -60,14 +61,6 @@ fn walk(root: &Path) -> Vec<TestSummary> {
     }
     summaries.sort_by(|a, b| a.id.cmp(&b.id));
     summaries
-}
-
-fn relative_id(root: &Path, path: &Path) -> String {
-    let rel = path.strip_prefix(root).unwrap_or(path);
-    rel.components()
-        .map(|c| c.as_os_str().to_string_lossy().into_owned())
-        .collect::<Vec<_>>()
-        .join("/")
 }
 
 fn read_one(path: &Path, id: String) -> TestSummary {

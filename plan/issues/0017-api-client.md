@@ -97,3 +97,29 @@ Notes:
 - `ParseError.col` may be `0` (zero) for EOF errors emitted by `serde_json` — Monaco markers expect `column >= 1`, so clamp with `Math.max(1, err.col)` when translating to markers.
 - The body is sent as-is (no JSON.stringify), so an empty editor sends `""` and gets a structured parse error back. That's the desired UX.
 - The replay engine is staged for M3; until then `replay` is always `null` even on a fully valid spec. Frontend code that consumes `replay` must guard for `null` and show a "replay not yet computed" placeholder.
+
+## Handoff from #0009 (SSE shape + reconnect semantics)
+`GET /api/events` is a long-lived `text/event-stream`. The server only emits one named event today:
+```
+event: file-changed
+data: {"id":"sub/foo.json"}
+```
+Plus a periodic keep-alive comment line (`: ping`) every 15 s — `EventSource` swallows comments automatically, so client code never sees it.
+
+Wire shape for `data`:
+```ts
+export interface FileChangedEvent {
+  id: string;          // forward-slash path relative to the test root, same id used by /api/tests/:id
+}
+```
+
+Client implementation notes:
+- Use `new EventSource("/api/events")` (relative URL — works in dev via the Vite proxy and in the embedded build at same-origin).
+- Listen with `es.addEventListener("file-changed", e => onEvent(JSON.parse(e.data) as FileChangedEvent))`. Do **not** rely on the default `message` handler — the server always names its events.
+- `EventSource` reconnects automatically on transport drop, so `api.events(onEvent)` only needs to expose a disposer that calls `es.close()`. No manual retry/backoff loop required.
+- Treat the event as a **cache-bust signal**, not a payload. After receiving a `file-changed` for `id`, re-fetch via `api.getTest(id)` (or re-run replay if that file is currently open). The event carries no content — by design, to keep the channel cheap.
+- The server debounces bursts to **at most one event per file per 100 ms**, so editors that write+rename or save twice in quick succession yield a single notification. Client code should still be idempotent (e.g. dedupe a re-fetch for the same id within a frame) because multiple distinct files can each fire within the same tick.
+- Events fire for `*.json` only, anywhere under the test root (recursive). Non-JSON files and the watcher's own internal directory creates are filtered out server-side; the client doesn't need to filter again.
+- Both create and modify surface as `file-changed` (atomic-rename writes show up as a Create on the new path). Removes also fire `file-changed` — there is currently no `file-removed` event. If the frontend cares about deletions specifically, fall back to detecting via a follow-up `getTest` returning 404, or wait for a future iteration to introduce a distinct event name.
+- Lagged subscribers (more than 64 unread events buffered) silently miss the overflow rather than disconnecting. In practice this only matters under pathological churn; if it bites, the client can recover by re-listing tests.
+- Don't gzip the response on any reverse proxy you put in front of this — `EventSource` and most proxies handle SSE+gzip badly. The Vite dev proxy is already configured correctly (`frontend/vite.config.ts`) and the embedded build doesn't compress.
