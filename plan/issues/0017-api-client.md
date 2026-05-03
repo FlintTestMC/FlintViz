@@ -65,3 +65,35 @@ Notes:
 - `id` in the response is the *normalized* form (after canonicalization, with forward slashes). Use `detail.id` rather than the request id when keying caches/store entries — `"sub/./a.json"` becomes `"sub/a.json"`.
 - `TestSpec` mirrors `flint_core::test_spec::TestSpec` at rev `b04ad23` (camelCase via serde): `flintVersion: string | null`, `name: string`, `description: string | null`, `tags: string[]`, `dependencies: string[]`, `setup: SetupSpec | null` (with `cleanup: { region: [[i32;3];2] }`), `timeline: TimelineEntry[]`, `breakpoints: number[]`. The `TimelineEntry` shape is a tagged union via the `do` discriminant — don't try to fully type it in this issue; treat it as `unknown` or a permissive `Record<string, unknown>` and let #0021 (JSON schema) drive validation.
 - The client should encode each path segment of `id` (e.g. `id.split('/').map(encodeURIComponent).join('/')`) before interpolating into the URL, so block ids with spaces or `+` survive the round-trip.
+
+## Handoff from #0008 (ReplayResponse shape + body semantics)
+`POST /api/replay` accepts the **raw editor buffer as the request body** (not wrapped in JSON, not a multipart). Send it as `Content-Type: application/json` with the buffer bytes verbatim:
+```ts
+fetch("/api/replay", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: editorSource,        // string — exactly what's in the editor, even if malformed
+});
+```
+Response shape (always 200 unless the body is too large):
+```ts
+export interface ReplayResponse {
+  spec: TestSpec | null;            // null when errors is non-empty
+  errors: ParseError[];             // empty on success
+  replay: null;                     // reserved for M3 — type as `null` for now, will become `Replay | null`
+}
+export interface ParseError {
+  line: number;                     // 1-indexed line where the error was detected
+  col: number;                      // 1-indexed column; can be 0 for EOF errors — don't assert >= 1 in Monaco markers
+  message: string;
+}
+```
+Status codes:
+- **200** — *always* for both success and parse failure. The frontend must inspect `errors.length > 0`, NOT `res.ok`, to decide whether to show squiggles.
+- **413** — body exceeded 1 MiB limit. Surface as a typed `ApiError` (`"replay body too large (max 1 MiB)"` or similar). Body comes back as a short text/HTML payload from axum's body-limit layer; don't parse as JSON.
+- **5xx** — unexpected server failure; treat as `ApiError`.
+
+Notes:
+- `ParseError.col` may be `0` (zero) for EOF errors emitted by `serde_json` — Monaco markers expect `column >= 1`, so clamp with `Math.max(1, err.col)` when translating to markers.
+- The body is sent as-is (no JSON.stringify), so an empty editor sends `""` and gets a structured parse error back. That's the desired UX.
+- The replay engine is staged for M3; until then `replay` is always `null` even on a fully valid spec. Frontend code that consumes `replay` must guard for `null` and show a "replay not yet computed" placeholder.
