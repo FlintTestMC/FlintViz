@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 axum = "0.8"
+clap = { version = "4", features = ["derive"] }
 tokio = { version = "1.48", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+webbrowser = "1"
