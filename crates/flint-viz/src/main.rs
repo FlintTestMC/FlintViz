@@ -1,3 +1,4 @@
+mod api;
 mod cli;
 #[cfg(feature = "embed-frontend")]
 mod embed;
@@ -44,6 +45,7 @@ async fn run_serve(
 
     let api = Router::new()
         .route("/healthz", get(healthz))
+        .merge(api::router())
         .with_state(state);
 
     #[cfg(feature = "embed-frontend")]

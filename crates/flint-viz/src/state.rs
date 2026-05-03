@@ -5,7 +5,6 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct AppState {
     /// Absolute, canonicalized path to the directory holding Flint test JSON files.
-    #[allow(dead_code)] // consumed by API endpoints starting in #0006
     pub test_root: PathBuf,
 }
 
