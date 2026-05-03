@@ -25,8 +25,19 @@ pub struct Replay {
     /// Sparse: only ticks with at least one action or assertion appear.
     pub frames: Vec<TickFrame>,
     pub breakpoints: Vec<u32>,
+    /// Engine-level rejections (e.g. oversize fills). Visible to the frontend
+    /// so it can surface the cause; the offending action still emits a visual
+    /// `ActionEvent` but skips its `BlockChange`s.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub errors: Vec<ReplayError>,
     /// Populated by #0016. Empty until then.
     pub source_map: Vec<SourceSpan>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReplayError {
+    pub tick: u32,
+    pub message: String,
 }
 
 /// Everything that happens on one tick.
@@ -217,6 +228,7 @@ mod tests {
                 }],
             }],
             breakpoints: vec![3],
+            errors: Vec::new(),
             source_map: vec![SourceSpan {
                 tick: 3,
                 event_index: 0,

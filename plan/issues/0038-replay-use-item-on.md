@@ -41,3 +41,9 @@ UseItemOn {
 - `ActionEvent::UseItemOn { pos, face: BlockFace, item: Option<String>, resolved_item: Option<Item> }` is **already defined** in `replay/model.rs`. `BlockFace` comes directly from `flint_core::test_spec` (no local mirror); don't redefine.
 - This action emits **no** `BlockChange` and **no** `PlayerDelta` (so `inventory_diff` stays whatever the rest of the tick produces).
 - `resolve_active_item`: if `item.is_some()`, return `Some(Item::new(item))` (count 1, no data). Else look up `snapshot.inventory.get(&PlayerSlot::hotbar(snapshot.selected_hotbar)?)` and clone. If neither resolves, leave `resolved_item = None` — frontend will render the action with an "unknown item" badge.
+
+## Status (post-#0011)
+
+- Dispatch site is `apply_action` in `crates/flint-viz/src/replay/engine.rs`. `ActionType::UseItemOn { .. }` is in the no-op tail of that `match`; split it off.
+- Depends on #0014 having landed first — it threads a running `PlayerSnapshot` through `apply_action`, which is required for `resolved_item` resolution.
+- Reminder of intent: emit ONLY `ActionEvent::UseItemOn`; do NOT push to `frame.block_diff` and do NOT mutate the snapshot. The `is_frame_empty` filter will keep the frame because `actions` is non-empty.

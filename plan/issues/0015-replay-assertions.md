@@ -34,3 +34,26 @@ Collect every `assert` / `assert_state` entry into `TickFrame.assertions` as `As
 - `InventoryCheck { slot, is: Option<Item> }` → `AssertionView::Inventory { slot, expected: is }`.
 - v1.1.3 `ActionType` does **not** define a separate `assert_state` variant. Skip that; reserve the `Other { description }` arm for when one is added (or when a state-style check appears via flint-core extensions).
 - The engine should *not* emit an `ActionEvent` for assertions — they live exclusively in `TickFrame.assertions`. (`ActionEvent` has no `Assert` variant.)
+
+## Status (post-#0011)
+
+- Dispatch in `crates/flint-viz/src/replay/engine.rs` `apply_action`. `ActionType::Assert { .. }` is currently in the no-op tail of the `match`; split it into its own arm and push to `frame.assertions`.
+- Frame-empty filtering (`is_frame_empty` in the same file) already includes `assertions` in its check — assert-only ticks will materialise as their own `TickFrame` once you start populating that vec. Today (post-#0011) assert-only ticks are dropped because their frame ends up empty; that flips automatically when this issue lands.
+- For `BlockSpec::Multiple` choose ONE convention and document it in the dispatch arm. Recommendation that fits the rest of the engine: emit one `AssertionView::Block` per expected block (so the assertion panel #0031 can render them as a list of alternatives without parsing free-text).
+- Suggested skeleton:
+  ```rust
+  ActionType::Assert { checks } => {
+      for check in checks {
+          match check {
+              AssertType::Block(BlockCheck { pos, is }) => {
+                  for expected in is.to_vec() {
+                      frame.assertions.push(AssertionView::Block { position: *pos, expected });
+                  }
+              }
+              AssertType::Inventory(InventoryCheck { slot, is }) => {
+                  frame.assertions.push(AssertionView::Inventory { slot: *slot, expected: is.clone() });
+              }
+          }
+      }
+  }
+  ```

@@ -36,3 +36,9 @@ SelectHotbar {
 - `PlayerDelta::SelectHotbar` enum variant **does not exist** — `PlayerDelta` is a struct (see #0014). Set `delta.selected_hotbar = Some(HotbarChange { slot, previous })` where `previous = snapshot.selected_hotbar` *before* applying.
 - If multiple `select_hotbar` entries land on the same tick, last wins; `previous` is the value at the start of the tick (so reverse-scrub still restores correctly).
 - Out-of-range (`slot < 1 || slot > 9`): emit the `ActionEvent` for visibility but skip the `HotbarChange` and log a warning. (No `Replay`-level warning channel yet; `tracing::warn!` is fine for now — extend the model with a warnings field if a need accumulates.)
+
+## Status (post-#0011)
+
+- A `Replay`-level error channel now exists: `Replay.errors: Vec<ReplayError { tick, message }>` (added in #0011 for oversize fills). Prefer pushing an out-of-range `select_hotbar` into `errors` over `tracing::warn!` — that earlier note about "no warning channel yet" is superseded. The frontend can surface the message inline at the offending tick.
+- Dispatch site is `apply_action` in `crates/flint-viz/src/replay/engine.rs`. `ActionType::SelectHotbar { .. }` sits in the no-op tail of the `match`; split it off.
+- Depends on #0014 having landed first — needs the running `PlayerSnapshot` (for `previous`) and the per-tick `PlayerDelta` plumbing.

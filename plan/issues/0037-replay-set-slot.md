@@ -42,3 +42,9 @@ SetSlot {
 - `previous` is captured by reading the running `PlayerSnapshot.inventory` *before* applying the delta (snapshot is threaded through the engine).
 - For `item.is_some()`, build `Item { id: item.clone().unwrap(), count, data: Default::default() }`. For `item.is_none()`, the new value is `None` (clear the slot).
 - After a tick's slot writes, attach the `PlayerDelta` only if `!delta.is_empty()`; otherwise leave `inventory_diff = None`.
+
+## Status (post-#0011)
+
+- Dispatch site is `apply_action` in `crates/flint-viz/src/replay/engine.rs`. `ActionType::SetSlot { .. }` currently sits in the no-op tail of that `match`; split it off.
+- Threading the running `PlayerSnapshot` through `apply_action` is part of #0014's foundation. Land #0014 first (it changes the `apply_action` signature to take `&mut PlayerSnapshot`) and build on top of that — don't refactor the signature here.
+- Use the existing `Replay.errors: Vec<ReplayError>` field (added in #0011) only for genuine engine-level rejections; `set_slot` is well-defined and shouldn't need it.

@@ -34,3 +34,19 @@ Track the player snapshot through the timeline: gamemode, hotbar slot selection,
   Reason: `TickFrame.inventory_diff: Option<PlayerDelta>` only allows one delta per tick — but a tick can contain several `set_slot` plus a `select_hotbar`. Issues #0037/#0038/#0039 originally said `PlayerDelta::SetSlot` etc.; that wording is **superseded** — they should populate fields on the struct instead.
 - `SlotChange { slot, item: Option<Item>, previous: Option<Item> }`, `HotbarChange { slot, previous }`, `GameModeChange { mode, previous }` all carry a `previous` value so the frontend store (#0018) can reverse-scrub in O(1).
 - After applying a delta, also emit `inventory_diff = None` (don't attach an empty `PlayerDelta`); use `PlayerDelta::is_empty()` to decide.
+
+## Status (post-#0011)
+
+- The engine entry point is `replay::compute(&TestSpec) -> Replay` in `crates/flint-viz/src/replay/engine.rs`. It currently builds `initial_player` from `setup.player` directly — keep that path and just extend the per-tick walk.
+- `apply_action(frame, action, errors)` is the per-action dispatch. To track player state, **change its signature** to thread a running snapshot:
+  ```rust
+  fn apply_action(
+      frame: &mut TickFrame,
+      action: &ActionType,
+      snapshot: &mut PlayerSnapshot,
+      errors: &mut Vec<ReplayError>,
+  )
+  ```
+  The snapshot is initialised from `initial_player.clone()` *before* the timeline loop and mutated forward as each tick's deltas apply. Per-tick: lazily get-or-init `frame.inventory_diff = Some(PlayerDelta::default())`, append changes, then at end of `compute` post-process: drop `inventory_diff` for any frame where `delta.is_empty()`.
+- A `Replay`-level `errors: Vec<ReplayError>` field exists now (added in #0011 for oversize fills). Reuse it for `select_hotbar` out-of-range warnings (#0039) instead of inventing a separate channel — it's structured `{ tick, message }`.
+- The empty-frame filter (`is_frame_empty` in `engine.rs`) already considers `inventory_diff` — frames whose only contribution is a `PlayerDelta` will be retained correctly.
