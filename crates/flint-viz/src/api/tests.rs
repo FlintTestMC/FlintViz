@@ -108,6 +108,63 @@ fn read_one(path: &Path, id: String) -> TestSummary {
     }
 }
 
+#[derive(Debug, Serialize)]
+pub struct TestDetail {
+    pub id: String,
+    pub source: String,
+    pub spec: Option<TestSpec>,
+    pub parse_error: Option<String>,
+}
+
+async fn get_test(
+    State(state): State<Arc<AppState>>,
+    AxumPath(id): AxumPath<String>,
+) -> Result<Json<TestDetail>, (StatusCode, &'static str)> {
+    let root = state.test_root.clone();
+    tokio::task::spawn_blocking(move || load_test(&root, &id))
+        .await
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "task join failed"))?
+        .map(Json)
+}
+
+fn load_test(root: &Path, id: &str) -> Result<TestDetail, (StatusCode, &'static str)> {
+    let resolved = resolve_under_root(root, id)?;
+    if !resolved.is_file() {
+        return Err((StatusCode::NOT_FOUND, "test not found"));
+    }
+    let source = std::fs::read_to_string(&resolved)
+        .map_err(|_| (StatusCode::NOT_FOUND, "test not found"))?;
+
+    let normalized_id = relative_id(root, &resolved);
+    let (spec, parse_error) = match serde_json::from_str::<TestSpec>(&source) {
+        Ok(spec) => (Some(spec), None),
+        Err(err) => (None, Some(err.to_string())),
+    };
+
+    Ok(TestDetail {
+        id: normalized_id,
+        source,
+        spec,
+        parse_error,
+    })
+}
+
+/// Resolve `id` against `root`, canonicalize, and verify the result lives under `root`.
+/// `root` is expected to already be canonicalized (see `resolve_test_root` in `main.rs`).
+fn resolve_under_root(root: &Path, id: &str) -> Result<PathBuf, (StatusCode, &'static str)> {
+    if id.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "id must not be empty"));
+    }
+    let candidate = root.join(id);
+    let canonical = candidate
+        .canonicalize()
+        .map_err(|_| (StatusCode::NOT_FOUND, "test not found"))?;
+    if !canonical.starts_with(root) {
+        return Err((StatusCode::BAD_REQUEST, "id escapes test root"));
+    }
+    Ok(canonical)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -155,5 +212,81 @@ mod tests {
         assert_eq!(got[0].name, "broken");
         assert!(got[0].tags.is_empty());
         assert!(got[0].parse_error.is_some());
+    }
+
+    #[test]
+    fn load_test_returns_source_and_spec() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let body = r#"{"name":"alpha","tags":["x"],"timeline":[]}"#;
+        fs::create_dir(root.join("sub")).unwrap();
+        fs::write(root.join("sub/a.json"), body).unwrap();
+
+        let detail = load_test(&root, "sub/a.json").unwrap();
+        assert_eq!(detail.id, "sub/a.json");
+        assert_eq!(detail.source, body);
+        assert!(detail.parse_error.is_none());
+        let spec = detail.spec.unwrap();
+        assert_eq!(spec.name, "alpha");
+        assert_eq!(spec.tags, vec!["x".to_string()]);
+    }
+
+    #[test]
+    fn load_test_returns_source_with_parse_error() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let body = "{ not json";
+        fs::write(root.join("broken.json"), body).unwrap();
+
+        let detail = load_test(&root, "broken.json").unwrap();
+        assert_eq!(detail.source, body);
+        assert!(detail.spec.is_none());
+        assert!(detail.parse_error.is_some());
+    }
+
+    #[test]
+    fn load_test_missing_returns_404() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let err = load_test(&root, "nope.json").unwrap_err();
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn load_test_directory_returns_404() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        fs::create_dir(root.join("sub")).unwrap();
+        let err = load_test(&root, "sub").unwrap_err();
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn load_test_rejects_traversal() {
+        let outer = TempDir::new().unwrap();
+        let outer_path = outer.path().canonicalize().unwrap();
+        fs::write(outer_path.join("secret.json"), r#"{"x":1}"#).unwrap();
+
+        fs::create_dir(outer_path.join("root")).unwrap();
+        let root = outer_path.join("root");
+        fs::write(root.join("ok.json"), r#"{"name":"x","timeline":[]}"#).unwrap();
+
+        let err = load_test(&root, "../secret.json").unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn load_test_normalizes_id() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        fs::create_dir(root.join("sub")).unwrap();
+        fs::write(
+            root.join("sub/a.json"),
+            r#"{"name":"alpha","timeline":[]}"#,
+        )
+        .unwrap();
+
+        let detail = load_test(&root, "sub/./a.json").unwrap();
+        assert_eq!(detail.id, "sub/a.json");
     }
 }
