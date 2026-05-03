@@ -3,9 +3,15 @@ name = "flint-viz"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+embed-frontend = ["dep:rust-embed", "dep:mime_guess"]
+
 [dependencies]
 axum = "0.8"
 clap = { version = "4", features = ["derive"] }
+mime_guess = { version = "2", optional = true }
+rust-embed = { version = "8", optional = true }
 tokio = { version = "1.48", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

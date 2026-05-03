@@ -1,4 +1,6 @@
 mod cli;
+#[cfg(feature = "embed-frontend")]
+mod embed;
 mod state;
 
 use std::path::{Path, PathBuf};
@@ -40,9 +42,14 @@ async fn run_serve(
 
     let state = AppState::new(test_root);
 
-    let app = Router::new()
+    let api = Router::new()
         .route("/healthz", get(healthz))
         .with_state(state);
+
+    #[cfg(feature = "embed-frontend")]
+    let app = api.merge(embed::router());
+    #[cfg(not(feature = "embed-frontend"))]
+    let app = api;
 
     let addr = format!("127.0.0.1:{port}");
     let listener = tokio::net::TcpListener::bind(&addr).await?;
