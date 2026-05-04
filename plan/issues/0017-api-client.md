@@ -174,6 +174,76 @@ Notes:
 - Once #0011 changes `replay: null` → `replay: Replay | null` on the server, update `ReplayResponse.replay` in lockstep.
 - `flint-core` is now pinned to `tag = "v1.1.3"` (was `rev = "b04ad23"`); the `TestSpec` types referenced earlier in this doc are still accurate but now also include `Item`, `PlayerSlot`, `BlockFace`, `GameMode`, `PlayerConfig` (camelCase: `selectedHotbar`, `gameMode`), and the extra `ActionType` variants `UseItemOn`/`SetSlot`/`SelectHotbar`. Mirror them when typing `TimelineEntry` more strictly.
 
+### Status (post-#0037 / #0038)
+
+The wire types listed above are unchanged — they were already locked down by #0010 and remain accurate. What changed is which `ActionEvent` variants the server actually emits today:
+
+- ✅ Emitted: `place`, `place_each`, `fill`, `remove`, `set_slot`, `use_item_on`.
+- ⏳ Still no-op (event will be missing until issue lands): `select_hotbar` (#0039). `assert` doesn't appear in `actions` at all — assertions land on `TickFrame.assertions` (#0015).
+
+For `set_slot`, the matching `inventory_diff.slots` entry is also populated (with `previous` captured for O(1) reverse-scrubbing). For `use_item_on`, **no** `inventory_diff` and **no** `block_diff` is emitted — `resolved_item` on the `ActionEvent` is the only state the frontend has to render the action; treat it as a highlight-only event.
+
+### Status (post-#0039)
+
+`select_hotbar` is now wired. Refreshed coverage of the `ActionEvent` variants:
+
+- ✅ Emitted: `place`, `place_each`, `fill`, `remove`, `set_slot`, `use_item_on`, `select_hotbar`.
+- ⏳ Still missing: nothing in `actions`. `assert` (#0015) is the only remaining M3 dispatch arm and lands on `TickFrame.assertions` (never on `actions`).
+
+For `select_hotbar`:
+- The matching `inventory_diff.selected_hotbar` is a single `HotbarChange { slot, previous }` — `previous` always reflects the value at the start of the tick, so the frontend can reverse-scrub in one hop even when multiple `select_hotbar` entries collapse on the same tick (last write wins).
+- Out-of-range slots (`<1` or `>9`) push the `ActionEvent` for timeline visibility but skip the `HotbarChange` and emit a `ReplayError` keyed to that tick. So a frontend handler must:
+  - tolerate a `select_hotbar` ActionEvent without a corresponding `HotbarChange` on `inventory_diff`, and
+  - surface `replay.errors[i]` near the offending tick (the existing oversize-fill error UX from #0011 already establishes this pattern — keep it identical).
+- A `select_hotbar` that *changes* the snapshot **also** changes how a later `use_item_on` resolves on the same replay: `resolved_item` on a `use_item_on` event is computed against the snapshot *after* preceding `select_hotbar` deltas have been applied. The frontend doesn't need to do anything for this — it's already baked into the wire payload — but tests that mock replays should keep that ordering in mind.
+
+With `select_hotbar` wired, the M3 engine surface is feature-complete except for assertions (#0015) and source map (#0016); the wire types in this doc remain authoritative for typing the client.
+
+### Status (post-#0015)
+
+`assert` is now wired and lands on `TickFrame.assertions`. Refreshed coverage:
+
+- ✅ Emitted on `actions`: `place`, `place_each`, `fill`, `remove`, `set_slot`, `use_item_on`, `select_hotbar`. (Unchanged from post-#0039.)
+- ✅ Emitted on `assertions`: `assert` — produces `AssertionView::Block { position, expected }` and/or `AssertionView::Inventory { slot, expected }`. `AssertionView::Other { description }` is reserved (see below) but no path in flint-core v1.1.3 currently emits it.
+- ⏳ Still missing: source map (#0016) — `replay.source_map` is still `[]`.
+
+Wire shape reminders for the client (already locked by #0010, restated for completeness):
+
+```ts
+export type AssertionView =
+  | { kind: "block"; position: [number, number, number]; expected: Block }
+  | { kind: "inventory"; slot: PlayerSlot; expected: Item | null }
+  | { kind: "other"; description: string };
+```
+
+Engine-side conventions the client must accommodate:
+
+- One `assert` timeline entry can produce **multiple** `AssertionView`s. Specifically, a `BlockCheck` whose `is` is `BlockSpec::Multiple` expands to **one `AssertionView::Block` per alternative** at the same `position` (e.g. `[stone, dirt]` → two views). The assertion panel (#0031) should render those as a group of alternatives at one position; click-to-fly should navigate to that single position, not to N positions.
+- An `assert` entry emits **zero `ActionEvent`s** — assertions never appear on `frame.actions`. Anything that paints the timeline scrubber (#0028) needs to source assertion ticks from `frame.assertions.length > 0`, not from `frame.actions.length > 0`.
+- Assert-only ticks now materialise as their own frames. A test like `basic_placement.json` (which has assert-only ticks at `at: 1` and `at: 3`) now produces 4 frames where it produced 2 before. Any client code that assumed `frames.length` matched the count of "block-active" ticks will need to filter on `actions.length > 0` explicitly.
+- `AssertionView::Other` is a forward-compat slot for state-style checks (e.g. `expected_count`, comparators). It is **not currently emitted** by the engine — flint-core v1.1.3 has no matching grammar — so the client can render it as a free-text fallback line and not invest in special UI.
+- `inventory_diff` is **not** emitted for `assert` entries. They're purely declarative — no snapshot mutation.
+
+### Status (post-#0016)
+
+The M3 engine is now feature-complete. `replay.source_map` is populated; the wire shape was already locked by #0010 and is unchanged:
+
+```ts
+export interface SourceSpan { tick: number; event_index: number; json_pointer: string }
+```
+
+Conventions the client must rely on:
+
+- **Pointers are top-level only.** Every `json_pointer` is `/timeline/N` (a decimal index into the `timeline` array). The engine intentionally never produces deeper pointers like `/timeline/3/checks/0` or `/timeline/3/blocks/2` — for `place_each` and `assert`-with-multiple-checks, all expanded events still point at the parent timeline entry. This matches how the timeline scrubber (#0028) and assertion panel (#0031) treat each `timeline[N]` entry as the click target.
+- **No RFC 6901 escaping appears in practice.** Numeric indices contain no `/` or `~`. The engine ships an `escape_token` helper (`crates/flint-viz/src/replay/source_map.rs`) for future deeper-pointer use, but today's wire bytes are always `/timeline/<digits>`.
+- **`(tick, event_index)` is the lookup key.** `event_index` indexes the **merged ordered list `(actions ++ assertions)`** for that tick — i.e. `event_index < frame.actions.length` ↔ `frame.actions[event_index]` and otherwise `frame.assertions[event_index - frame.actions.length]`. Don't index `frame.actions` and `frame.assertions` separately with the same number; you'll mismap any tick where both are populated.
+- **One timeline entry can produce multiple spans.** Two cases: (a) `at: [t1, t2, t3]` emits one span per resulting tick, all sharing the same `json_pointer`; (b) `assert` with `BlockSpec::Multiple` emits one span per alternative on the same tick, all sharing the same `json_pointer` with consecutive `event_index` values. The reverse mapping (pointer → set of spans) is many-to-many; the forward mapping (`(tick, event_index)` → pointer) is unique.
+- **`place_each` is one span, not one-per-placement.** A `place_each` of N blocks emits a single `ActionEvent::PlaceEach { placements }` and a single `SourceSpan` at `/timeline/N`. The N placements are inspectable off the action event payload, not via separate spans.
+- **Rejected actions still get spans.** An oversize `fill` or out-of-range `select_hotbar` still pushes its `ActionEvent` (so the timeline shows the attempt) and therefore still gets a `SourceSpan`. The error is reported separately on `replay.errors[i]`.
+- **Span ordering is emission order**, not sorted. Spans are pushed in the order their entries appear in `spec.timeline` (and within an entry, in `at`-tick order, then actions before assertions for that arm). Don't assume sorted by `tick` or `event_index` — build a `Map<tick, Map<event_index, pointer>>` lookup when O(1) reverse access matters (this is what #0032 will do).
+
+The M3 engine surface is now complete. No further `replay.*` shape changes are planned for M3.
+
 ## Handoff from #0009 (SSE shape + reconnect semantics)
 `GET /api/events` is a long-lived `text/event-stream`. The server only emits one named event today:
 ```

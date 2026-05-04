@@ -67,3 +67,11 @@ SelectHotbar {
   ```
 - Test (mirroring this issue's Outcome) should also assert that selecting an in-range slot updates the running snapshot — easy to verify by adding a follow-up `set_slot` or by inspecting `replay.frames[i].inventory_diff.selected_hotbar`.
 - The empty-delta cleanup in `compute`'s post-pass means out-of-range entries (which return early without recording) won't leave a stale `inventory_diff` even if other actions on the same tick do nothing player-related.
+
+## Status (post-#0037 / #0038)
+
+- `apply_action`'s parameter is now named `snapshot` (no leading underscore) — both #0037 and #0038 read from it. Don't rename.
+- The engine now imports `super::player` (alongside `Item` from `flint_core::test_spec`); reuse those imports rather than re-adding them.
+- The no-op tail of the dispatch `match` has shrunk to **`ActionType::Assert { .. } | ActionType::SelectHotbar { .. } => {}`**. After this issue lands it shrinks to just `ActionType::Assert { .. }`. The `// Variants below land in #0015, #0039.` comment becomes `// Variants below land in #0015.`
+- `record_hotbar_change` lives next to `record_slot_change` and `resolve_active_item` (the latter was added by #0038). All three are `pub` and already covered by the `#![allow(dead_code)]` at the top of `player.rs` — once #0039 lands you can drop that allow once every helper has at least one in-tree caller.
+- `PlayerDelta` cleanup in `compute`'s post-pass already handles the case where a `select_hotbar` is the only player action on a tick alongside e.g. a `set_slot` or `use_item_on` — the existing `is_empty()` check covers all three fields, so no new wiring is needed.

@@ -83,3 +83,16 @@ Collect every `assert` / `assert_state` entry into `TickFrame.assertions` as `As
 - The no-op tail of the `match` is unchanged from post-#0013 (`Assert | UseItemOn | SetSlot | SelectHotbar`) — #0014 only added foundation, not new arms. Splitting `Assert` off using the post-#0011 skeleton remains correct.
 - A `replay::player` helper module exists for the player-action issues (#0037–#0039); assertions don't use it.
 - `compute`'s post-pass now also strips empty `inventory_diff`s before frame filtering. Asserts emit nothing on `inventory_diff`, so this is invisible to #0015 — just a heads-up if you're reading the surrounding code.
+
+## Status (post-#0037 / #0038)
+
+- `apply_action`'s parameter is now named `snapshot` (no leading underscore) — #0037/#0038 removed the underscore. The `Assert` arm still doesn't need it, but don't try to "fix" the missing underscore.
+- The no-op tail of the `match` has shrunk to **`ActionType::Assert { .. } | ActionType::SelectHotbar { .. } => {}`** with the comment `// Variants below land in #0015, #0039.` After this issue lands the comment becomes `// Variants below land in #0039.` and the tail shrinks to `ActionType::SelectHotbar { .. } => {}`.
+- The `engine.rs` test `basic_placement_emits_place_actions_at_their_ticks` still asserts `replay.frames.len() == 2` — bump that to `4` and add expectations for the assertion ticks at `at: 1` and `at: 3`, exactly as flagged in the post-#0013 status.
+
+## Status (post-#0039)
+
+- `#0039` has landed. The no-op tail of the dispatch is now **just `ActionType::Assert { .. } => {}`** with the comment `// Variants below land in #0015.`. After this issue lands, drop the comment and the entire no-op arm — every `ActionType` variant will be handled.
+- The `Assert` arm doesn't need `snapshot`, but `apply_action` still accepts it (consumed by the four player/`use_item_on` arms). Don't change the signature — the assertion arm just ignores the parameter.
+- All other M3 engine arms (`Place`, `Fill`, `PlaceEach`, `Remove`, `SetSlot`, `UseItemOn`, `SelectHotbar`) are wired and tested. Once `Assert` lands, the engine has full M3 dispatch coverage and the only outstanding M3 work is #0016 (source map).
+- `compute`'s post-pass strips empty `inventory_diff`s; assert-only ticks won't trigger that branch. They will, however, materialise as their own `TickFrame`s once `frame.assertions` is populated — which flips the `basic_placement_emits_place_actions_at_their_ticks` test from `frames.len() == 2` to `frames.len() == 4`, as previously flagged.

@@ -8,7 +8,6 @@
 //! and the tick's [`PlayerDelta`] so reverse-scrubbing works in the frontend
 //! store (#0018) without a second pass.
 
-#![allow(dead_code)] // first internal users land in #0037 / #0039.
 
 use flint_core::test_spec::{GameMode, Item, PlayerSlot};
 
@@ -48,6 +47,19 @@ pub fn record_slot_change(
     });
 }
 
+/// Resolve the item used by a `use_item_on` action. If `override_id` is
+/// `Some`, that wins (built as `Item::new`, count 1, no NBT). Otherwise the
+/// currently-selected hotbar slot is consulted; if that slot is empty or the
+/// selection is out of range (`hotbar()` rejects 0 / 10+), `None` is returned
+/// and the frontend will render the action with an "unknown item" badge.
+pub fn resolve_active_item(snapshot: &PlayerSnapshot, override_id: &Option<String>) -> Option<Item> {
+    if let Some(id) = override_id {
+        return Some(Item::new(id));
+    }
+    let slot = PlayerSlot::hotbar(snapshot.selected_hotbar)?;
+    snapshot.inventory.get(&slot).cloned()
+}
+
 /// Apply a hotbar selection. Last write within a tick wins — only the final
 /// `HotbarChange` is kept, but its `previous` always reflects the snapshot
 /// value at the start of the tick (so a reverse scrub lands in one hop).
@@ -61,7 +73,10 @@ pub fn record_hotbar_change(snapshot: &mut PlayerSnapshot, delta: &mut PlayerDel
 }
 
 /// Apply a gamemode change. Same last-write-wins / start-of-tick `previous`
-/// rule as [`record_hotbar_change`].
+/// rule as [`record_hotbar_change`]. No `set_game_mode` action exists in
+/// flint-core today; kept symmetrical with the slot/hotbar helpers so a
+/// future variant can drop in without re-deriving the pattern.
+#[allow(dead_code)]
 pub fn record_game_mode_change(
     snapshot: &mut PlayerSnapshot,
     delta: &mut PlayerDelta,
