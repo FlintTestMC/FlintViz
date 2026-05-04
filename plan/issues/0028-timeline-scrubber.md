@@ -39,3 +39,15 @@ Assert ticks now materialise as their own `TickFrame`s with empty `actions` / `b
 - Build the lookup once per replay (e.g. `Map<tick, Map<event_index, string>>` keyed off `replay.source_map`), not per-frame on render. Spans are emitted in spec-order, not sorted.
 - `at: [t1, t2, t3]` repeats a single source pointer across three frames. The scrubber should still render three distinct markers (one per tick); they'll all `click → /timeline/N` to the same JSON entry, which is the intended "this is the source of *all three* placements" UX.
 - A rejected `fill` (oversize) or out-of-range `select_hotbar` has both an `ActionEvent` and a `SourceSpan`. So the scrubber's tick marker for those still works as a clickable source link, even though the action's world/inventory side-effect was skipped.
+
+## Handoff from #0018 (replay store)
+
+Store at `frontend/src/store/replay.ts` exposes everything the scrubber needs:
+
+- `tick: number` (current playhead) — selector: `useReplayStore(s => s.tick)`.
+- `replay: Replay | null` — the scrubber should render an empty/disabled track when `null`. Memoize marker positions off `replay` only (not `tick`), so dragging the playhead doesn't recompute markers: `useMemo(() => buildMarkers(replay), [replay])`.
+- `replay.max_tick` — track length. `replay.frames` is the *sparse* event-bearing list; `replay.breakpoints: number[]` are the red-flag ticks.
+- Drag handler calls `setTick(t)`. The store clamps to `[0, max_tick]` internally and is a no-op when target equals current — safe to fire on every pointermove without throttling.
+- `playback: 'paused' | 'playing'` lives on the store; the scrubber doesn't write it, but #0029 will. If the user grabs the playhead, optimistic `pause()` calls are fine.
+- `stepForward()` / `stepBack()` are tick±1 helpers — use them for keyboard `←`/`→` if you wire keyboard here (otherwise wait for #0029).
+- Forward scrubbing is incremental (O(Δticks)), backward rebuilds from initial. Either way the store returns synchronously — don't queue across `requestAnimationFrame`.

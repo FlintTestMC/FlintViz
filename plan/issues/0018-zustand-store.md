@@ -46,3 +46,19 @@ Store shape:
 - Forward apply: `BlockChange::Set` → `worldState.set(key, block)`; `BlockChange::Remove` → `worldState.delete(key)`. For `PlayerDelta`, apply `slots[]` (set/clear inventory entries), then `selected_hotbar` (`{slot}`), then `game_mode` (`{mode}`).
 - Reverse apply uses the `previous` field carried by every `SlotChange` / `HotbarChange` / `GameModeChange` — restore from those instead of rebuilding from `initial_player`. (Block reverse-scrub still rebuilds, since `BlockChange` carries no `previous` to keep the wire small. Acceptable: world rebuild is cheap unless tests get huge.)
 - `inventory_diff` is `PlayerDelta | null` and the `PlayerDelta` fields (`slots`, `selected_hotbar`, `game_mode`) are all *omitted* from JSON when empty (`skip_serializing_if`). Treat any missing field as "no change" — don't crash on `delta.slots === undefined`.
+
+## Status (this issue)
+
+Implemented at:
+
+- `frontend/src/store/world.ts` — pure helpers: `posKey([x,y,z]) → "x,y,z"`, `clonePlayer`, `applyForward(world, player, frame)`, `applyPlayerReverse`, `rebuildAt(replay, targetTick)`, `stepForwardTo(replay, world, player, currentTick, targetTick)`. All synchronous, no React/zustand coupling.
+- `frontend/src/store/replay.ts` — `useReplayStore` (Zustand). Shape:
+  ```ts
+  { testId, source, replay, parseErrors, tick, worldState: Map<PosKey, Block>, player: PlayerSnapshot, playback: 'paused'|'playing',
+    openTest(testId, source), setSource(s), setReplay(replay, parseErrors), setTick(t), play(), pause(), stepForward(), stepBack() }
+  ```
+- `setTick` is hybrid: forward → incremental walk over sparse frames (clones the `Map` once), backward → `rebuildAt` from `initial_player`. No reverse-block diffs maintained.
+- `setReplay(null, errors)` deliberately **preserves** `tick`/`worldState`/`player` (last-good UX for #0033). `setReplay(replay, ...)` resets `tick` to 0 and seeds from `replay.initial_player`.
+- `openTest(id, source)` blanks the store back to empty state but does **not** trigger a replay fetch — callers (sidebar, editor) must call `api.replay(source)` and then `setReplay`.
+- 12 Vitest tests in `frontend/src/store/__tests__/replay.test.ts` cover: `rebuildAt` at tick 0/middle/end, forward incremental, max_tick clamping, backward rebuild, return to 0, negative clamping, play/pause/step, `setReplay` seed + null-preserve. Run with `npm test`.
+- `vitest` and `zustand` were added to `package.json` (dev/runtime respectively); a `"test": "vitest run"` script was added.

@@ -244,6 +244,18 @@ Conventions the client must rely on:
 
 The M3 engine surface is now complete. No further `replay.*` shape changes are planned for M3.
 
+## Status (this issue)
+
+Implemented at:
+
+- `frontend/src/api/types.ts` — full wire types (`TestSummary`, `TestDetail`, `ReplayResponse`, `Replay` & friends, `FileChangedEvent`).
+- `frontend/src/api/client.ts` — `api.listTests()`, `api.getTest(id)`, `api.replay(source)`, `api.events(onEvent)`. All return-typed; all accept an optional `AbortSignal` for fetch methods.
+- `frontend/src/api/events.ts` — `subscribeEvents` wraps `EventSource` and returns a disposer.
+- `ApiError extends Error` with `status` and `body`. Non-2xx → `await res.text()` (server returns text/plain), then throw. Special-cased: 413 on `/api/replay` throws `ApiError(413, "", "replay body too large (max 1 MiB)")`.
+- `getTest` URL-encodes each path segment (`id.split('/').map(encodeURIComponent).join('/')`).
+- `TimelineEntry` typed as permissive `Record<string, unknown>` per the issue's "let #0021 drive validation" guidance.
+- No tests written for this file (network code; covered indirectly by #0018's store tests on the typed shapes).
+
 ## Handoff from #0009 (SSE shape + reconnect semantics)
 `GET /api/events` is a long-lived `text/event-stream`. The server only emits one named event today:
 ```

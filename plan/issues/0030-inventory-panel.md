@@ -21,3 +21,22 @@ Show the player's hotbar (9 slots), off-hand, and 4 armor slots at the current t
 ## Files
 - `frontend/src/panels/Inventory.tsx`
 - `frontend/src/panels/itemIcons.ts` — builds the sprite sheet on demand, returns `(itemId) => CSS background`
+
+## Handoff from #0018 (replay store)
+
+Store at `frontend/src/store/replay.ts`:
+
+- `player: PlayerSnapshot` — selector: `useReplayStore(s => s.player)`. Shape:
+  ```ts
+  interface PlayerSnapshot {
+    inventory: Partial<Record<PlayerSlot, Item>>;  // missing slot ↔ empty
+    selected_hotbar: number;                       // 1..=9
+    game_mode: GameMode;
+  }
+  ```
+- Empty slots are **omitted** from `inventory` (not `null`) — render slot N as "empty cell" if `player.inventory[slot] === undefined`. This is `noUncheckedIndexedAccess`-safe automatically.
+- `Item` is `{ id: string, count: number, [data: string]: unknown }` — count badge reads `item.count`. NBT-ish data is flattened onto the same object; ignore for v1.
+- "Glow when changed this tick" should source from the *current* frame's `inventory_diff`, not by diffing snapshots. Find it via `replay.frames.find(f => f.tick === tick)?.inventory_diff` — `slots[]` lists the slots that changed, `selected_hotbar` is a `HotbarChange`. Note `inventory_diff` is `null` on most ticks; selectors should default to "no glow".
+- `PlayerDelta` fields are **omitted** when empty (`slots`, `selected_hotbar`, `game_mode`) — code defensively (`delta.slots ?? []`).
+- `selected_hotbar: 1..=9` — slots in `inventory` are keyed by the `PlayerSlot` enum string (`"hotbar1"`..`"hotbar9"`, `"off_hand"`, `"helmet"`, `"chestplate"`, `"leggings"`, `"boots"`). The selected hotbar number maps to `"hotbar${n}"` — write a small label/order helper and reuse it from #0031 (assertion panel uses the same enum values).
+- Forward/reverse scrubbing through the store is correct for inventory — slots and hotbar reverse via `previous` fields on `SlotChange`/`HotbarChange`. The panel just reads `store.player`; no need to re-derive.

@@ -49,3 +49,13 @@ Key engine-side behaviors to render correctly:
 - `BlockSpec::Multiple` produces multiple `AssertionView::Block` entries at the same position **and** multiple `SourceSpan`s — all sharing the same `/timeline/N` pointer, with consecutive `event_index` values. If the panel renders these as a single grouped row ("expect stone OR dirt @ (0,0,0)" per the existing convention), any of the group's `event_index` values yields the same JSON pointer, so picking the first is fine.
 - Inventory assertions get one span each. Same `(tick, A + j)` lookup, same `/timeline/N` shape.
 - The pointer is always to the parent timeline entry (`/timeline/N`), never to a specific check inside (`/timeline/N/checks/M` is intentionally not produced — see post-#0015 status in 0016). So "click-to-editor" lands on the whole `assert` entry, which matches the existing UX intent.
+
+## Handoff from #0018 (replay store)
+
+Store at `frontend/src/store/replay.ts`:
+
+- Selector: `useReplayStore(s => { const f = s.replay?.frames.find(f => f.tick === s.tick); return f?.assertions ?? []; })`. The frame list is sparse — most ticks return `[]` (empty state).
+- `tick` reads `useReplayStore(s => s.tick)`; subscribe separately so the panel re-renders only on tick / replay changes.
+- "Click-to-fly" needs the camera ref from #0024; the panel just publishes the target position. Keep that decoupled — pass via a lifted callback or a small `cameraTarget` zustand slice (your call; nothing in #0018 dictates this).
+- Inventory-row highlight integration with #0030: both panels source `slot: PlayerSlot` from the same enum string set; agree on a single label/order helper (note in #0030 says the same).
+- The store does not separately surface "assertions at tick" — pull off `replay.frames`. If you need O(1) lookup, build `Map<number, TickFrame>` once per `replay` (memoize on `replay` identity, which only changes when `setReplay` runs).
