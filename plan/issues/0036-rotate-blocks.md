@@ -55,6 +55,17 @@ The camera at `frontend/src/world/Camera.tsx` auto-frames against the cleanup re
 - Don't add a second OrbitControls instance. `Camera.tsx` already mounts one with `makeDefault`; downstream `useThree(s => s.controls)` returns it.
 - The store-reset semantics for `rotation` (extending `openTest` / `setReplay`) are unchanged from #0023's note.
 
+## Status (post-implementation)
+
+Done. The shipped shape:
+
+- `useReplayStore` carries `rotation: 0 | 1 | 2 | 3`, plus `setRotation` and `rotateClockwise`. Reset to `0` on `openTest` and `setReplay`. Tests in `__tests__/replay.test.ts` cover the reset semantics.
+- `Scene.tsx`'s `<SceneRoot>` reads rotation + the cleanup region (or block-bounds fallback) and applies the standard `translate → rotate → translate-back` pivot via three nested groups. Identity rotation short-circuits to a single no-op `<group>` so non-rotated tests pay zero transform cost.
+- `frontend/src/world/SceneToolbar.tsx` is the new home for `0° / 90° / 180° / 270°` buttons, plus the lifted `Cleanup region` toggle and `Reset view` button (formerly inline in `App.tsx`). `App.tsx` now just renders `<SceneToolbar />` in the visualization header.
+- Camera handling: per the #0024 handoff revision, the camera is rotation-agnostic — `computeFraming` uses the same pivot the rotation transform pivots on, so the rotated scene stays centred on screen without any camera-side rotation listener. No code change in `Camera.tsx`.
+
+Out of scope (deferred): "bake rotation to source" button. Block models still render in their authored orientation; only the world transform changes.
+
 ## Handoff from #0023 (Scene composition root)
 
 `frontend/src/world/Scene.tsx` already exists and contains a private `<SceneRoot>` wrapper around `<World />` (and, post-#0025/#0026/#0027, the cleanup overlay, highlights, and assertion ghosts). The current implementation is a thin no-op group:

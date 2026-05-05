@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   InstancedMesh,
   Matrix4,
@@ -8,9 +8,10 @@ import {
 
 import type { Vec3 } from "../api/types";
 import { useReplayStore } from "../store/replay";
-import { loadBlockProviders, type BlockProviders } from "./atlas";
+import type { BlockProviders } from "./atlas";
 import { buildBlockMesh } from "./blockAdapter";
 import { groupByState, type InstanceGroup } from "./instancing";
+import { useBlockProviders } from "./useBlockProviders";
 
 // Declarative R3F renderer for `store.worldState`. Groups blocks by
 // `(id, propsKey)` and emits one `<instancedMesh>` per group. Re-renders
@@ -31,26 +32,6 @@ export default function World() {
       ))}
     </group>
   );
-}
-
-// Loads the cached block providers exactly once. Errors are surfaced via
-// console for now; #0033 will replace this with a UI panel.
-function useBlockProviders(): BlockProviders | null {
-  const [providers, setProviders] = useState<BlockProviders | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    loadBlockProviders()
-      .then((p) => {
-        if (!cancelled) setProviders(p);
-      })
-      .catch((err) => {
-        console.error("World: failed to load block providers", err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return providers;
 }
 
 function InstanceGroupMesh({

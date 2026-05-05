@@ -67,6 +67,16 @@ The camera lives at `frontend/src/world/Camera.tsx` and owns `OrbitControls` (Sc
 - Inventory assertions (slot highlight) and `kind: "other"` rows do not call `flyTo`. Only block-position rows publish a target.
 - Auto-framing: when a new test loads, the Camera component runs a *one-shot* fit-to-cleanup-region animation, then leaves the camera alone. Subsequent `worldState` edits do not re-frame. So a 📍 click during ongoing playback just lerps the target — no fight with auto-frame.
 
+## Handoff from #0027 (assertion ghost overlay)
+
+`frontend/src/world/AssertionGhosts.tsx` is mounted under `<SceneRoot>` and already handles the 3D side of assertions. It is **block-kind only**: `AssertionView::Inventory` and `AssertionView::Other` are intentionally skipped in 3D and must be surfaced **only** in this panel — don't try to add inventory ghosts elsewhere.
+
+What the overlay already does that this panel doesn't need to repeat:
+
+- Groups `AssertionView::Block` entries by position so `BlockSpec::Multiple` doesn't stack ghosts. The first alternative renders, with a `+N more` HTML label. The panel should still render its own grouped row (the existing post-#0015 status note already says this), and that row's text is the canonical alternatives list — the 3D label is just a teaser.
+- Re-uses the deepslate adapter via `frontend/src/world/useBlockProviders.ts` (a shared hook lifted out of `World.tsx` for this issue and `AssertionGhosts.tsx`). If you ever need block icons in the panel rows, that hook + `buildBlockMesh` is the same path; alternatively use deepslate's item-icon helper directly (keeps the panel out of R3F).
+- Ghost material is a cached translucent clone of the shared opaque material (cloned per `BlockProviders` instance). Reusing this isn't relevant to the panel, but if you start cloning materials elsewhere, follow the same `WeakMap<BlockProviders, Material>` cache pattern so we don't leak.
+
 ## Handoff from #0018 (replay store)
 
 Store at `frontend/src/store/replay.ts`:
