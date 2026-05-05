@@ -58,3 +58,23 @@ Store at `frontend/src/store/replay.ts`:
 - `setReplay(replay, [])` resets `tick` to 0 and seeds `worldState`/`player` from `replay.initial_player`. If you want to **preserve the user's current tick across re-replay** (better UX during live editing), capture `tick` before, then `setTick(prevTick)` after — the store clamps to `replay.max_tick` so a now-shorter timeline is safe.
 - `parseErrors` is exposed on the store — selecting it directly (`useReplayStore(s => s.parseErrors)`) is the canonical way to drive marker re-application from anywhere in the tree, but the editor's own debounce path can also pass them through directly without going through the store.
 - For external file refresh (SSE `file-changed`): if the test is open and the user hasn't typed since the last save, call `setSource(newSource)` and re-replay; if they have local edits, prefer to ignore (or surface a "file changed on disk" banner — out of scope here, see #0033).
+
+## Status (this issue)
+
+Implemented at:
+
+- `frontend/src/editor/Editor.tsx` — `<MonacoEditor>` from `@monaco-editor/react` (CDN-loaded `monaco-editor`, vs-dark theme, JSON language). Mounted in `App.tsx` as the `right` slot (replaced the placeholder).
+- `frontend/src/editor/markers.ts` — `parseErrorsToMarkers` translates `ParseError[]` to `editor.IMarkerData[]`. Both `line` and `col` are clamped to `>= 1` (server can emit `col: 0` on EOF, `line: 0` is a defensive guard). Marker owner string is exported as `MARKER_OWNER = "flint-replay"` so other code can clear/inspect them. The hard-coded `severity: 8` is rewritten to `monaco.MarkerSeverity.Error` at apply time inside `Editor.tsx`.
+- 4 vitest cases in `__tests__/markers.test.ts`. No tests for `Editor.tsx` itself — Monaco doesn't run in jsdom; test the surface (markers, registerSchema) instead.
+- **Imperative value management** via `defaultValue` + ref. The `value` prop pattern would loop because `setValue` re-fires `onChange`. An `applyingExternalRef` boolean guards the brief window between programmatic `setValue` and the resulting `onChange` callback, so external loads don't bounce back through the debounced replay.
+- External-update path: `useEffect` on `store.source` compares `editor.getValue()` to detect a change from outside (sidebar click / SSE), captures cursor `Position`, calls `setValue`, restores cursor. Cursor restoration is best-effort — line/column may now point past EOF after a shrink, in which case Monaco silently clamps.
+- User-edit path: `onChange` → `store.setSource(value)` immediately + 250ms debounced `api.replay(value)`. After the response, `store.setReplay(...)`. **Tick is preserved across re-replay**: capture `prevTick` before `setReplay`, and if the new replay parsed cleanly call `setTick(prevTick)` (the store clamps to `replay.max_tick`, so a now-shorter timeline is safe). Stale-result protection via a token ref so out-of-order responses don't clobber the latest result.
+- Marker re-application: `useEffect` on `store.parseErrors` reapplies markers via `monaco.editor.setModelMarkers(model, MARKER_OWNER, ...)`. Initial markers (case where `parseErrors` arrives before mount) are also seeded inside `onMount`.
+- Status pill: 413 / network errors surface as a small red header pill (`statusError` local state). Per the handoff, this is a temporary UX until #0033 toasts land. Replay errors that the server returns as `result.errors` (the common case for invalid-but-200 responses) are NOT surfaced as status errors — they show as squiggles in the buffer.
+- Empty-state: when `testId === null` the component renders a "Select a test from the sidebar" placeholder instead of the Monaco instance, so the editor doesn't flash an empty buffer on first paint.
+- Schema registration is wired via `registerFlintSchema(monaco)` from `onMount` (idempotent guard inside that helper); see #0021.
+
+Notes for downstream:
+
+- The editor does NOT subscribe to `api.events` SSE — the sidebar handles `file-changed` and propagates via `store.source`, which the editor's external-update effect picks up.
+- `MARKER_OWNER` is exported and reserved for replay parse errors. Other features (e.g. semantic lint, schema-only diagnostics) should use a different owner so clearing one doesn't wipe the other. Monaco's own JSON service uses its own internal owner already, so the schema-validation squiggles from #0021 don't collide.

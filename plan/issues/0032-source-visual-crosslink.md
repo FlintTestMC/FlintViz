@@ -54,3 +54,39 @@ Bidirectional cross-link so users can navigate between the JSON and the 3D/timel
 - **Block placements inside `place_each`**: there's one span for the whole entry, not per placement. Clicking the block in 3D resolves to the parent `/timeline/N`; if you want to highlight a specific `blocks[k]` inside the editor that's a follow-up enhancement.
 - **Individual `checks[k]` inside an `assert`**: same story — one span per resulting `AssertionView`, all pointing at the parent `/timeline/N`. The assertion panel (#0031) renders multi-alternative checks as one grouped row, so this matches.
 - **`inventory_diff` entries**: not tracked. The corresponding `ActionEvent` (`SetSlot`, `SelectHotbar`) carries the source pointer; the inventory-diff entries are a derived view of that, not their own events.
+
+## Handoff from #0023 (world renderer)
+
+`frontend/src/world/World.tsx` renders one `<instancedMesh>` per `(blockId, propsKey)` group via the helper in `frontend/src/world/instancing.ts`. The world component lives inside `Scene.tsx`'s `<SceneRoot>` group so picking respects #0036's rotation automatically.
+
+For the click-to-source path:
+
+- Add `onClick={(e) => …}` on the `<instancedMesh>` inside `World.tsx`'s `InstancedNode` (or lift the handler so each `InstanceGroupMesh` receives the group + a callback). The R3F event carries `event.instanceId: number | undefined`.
+- `instanceId` indexes into the **rendered** instances `0 .. mesh.count - 1`, which is `group.positions.length`. The mapping `group.positions[instanceId]` recovers the world `[x, y, z]` clicked. (The capacity-bucket trick — backing buffer rounded up to a power of two — does not affect indexing, since we set `mesh.count = positions.length` and only the first `count` instances render.)
+- To go from `[x, y, z]` to a JSON pointer, the store needs a reverse index `Map<PosKey, { tick: number; eventIndex: number }>` populated as `applyForward` mutates `worldState`. For `Place`/`PlaceEach`/`Remove`/`UseItemOn`, the `event_index` is the action's index in `frame.actions`. For `Fill`, every position the action expanded into shares the same `event_index` (that of the single `ActionEvent::Fill` in `frame.actions`) — track the source action index, not the per-position diff index.
+- `frame.block_diff` does not carry the originating action index. Two safe options: (a) re-derive it by walking `frame.actions` in spec order and recomputing which positions each action would touch, or (b) extend the wire model in a follow-up to attach an `action_index` to each `BlockChange`. (a) is the cheaper path for v1 since the action types are small in count.
+- `posKey([x,y,z])` from `frontend/src/store/world.ts` is the canonical key format for the reverse index — match it exactly so lookups work.
+- The current `instancing.ts` group key is `${blockId}|${JSON.stringify(sortedProps)}` — opaque to this issue, but if you later need to pick *the block id at* a position without reverse-indexing, the worldState Map is still the source of truth.
+
+For "hover to highlight in editor" (if you add it): R3F supplies `onPointerOver` / `onPointerOut` on the same `<instancedMesh>`. Beware: with `frustumCulled={false}` (set in `World.tsx`), every group is hit-tested every frame; dense worlds may want a coarser hover policy.
+
+## Handoff from #0020 (Monaco editor)
+
+The editor lives at `frontend/src/editor/Editor.tsx` and exposes its Monaco instance via the `onMount` callback (`editor`, `monaco` parameters). For this issue you'll want a stable handle to the editor so other panes (timeline, world) can call `revealRangeInCenter` / `setSelection` on it. Two viable approaches:
+
+- **Lift the editor ref into a Zustand slice** (e.g. `editorRef: IStandaloneCodeEditor | null` set inside `onMount`). Then any pane can grab it from the store without React refs being shared across panels.
+- **Or expose an event bus** (`useEditorBus.send({ type: "reveal", range })`) and let the editor subscribe to it. Keeps the editor self-contained but adds a layer.
+
+Either is fine; recommended is the store-ref approach for symmetry with the existing `useReplayStore` pattern.
+
+Constraints to respect when implementing the cross-link in the editor:
+
+- The editor uses **imperative value management** (`defaultValue` + ref + an `applyingExternalRef` guard). Do NOT add a `value` prop to fix issues — it loops with `onChange`. If you need to programmatically replace text (e.g. a "jump and select" action), call `editor.setSelection(range)` + `editor.revealRangeInCenter(range)`; don't `setValue`.
+- The editor's marker owner is `MARKER_OWNER = "flint-replay"` (exported from `editor/markers.ts`). The cross-link decorations should NOT use that owner — use Monaco **decorations** (`editor.deltaDecorations`) for highlights, not markers.
+- For the cursor → timeline highlight, subscribe to `editor.onDidChangeCursorPosition`. Re-parsing the source on every move is fine (the buffers are small, ≤1 MiB by replay limit) — `jsonc-parser`'s incremental walker is cheap.
+- The editor preserves cursor across external reloads (sidebar click / SSE) by snapshotting `Position` and restoring it after `setValue`. If your "click block → highlight in editor" path also wants to preserve scroll, use `editor.setScrollTop(editor.getTopForLineNumber(...))` after `revealRangeInCenter`.
+- Empty state: when `testId === null` the editor renders a placeholder `<div>` instead of mounting Monaco. Cross-link triggers must handle the case where `editorRef` is `null` (test not yet selected) — bail silently.
+
+## Handoff from #0021 (JSON schema)
+
+- Schema-validation squiggles use Monaco's internal marker owner; replay-error squiggles use `MARKER_OWNER`. Cross-link decorations (a third visual layer) should be plain decorations, not markers, to avoid touching either set.

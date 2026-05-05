@@ -1,8 +1,21 @@
+import Editor from "./editor/Editor";
 import SplitLayout from "./layout/SplitLayout";
 import TestList from "./panels/TestList";
-import CanvasShell from "./world/CanvasShell";
+import Scene from "./world/Scene";
+import BlockGallery from "./world/__debug__/BlockGallery";
 
 export default function App() {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("debug") === "blocks") {
+      return (
+        <div className="h-screen w-screen">
+          <BlockGallery />
+        </div>
+      );
+    }
+  }
+
   return (
     <SplitLayout
       sidebar={<TestList />}
@@ -12,20 +25,11 @@ export default function App() {
             Visualization
           </header>
           <div className="flex-1">
-            <CanvasShell />
+            <Scene />
           </div>
         </div>
       }
-      right={
-        <div className="flex h-full flex-col">
-          <header className="border-b border-neutral-800 px-3 py-2 text-sm font-medium">
-            Editor
-          </header>
-          <div className="flex-1 p-3 text-neutral-400">
-            <p className="text-sm">Editor placeholder (lands in #0020).</p>
-          </div>
-        </div>
-      }
+      right={<Editor />}
     />
   );
 }

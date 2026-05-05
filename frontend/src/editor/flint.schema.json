@@ -1,0 +1,303 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Flint test",
+  "description": "Flint Minecraft test specification.",
+  "type": "object",
+  "required": ["name", "timeline"],
+  "properties": {
+    "flintVersion": {
+      "type": "string",
+      "description": "Required Flint version (semver). Tests with a higher version may be skipped by older runners."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable test name. Must be unique within the test suite."
+    },
+    "description": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free-form labels used for filtering."
+    },
+    "minecraftIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "setup": { "$ref": "#/definitions/setup" },
+    "timeline": {
+      "type": "array",
+      "description": "List of tick-indexed actions executed in order.",
+      "items": { "$ref": "#/definitions/timelineEntry" }
+    },
+    "breakpoints": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 },
+      "description": "Ticks at which the runner should pause (debugging aid)."
+    }
+  },
+  "definitions": {
+    "vec3": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "[x, y, z] block coordinate."
+    },
+    "region": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/vec3" },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] inclusive AABB."
+    },
+    "block": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Block id (e.g. \"minecraft:stone\")."
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean"]
+          },
+          "description": "Optional nested property bag (alternative to flat properties)."
+        }
+      },
+      "additionalProperties": {
+        "type": ["string", "number", "boolean"],
+        "description": "Block-state properties (e.g. \"powered\": false, \"facing\": \"north\")."
+      }
+    },
+    "blockPlacement": {
+      "type": "object",
+      "required": ["pos", "block"],
+      "properties": {
+        "pos": { "$ref": "#/definitions/vec3" },
+        "block": { "$ref": "#/definitions/block" }
+      },
+      "additionalProperties": false
+    },
+    "playerSlot": {
+      "type": "string",
+      "enum": [
+        "hotbar1",
+        "hotbar2",
+        "hotbar3",
+        "hotbar4",
+        "hotbar5",
+        "hotbar6",
+        "hotbar7",
+        "hotbar8",
+        "hotbar9",
+        "off_hand",
+        "helmet",
+        "chestplate",
+        "leggings",
+        "boots"
+      ]
+    },
+    "blockFace": {
+      "type": "string",
+      "enum": ["top", "bottom", "north", "south", "east", "west"]
+    },
+    "gameMode": {
+      "type": "string",
+      "enum": ["Survival", "Creative", "Adventure", "Spectator"]
+    },
+    "item": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "count": { "type": "integer", "minimum": 0, "maximum": 64 }
+      },
+      "additionalProperties": { "type": "string" }
+    },
+    "tickSpec": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        }
+      ],
+      "description": "A single tick or an array of ticks at which this entry fires."
+    },
+    "setup": {
+      "type": "object",
+      "properties": {
+        "cleanup": {
+          "type": "object",
+          "required": ["region"],
+          "properties": {
+            "region": { "$ref": "#/definitions/region" }
+          },
+          "additionalProperties": false
+        },
+        "player": { "$ref": "#/definitions/playerConfig" }
+      },
+      "additionalProperties": false
+    },
+    "playerConfig": {
+      "type": "object",
+      "properties": {
+        "inventory": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/definitions/playerSlot" },
+          "additionalProperties": { "$ref": "#/definitions/item" }
+        },
+        "selected_hotbar": { "type": "integer", "minimum": 1, "maximum": 9 },
+        "game_mode": { "$ref": "#/definitions/gameMode" }
+      },
+      "additionalProperties": false
+    },
+    "blockCheck": {
+      "type": "object",
+      "required": ["pos", "is"],
+      "properties": {
+        "pos": { "$ref": "#/definitions/vec3" },
+        "is": {
+          "oneOf": [
+            { "$ref": "#/definitions/block" },
+            { "type": "array", "items": { "$ref": "#/definitions/block" } }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "inventoryCheck": {
+      "type": "object",
+      "required": ["slot"],
+      "properties": {
+        "slot": { "$ref": "#/definitions/playerSlot" },
+        "is": {
+          "oneOf": [
+            { "$ref": "#/definitions/item" },
+            { "type": "string", "enum": ["None", "empty"] },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "assertCheck": {
+      "oneOf": [
+        { "$ref": "#/definitions/blockCheck" },
+        { "$ref": "#/definitions/inventoryCheck" }
+      ]
+    },
+    "timelineEntry": {
+      "type": "object",
+      "required": ["at", "do"],
+      "properties": {
+        "at": { "$ref": "#/definitions/tickSpec" },
+        "do": {
+          "type": "string",
+          "enum": [
+            "place",
+            "place_each",
+            "fill",
+            "remove",
+            "assert",
+            "use_item_on",
+            "set_slot",
+            "select_hotbar"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "do": { "const": "place" } } },
+          "then": {
+            "required": ["pos", "block"],
+            "properties": {
+              "pos": { "$ref": "#/definitions/vec3" },
+              "block": { "$ref": "#/definitions/block" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "place_each" } } },
+          "then": {
+            "required": ["blocks"],
+            "properties": {
+              "blocks": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/blockPlacement" }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "fill" } } },
+          "then": {
+            "required": ["region", "with"],
+            "properties": {
+              "region": { "$ref": "#/definitions/region" },
+              "with": { "$ref": "#/definitions/block" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "remove" } } },
+          "then": {
+            "required": ["pos"],
+            "properties": {
+              "pos": { "$ref": "#/definitions/vec3" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "assert" } } },
+          "then": {
+            "required": ["checks"],
+            "properties": {
+              "checks": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/assertCheck" }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "use_item_on" } } },
+          "then": {
+            "required": ["pos", "face"],
+            "properties": {
+              "pos": { "$ref": "#/definitions/vec3" },
+              "face": { "$ref": "#/definitions/blockFace" },
+              "item": { "type": ["string", "null"] }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "set_slot" } } },
+          "then": {
+            "required": ["slot"],
+            "properties": {
+              "slot": { "$ref": "#/definitions/playerSlot" },
+              "item": { "type": ["string", "null"] },
+              "count": { "type": "integer", "minimum": 0, "maximum": 64 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "do": { "const": "select_hotbar" } } },
+          "then": {
+            "required": ["slot"],
+            "properties": {
+              "slot": { "type": "integer", "minimum": 1, "maximum": 9 }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

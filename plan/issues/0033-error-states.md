@@ -35,3 +35,29 @@ The sidebar (`frontend/src/panels/TestList.tsx`) already does limited error rend
 
 - `ApiError` from `frontend/src/api/client.ts` is the only thrown error type from the API layer; switch on `err instanceof ApiError && err.status === N` for status-specific UX (e.g. 413 → "test file too big", 404 → "test was deleted").
 - The store's `parseErrors: ParseError[]` is already the canonical "current replay errors" source; toasts and stale badges should subscribe to it, not duplicate state.
+
+## Handoff from #0020 (Monaco editor)
+
+The editor (`frontend/src/editor/Editor.tsx`) already does limited error rendering — when the debounced replay throws (typically `ApiError` with status 413, or a network failure), it sets a local `statusError` string that renders as a small red pill in the editor's header bar. When this issue lands:
+
+- Migrate the editor's `statusError` pill to your global toast channel. Like the sidebar's strips, the pill is acceptable for v1 but should fire a toast and stay otherwise quiet once toasts exist.
+- 413 specifically is already wrapped: `ApiError` with `status: 413` and `message: "replay body too large (max 1 MiB)"` is the contract — don't re-derive the message, surface `err.message`.
+- The editor does NOT subscribe to `api.events`. Don't add SSE-driven errors here either; the sidebar owns that channel.
+- For the **stale badge** UX: the editor preserves the user's previous `tick` across re-replay (only when `result.replay && errors.length === 0`). When `errors.length > 0`, the store's `setReplay(null, errors)` already preserves the prior `worldState`/`player`, so the 3D view freezes on the last good state automatically. The badge selector should be `s => s.parseErrors.length > 0 && s.replay !== null` — `replay !== null` distinguishes "had a valid replay before this error" from "no test loaded yet".
+- Marker owner: the editor uses `MARKER_OWNER = "flint-replay"` (exported from `editor/markers.ts`) for replay errors. If you add semantic lint or other diagnostic sources, use a different owner so clearing one doesn't wipe the other.
+
+## Handoff from #0021 (JSON schema)
+
+- Schema validation squiggles come from Monaco's built-in JSON language service (separate marker owner) and live alongside the replay-error squiggles from #0020 without conflict.
+- For the "asset bundle missing" panel and other 3D-pane errors (out of scope for editor handoff), the world view is now rendered at `frontend/src/world/Scene.tsx` (post-#0023; `CanvasShell.tsx` was deleted). The editor and world panes are siblings under `SplitLayout`, so wrap each in its own `<ErrorBoundary>` independently.
+
+## Handoff from #0023 (world renderer)
+
+`frontend/src/world/Scene.tsx` is now the 3D-pane composition root, mounted directly from `App.tsx` (no `<CanvasShell>` indirection). For the asset-bundle-missing UX:
+
+- `frontend/src/world/atlas.ts`'s `loadBlockProviders()` rejects with the literal message `Failed to load /mc-assets.zip (<status>). Run \`npm run assets\` to generate it.` when the zip is absent. The string is intentionally surface-ready — render it verbatim in the panel rather than re-wording.
+- Today, `frontend/src/world/World.tsx` swallows that rejection in a `useEffect` and only `console.error`s. To trigger a panel, swap the silent catch for one of:
+  - **Lift the providers loader.** Move `useBlockProviders` out of `World.tsx` (currently private) into a shared module, surface a `{ providers, error }` tuple, and render the asset-error panel from `Scene.tsx` (or App-level) when `error !== null`. Recommended.
+  - **Throw inside the component.** Replace the `console.error` with `throw err`, wrap the 3D pane in an `<ErrorBoundary>` that detects the `Failed to load /mc-assets.zip` substring and renders the asset panel; fall back to a generic error panel otherwise.
+- Last-good-state badge: the world view is already correct here. `World.tsx` reads `worldState` directly from the store; `setReplay(null, errors)` preserves the previous Map, so the rendered scene stays on the last good state when JSON parse fails. The `<StaleBadge />` should overlay on top of `<Scene />` (e.g. as an absolutely-positioned sibling inside the `<div className="flex-1">` that hosts it in `App.tsx`), not inside the `<Canvas>` — HTML-in-3D needs `<Html>` from drei and is overkill for a status badge.
+- `<World />` returns `null` when `worldState.size === 0` or providers haven't loaded. That keeps the canvas visible (background, lights, OrbitControls still active) so the user sees an empty scene rather than a blank pane while loading.

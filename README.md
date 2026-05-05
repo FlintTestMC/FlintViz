@@ -14,6 +14,39 @@ Status: **M1 scaffolding only** — backend boots, frontend renders, packaging w
 - Rust (stable, edition 2024 — recent toolchain)
 - Node.js + npm (for the frontend)
 
+## Minecraft assets
+
+The 3D view renders blocks using vanilla Minecraft textures and models. These are
+**not** bundled in the repo (gitignored, license-sensitive, ~2 MB) — you generate
+them once locally from a vanilla client jar:
+
+```bash
+cd frontend
+npm install        # first time only
+npm run assets     # downloads the jar and writes public/mc-assets.zip
+```
+
+What it does:
+1. Fetches Mojang's launcher version manifest.
+2. Looks up the version (default `26.1.2`) and its `client.jar` URL.
+3. Downloads the jar (~36 MB) and verifies the SHA-1.
+4. Extracts only `assets/minecraft/{blockstates,models,textures/block,textures/item}/...`.
+5. Re-zips into `frontend/public/mc-assets.zip` (~2 MB).
+
+Re-run only if you bump the MC version. Override with:
+
+```bash
+MC_VERSION=1.21.4 npm run assets
+```
+
+If the zip is missing at runtime, the visualization pane shows an error and the
+3D view stays empty. The dev/release backend still boots and the rest of the UI
+works without it.
+
+License note: the extracted assets are Mojang's; do not redistribute the
+generated zip. The script is a thin wrapper around the public launcher API and
+is only intended to be run by developers with a valid Minecraft license.
+
 ## Two ways to run
 
 ### A. Dev mode — two processes, hot reload
