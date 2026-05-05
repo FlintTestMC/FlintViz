@@ -1,12 +1,14 @@
-import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import type { ReactNode } from "react";
 
+import Camera from "./Camera";
 import World from "./World";
 
 // Composition root for the 3D pane. The single `<SceneRoot>` group is the
 // rotation target for #0036 and the parent of every world-space overlay
-// (#0025 cleanup, #0026 highlights, #0027 assertion ghosts).
+// (#0025 cleanup, #0026 highlights, #0027 assertion ghosts). `<Camera>` owns
+// OrbitControls and the auto-framing state machine — it stays *outside*
+// `<SceneRoot>` so #0036's rotation doesn't apply to the camera view.
 export default function Scene() {
   return (
     <Canvas
@@ -17,7 +19,7 @@ export default function Scene() {
       <ambientLight intensity={0.6} />
       <directionalLight position={[8, 12, 6]} intensity={0.8} />
       <directionalLight position={[-6, 4, -8]} intensity={0.3} />
-      <OrbitControls makeDefault />
+      <Camera />
       <SceneRoot>
         <World />
       </SceneRoot>

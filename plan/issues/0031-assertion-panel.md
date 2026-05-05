@@ -50,6 +50,23 @@ Key engine-side behaviors to render correctly:
 - Inventory assertions get one span each. Same `(tick, A + j)` lookup, same `/timeline/N` shape.
 - The pointer is always to the parent timeline entry (`/timeline/N`), never to a specific check inside (`/timeline/N/checks/M` is intentionally not produced — see post-#0015 status in 0016). So "click-to-editor" lands on the whole `assert` entry, which matches the existing UX intent.
 
+## Handoff from #0024 (camera + fly-to)
+
+The camera lives at `frontend/src/world/Camera.tsx` and owns `OrbitControls` (Scene.tsx no longer mounts its own). Imperative camera commands flow through a small zustand slice — **do not import `Camera.tsx` or grab a controls ref**; publish via the store and the Camera component animates next frame.
+
+- Store: `frontend/src/world/cameraStore.ts`, hook `useCameraStore`. Methods: `flyTo(target: Vec3)` and `resetView()`. The store keeps monotonically-increasing `flyToToken` / `resetToken` so the Camera component picks up each call exactly once via `subscribe` even when the same target is published twice.
+- Wire-up shape for the 📍 button (assumes `view.kind === "block"`):
+  ```ts
+  const flyTo = useCameraStore((s) => s.flyTo);
+  // visual centre of the target block — same `+ 0.5` convention the camera framing uses
+  const center: Vec3 = [view.position[0] + 0.5, view.position[1] + 0.5, view.position[2] + 0.5];
+  flyTo(center);
+  ```
+- Animation: Camera lerps `controls.target` with `t = 1 - exp(-6 * dt)`, so a fly-to converges in roughly 0.4 s with no further work — that's the timing #0031 calls for. Camera **position** is *not* lerped on `flyTo`; only the orbit target moves, preserving the user's current angle and distance. This is intentional. If a future requirement wants the camera to move too, extend the cameraStore (e.g. add a `flyToOptions` field) — don't introduce a second imperative path.
+- The optional file `frontend/src/world/cameraFlyTo.ts` listed in #0031's "Files" can be a thin wrapper that re-exports `useCameraStore`'s `flyTo`, or you may delete it from the plan and import `useCameraStore` directly. Either is fine; nothing in #0024 depends on the wrapper existing.
+- Inventory assertions (slot highlight) and `kind: "other"` rows do not call `flyTo`. Only block-position rows publish a target.
+- Auto-framing: when a new test loads, the Camera component runs a *one-shot* fit-to-cleanup-region animation, then leaves the camera alone. Subsequent `worldState` edits do not re-frame. So a 📍 click during ongoing playback just lerps the target — no fight with auto-frame.
+
 ## Handoff from #0018 (replay store)
 
 Store at `frontend/src/store/replay.ts`:

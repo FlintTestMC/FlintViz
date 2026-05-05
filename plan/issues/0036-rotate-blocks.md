@@ -36,6 +36,15 @@ Let the user rotate the entire 3D scene by 90°/180°/270° around the Y axis as
 - `frontend/src/world/SceneToolbar.tsx` (new) — rotation buttons
 - `frontend/src/store/replay.ts` — add `rotation`, reset on test load
 
+## Handoff from #0024 (camera framing)
+
+The camera at `frontend/src/world/Camera.tsx` auto-frames against the cleanup region (or block bounds) **once per test load** and exposes a `resetView()` action via `useCameraStore` (`frontend/src/world/cameraStore.ts`). It does **not** automatically re-frame on every store change — auto-framing yanks the user out of any view they've manually set, which would happen on every rotation toggle.
+
+- The framing helper `computeFraming(cleanup, worldState)` in `frontend/src/world/cameraFraming.ts` is rotation-agnostic — it ignores rotation entirely and computes target/position from raw AABB coords. Since the rotation pivot in #0036 *is* the same AABB centre, the unrotated framing target lands exactly on the rotated scene's centre on screen. **No camera change is needed for the scene to stay centred** as long as your rotation transform is the standard "translate to origin → rotate → translate back" pivoted at `(min[i] + max[i] + 1) / 2`. The earlier note saying "subscribe to rotation change in your camera controller and recompute the framing target" is now obsolete — keep the camera out of the rotation loop entirely.
+- If you do want a Reset View click to nudge the user back to the canonical angle after a rotation, call `useCameraStore.getState().resetView()` from the same toolbar that hosts the rotation buttons (or just rely on the existing top-right Reset View button in the visualization header — already wired).
+- Don't add a second OrbitControls instance. `Camera.tsx` already mounts one with `makeDefault`; downstream `useThree(s => s.controls)` returns it.
+- The store-reset semantics for `rotation` (extending `openTest` / `setReplay`) are unchanged from #0023's note.
+
 ## Handoff from #0023 (Scene composition root)
 
 `frontend/src/world/Scene.tsx` already exists and contains a private `<SceneRoot>` wrapper around `<World />` (and, post-#0025/#0026/#0027, the cleanup overlay, highlights, and assertion ghosts). The current implementation is a thin no-op group:
