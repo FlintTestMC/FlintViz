@@ -2,6 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import type { ReactNode } from "react";
 
 import Camera from "./Camera";
+import CleanupOverlay from "./CleanupOverlay";
 import World from "./World";
 
 // Composition root for the 3D pane. The single `<SceneRoot>` group is the
@@ -22,6 +23,7 @@ export default function Scene() {
       <Camera />
       <SceneRoot>
         <World />
+        <CleanupOverlay />
       </SceneRoot>
     </Canvas>
   );

@@ -36,6 +36,16 @@ Let the user rotate the entire 3D scene by 90°/180°/270° around the Y axis as
 - `frontend/src/world/SceneToolbar.tsx` (new) — rotation buttons
 - `frontend/src/store/replay.ts` — add `rotation`, reset on test load
 
+## Handoff from #0025 (cleanup overlay + scene-overlay toolbar)
+
+`frontend/src/world/CleanupOverlay.tsx` is mounted as a child of `<SceneRoot>` alongside `<World />`. It will rotate with #0036 automatically — no special handling required from this issue.
+
+- View toggles (`cleanupVisible` today, future highlight/ghost toggles) live in `frontend/src/world/overlayStore.ts` (`useOverlayStore`). When you add the rotation control, you have two options:
+  - Add `rotation` to `replay.ts` (per the existing handoff below) since rotation must reset on test load alongside `tick` / `worldState`. Recommended — rotation is part of view-of-this-test state, not a global preference.
+  - **Don't** colocate it with `cleanupVisible` in `overlayStore`; that store is intentionally global-preference scoped (no test-load reset).
+- The "scene overlay" UI for #0025 is currently a button in the visualization header in `App.tsx` (alongside `ResetViewButton`). When `SceneToolbar.tsx` arrives in #0036 it should subsume both toggles — at that point, lift `CleanupToggleButton` and `ResetViewButton` from `App.tsx` into `SceneToolbar.tsx` and render the toolbar in the header. This keeps the overlay UI discoverable in one place rather than scattered across header chrome.
+- Disposal: `CleanupOverlay` builds an `EdgesGeometry` keyed on the cleanup-region dimensions and disposes it on unmount / re-key. If you copy the pattern for highlights or assertion ghosts, follow the same useMemo + cleanup-effect shape.
+
 ## Handoff from #0024 (camera framing)
 
 The camera at `frontend/src/world/Camera.tsx` auto-frames against the cleanup region (or block bounds) **once per test load** and exposes a `resetView()` action via `useCameraStore` (`frontend/src/world/cameraStore.ts`). It does **not** automatically re-frame on every store change — auto-framing yanks the user out of any view they've manually set, which would happen on every rotation toggle.
