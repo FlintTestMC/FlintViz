@@ -13,6 +13,10 @@ import { useCameraStore } from "./cameraStore";
 // called out in #0031 for fly-to.
 const ANIM_RATE = 6;
 
+// Distance at which we consider an animation settled and stop lerping. Below
+// this, continued lerping would just fight the user's OrbitControls input.
+const SETTLE_EPSILON = 0.001;
+
 // Owns OrbitControls and the camera-framing state machine.
 //
 // Auto-frame: on test load, lerp camera + target to fit the cleanup region
@@ -35,9 +39,11 @@ export default function Camera() {
 
   const desiredTarget = useRef(new Vector3(0, 0, 0));
   const desiredPosition = useRef(new Vector3(6, 6, 6));
-  // Whether the next animation step should also lerp camera.position.
-  // `false` for fly-to (target-only); `true` for reset / auto-frame.
-  const animatePosition = useRef(false);
+  // Active flags: we only lerp while these are true. Each turns off once the
+  // value has converged on its desired target so OrbitControls input (rotate,
+  // pan, zoom) isn't dragged back every frame.
+  const targetActive = useRef(false);
+  const positionActive = useRef(false);
 
   const framing = useMemo<Framing | null>(
     () => computeFraming(cleanup, worldState),
@@ -59,8 +65,24 @@ export default function Camera() {
     lastFramedTestId.current = testId;
     desiredTarget.current.set(...framing.target);
     desiredPosition.current.set(...framing.position);
-    animatePosition.current = true;
+    targetActive.current = true;
+    positionActive.current = true;
   }, [framing, testId]);
+
+  // Any direct user interaction with OrbitControls (rotate / pan / zoom) wins
+  // over an in-flight animation. Without this, dragging to rotate during an
+  // auto-frame lerp results in the camera snapping back toward the framed
+  // pose as soon as you let go.
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const onStart = () => {
+      targetActive.current = false;
+      positionActive.current = false;
+    };
+    controls.addEventListener("start", onStart);
+    return () => controls.removeEventListener("start", onStart);
+  }, []);
 
   useEffect(() => {
     return useCameraStore.subscribe((state, prev) => {
@@ -69,7 +91,8 @@ export default function Camera() {
         if (f) {
           desiredTarget.current.set(...f.target);
           desiredPosition.current.set(...f.position);
-          animatePosition.current = true;
+          targetActive.current = true;
+          positionActive.current = true;
         }
       }
       if (
@@ -77,7 +100,8 @@ export default function Camera() {
         state.flyToTarget
       ) {
         desiredTarget.current.set(...state.flyToTarget);
-        animatePosition.current = false;
+        targetActive.current = true;
+        positionActive.current = false;
       }
     });
   }, []);
@@ -86,9 +110,19 @@ export default function Camera() {
     const controls = controlsRef.current;
     if (!controls) return;
     const t = 1 - Math.exp(-ANIM_RATE * dt);
-    controls.target.lerp(desiredTarget.current, t);
-    if (animatePosition.current) {
+    if (targetActive.current) {
+      controls.target.lerp(desiredTarget.current, t);
+      if (controls.target.distanceToSquared(desiredTarget.current) < SETTLE_EPSILON * SETTLE_EPSILON) {
+        controls.target.copy(desiredTarget.current);
+        targetActive.current = false;
+      }
+    }
+    if (positionActive.current) {
       camera.position.lerp(desiredPosition.current, t);
+      if (camera.position.distanceToSquared(desiredPosition.current) < SETTLE_EPSILON * SETTLE_EPSILON) {
+        camera.position.copy(desiredPosition.current);
+        positionActive.current = false;
+      }
     }
     controls.update();
   });

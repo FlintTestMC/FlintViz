@@ -17,3 +17,5 @@ Thumbs.db
 
 # Bundled MC assets (generated, large, license-sensitive)
 frontend/public/mc-assets.zip
+
+tests

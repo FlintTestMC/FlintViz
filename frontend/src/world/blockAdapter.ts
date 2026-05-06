@@ -19,8 +19,6 @@ export interface BlockMesh {
   transform: Matrix4;
 }
 
-const BLOCK_UNIT = 1 / 16;
-
 let sharedMaterial: Material | null = null;
 
 export function getSharedMaterial(providers: BlockProviders): Material {
@@ -106,9 +104,12 @@ function meshToBufferGeometry(mesh: DeepslateMesh): BufferGeometry {
     }
 
     for (const v of verts) {
-      positions[vi * 3 + 0] = v.pos.x * BLOCK_UNIT;
-      positions[vi * 3 + 1] = v.pos.y * BLOCK_UNIT;
-      positions[vi * 3 + 2] = v.pos.z * BLOCK_UNIT;
+      // deepslate's BlockDefinition.getMesh already scales the mesh by 1/16,
+      // so vertex positions arrive in scene units (1 = one block). Don't scale
+      // again here.
+      positions[vi * 3 + 0] = v.pos.x;
+      positions[vi * 3 + 1] = v.pos.y;
+      positions[vi * 3 + 2] = v.pos.z;
 
       const vn = v.normal;
       if (vn) {
