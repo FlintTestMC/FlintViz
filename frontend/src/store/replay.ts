@@ -6,6 +6,7 @@ import type {
   PlayerSnapshot,
   Replay,
 } from "../api/types";
+import { buildSourceIndices, type SourceIndices } from "./sourceMap";
 import {
   clonePlayer,
   rebuildAt,
@@ -36,6 +37,7 @@ export interface ReplayState {
   player: PlayerSnapshot;
   playback: Playback;
   rotation: Rotation;
+  sourceIndices: SourceIndices;
 
   openTest: (testId: string, source: string) => void;
   setSource: (source: string) => void;
@@ -59,6 +61,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
   player: { ...DEFAULT_PLAYER, inventory: {} },
   playback: "paused",
   rotation: 0,
+  sourceIndices: buildSourceIndices(null),
 
   openTest: (testId, source) => {
     set({
@@ -71,6 +74,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       player: { ...DEFAULT_PLAYER, inventory: {} },
       playback: "paused",
       rotation: 0,
+      sourceIndices: buildSourceIndices(null),
     });
   },
 
@@ -78,6 +82,8 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
 
   setReplay: (replay, parseErrors) => {
     if (!replay) {
+      // Preserve worldState/player/tick so the 3D view stays on the last good
+      // state when JSON parse fails (#0033 stale-badge contract).
       set({ replay: null, parseErrors });
       return;
     }
@@ -91,6 +97,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       worldState: world,
       player,
       rotation: 0,
+      sourceIndices: buildSourceIndices(replay),
     });
   },
 

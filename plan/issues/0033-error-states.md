@@ -68,6 +68,47 @@ The editor (`frontend/src/editor/Editor.tsx`) already does limited error renderi
 
 When parse errors land but a previous replay survived (`s.parseErrors.length > 0 && s.replay !== null`), the scrubber renders against the *last good* replay, so the playhead and markers continue to work. The stale badge should overlay the 3D pane only — don't gray out or banner the scrubber, since users actively need to scrub through the last-good replay while reviewing the parse error.
 
+## Status (post-implementation, 2026-05-06)
+
+Landed. Surface for downstream consumers (#0034 README, future error-handling
+work):
+
+- `frontend/src/components/ErrorBoundary.tsx` — class boundary with optional
+  `label` and `fallback`. Wraps each pane in `App.tsx` (Sidebar, 3D view,
+  Timeline, Inventory, Assertions, Editor) so a render-time failure in one
+  pane doesn't blank the whole UI.
+- `frontend/src/components/Toast.tsx` + `toastStore.ts` — module-scope zustand
+  store with `showToast({ kind, message, ttlMs? })`. Default TTL 6 s; pass
+  `ttlMs: 0` for sticky. `<Toast />` is mounted once in `App.tsx`.
+- `frontend/src/components/StaleBadge.tsx` — reads
+  `s.parseErrors.length > 0 && s.replay !== null` and renders an amber
+  "stale" pill absolutely-positioned over the 3D pane. Sits as a sibling of
+  `<Scene />` inside `App.tsx`; not inside the `<Canvas>`.
+- `frontend/src/world/useBlockProviders.ts` — now exports
+  `useBlockProvidersState` returning `{ providers, error }`. The legacy
+  `useBlockProviders()` hook still returns `BlockProviders | null` and is
+  unchanged for `World.tsx` / `AssertionGhosts.tsx` consumers.
+- `frontend/src/world/Scene.tsx` — when the providers loader errors, renders
+  `<AssetMissingPanel>` in place of the `<Canvas>`. The panel surfaces the
+  loader's message verbatim (`Failed to load /mc-assets.zip …`) and follows up
+  with a `npm run assets` instruction.
+- `frontend/src/panels/TestList.tsx` — no longer renders inline `listError` /
+  `openError` strips. Both failures route through `showToast`. The empty-state
+  copy has been extended with a hint about pointing at a different directory.
+- `frontend/src/editor/Editor.tsx` — the `statusError` pill is gone; replay
+  failures fire toasts. A `lastErrorRef` dedups identical errors so a 413 that
+  fires every keystroke doesn't carpet-bomb the channel.
+- `crates/flint-viz/src/main.rs::resolve_test_root` — error messages now
+  include a `hint:` line per failure mode (missing path, file-not-directory,
+  canonicalize failure).
+
+Inventory icon-load failures keep the existing console.warn + 4-letter text
+fallback per the original handoff — single missing-zip toast surface is the
+3D-view panel, no need to duplicate.
+
+The Monaco MARKER_OWNER (`flint-replay`) is preserved; cross-link decorations
+in #0032 use selection ranges, not markers, so the two layers stay decoupled.
+
 ## Handoff from #0030 (inventory panel)
 
 `frontend/src/panels/itemIcons.ts` is the second consumer of the asset zip after `world/atlas.ts`. The shared loader `loadAssetZip()` (now in `world/atlas.ts`) memoizes the parsed `JSZip` so a missing zip rejects from both consumers with the same surface message. For this issue:

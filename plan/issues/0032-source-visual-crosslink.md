@@ -116,6 +116,48 @@ Global keyboard shortcuts now live in `frontend/src/timeline/Controls.tsx` behin
 - Inventory and `other` rows are one assertion each; their `event_index` is `frame.actions.length + j` where `j` is their offset within `frame.assertions`.
 - The 📍 button publishes via `useCameraStore.flyTo`. Editor reveal should route through the editor-ref store (or event bus) you choose for #0032; the panel already imports `useCameraStore`, so reusing the same module-store pattern keeps imports symmetric.
 
+## Status (post-implementation, 2026-05-06)
+
+Landed. Surface for downstream consumers:
+
+- `frontend/src/editor/jsonPointerToRange.ts` — small RFC-6901 walker (no
+  `jsonc-parser` dep). Exports `parseJson`, `pointerToSpan`,
+  `pointerAtOffset`, and `timelineEntryPointerAt` (the optimised
+  cursor → `/timeline/N` lookup the editor uses).
+- `frontend/src/store/sourceMap.ts` — `buildSourceIndices(replay)` builds the
+  forward `(tick, event_index) → pointer` and reverse `pointer → Set<tick>`
+  indices. Held on the replay store as `sourceIndices`. `pointerForEvent` and
+  `pointerForTick` are the lookup helpers; the timeline marker click uses
+  `pointerForTick` (first event_index on the tick).
+- `frontend/src/store/sourceMap.ts::buildPosSourceMap(replay, targetTick)` —
+  computes the world-position → `(tick, eventIndex)` map by replaying actions
+  up to `targetTick`. Called lazily on world click; no caching, since clicks
+  are rare and the cost matches `rebuildAt`.
+- `frontend/src/store/crosslink.ts` — `useCrosslinkStore` holds the editor
+  handle (`setEditor`/`revealPointer`) plus the cursor-driven
+  `highlightedTicks: Set<number>` that the scrubber subscribes to. Exports
+  `ticksAtOffset` (pure helper, used by the editor's cursor handler).
+- `frontend/src/timeline/Scrubber.tsx` — markers are clickable
+  (`onClick` on the per-marker `<g>`, with `stopPropagation` so the surrounding
+  `<svg>`'s drag-to-scrub doesn't double-fire). Highlighted ticks render a
+  cyan ring around the marker.
+- `frontend/src/world/World.tsx` — `<instancedMesh>` carries `onClick`;
+  `event.instanceId` indexes into `group.positions` for the world coordinate.
+  `event.stopPropagation()` is called so back-row instances don't all fire on
+  the same ray.
+- `frontend/src/panels/Assertions.tsx` — rows are now buttons that reveal the
+  source pointer; `groupAssertions` was extended with `firstEventIndex` per
+  group. The 📍 fly-camera button on block rows is unchanged.
+- `frontend/src/editor/Editor.tsx` — registers the editor in
+  `useCrosslinkStore` on mount and dispatches `setHighlightedTicks` on cursor
+  move via `onDidChangeCursorPosition`. The editor handle is cleared on
+  unmount so reveals from other panes bail silently when no test is loaded.
+
+Out of scope (matches the original "What `source_map` does NOT cover" list):
+per-placement source highlighting inside `place_each`, per-`checks[k]`
+highlighting inside an `assert`, and per-slot click-to-source on the inventory
+panel. Each is a follow-up issue.
+
 ## Handoff from #0030 (inventory panel)
 
 `frontend/src/panels/Inventory.tsx` reads `frame.inventory_diff?.slots` for its change-glow signal. Reverse indexing inventory clicks → source pointer is *not* tracked by `inventory_diff` itself (the source pointer lives on the originating `ActionEvent`, e.g. `set_slot` / `select_hotbar`, in `frame.actions`). If a future "click slot → editor" path is added: walk `frame.actions` for the matching `set_slot` whose `slot` field equals the clicked slot, and reuse that action's `event_index`.

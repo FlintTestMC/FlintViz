@@ -1,8 +1,10 @@
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
-import type { editor as monacoEditor } from "monaco-editor";
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { editor as monacoEditor, IDisposable } from "monaco-editor";
+import { useCallback, useEffect, useRef } from "react";
 
 import { ApiError, api } from "../api/client";
+import { showToast } from "../components/toastStore";
+import { useCrosslinkStore, ticksAtOffset } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
 import { MARKER_OWNER, parseErrorsToMarkers } from "./markers";
 import { registerFlintSchema } from "./registerSchema";
@@ -21,13 +23,20 @@ export default function Editor() {
   // Set true while we're applying an external setValue, so onChange can ignore
   // its own programmatic update and not loop back into the debounced replay.
   const applyingExternalRef = useRef(false);
-  const [statusError, setStatusError] = useState<string | null>(null);
+  // Last error message we already toasted, so a single failure mode (e.g. a
+  // 413 that fires every keystroke) doesn't carpet-bomb the toast channel.
+  const lastErrorRef = useRef<string | null>(null);
+
+  const cursorDisposableRef = useRef<IDisposable | null>(null);
 
   const handleMount = useCallback<OnMount>(
     (ed, monaco) => {
       editorRef.current = ed;
       monacoRef.current = monaco;
       registerFlintSchema(monaco);
+      // Publish the editor handle so non-editor panes (timeline, world,
+      // assertion panel) can reveal ranges without prop-drilling refs.
+      useCrosslinkStore.getState().setEditor(ed, monaco);
       // Seed initial markers in case parseErrors arrived before mount.
       const model = ed.getModel();
       if (model) {
@@ -37,6 +46,20 @@ export default function Editor() {
         }));
         monaco.editor.setModelMarkers(model, MARKER_OWNER, markers);
       }
+      // Cursor → timeline highlight (#0032). Resolve the enclosing
+      // `/timeline/N` and dispatch the highlighted-tick set on every move.
+      const updateHighlight = () => {
+        const m = ed.getModel();
+        if (!m) return;
+        const pos = ed.getPosition();
+        if (!pos) return;
+        const offset = m.getOffsetAt(pos);
+        const indices = useReplayStore.getState().sourceIndices;
+        const ticks = ticksAtOffset(m.getValue(), offset, indices.pointerToTicks);
+        useCrosslinkStore.getState().setHighlightedTicks(ticks);
+      };
+      cursorDisposableRef.current = ed.onDidChangeCursorPosition(updateHighlight);
+      updateHighlight();
     },
     // parseErrors intentionally captured at mount only; the marker effect below
     // keeps them in sync after that.
@@ -86,10 +109,14 @@ export default function Editor() {
       if (result.replay && result.errors.length === 0 && prevTick > 0) {
         useReplayStore.getState().setTick(prevTick);
       }
-      setStatusError(null);
+      lastErrorRef.current = null;
     } catch (err) {
       if (token !== replayTokenRef.current) return;
-      setStatusError(formatError(err));
+      const msg = formatError(err);
+      if (msg !== lastErrorRef.current) {
+        showToast({ kind: "error", message: msg });
+        lastErrorRef.current = msg;
+      }
     }
   }, []);
 
@@ -114,6 +141,12 @@ export default function Editor() {
       if (debounceRef.current !== null) {
         window.clearTimeout(debounceRef.current);
       }
+      cursorDisposableRef.current?.dispose();
+      cursorDisposableRef.current = null;
+      useCrosslinkStore.getState().setHighlightedTicks(new Set());
+      // Clear the editor handle so non-editor panes bail silently instead of
+      // revealing on a disposed model.
+      useCrosslinkStore.getState().setEditor(null, null);
     };
   }, []);
 
@@ -134,14 +167,6 @@ export default function Editor() {
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b border-neutral-800 px-3 py-2 text-sm font-medium">
         <span>Editor</span>
-        {statusError && (
-          <span
-            className="rounded bg-red-900/40 px-2 py-0.5 text-xs text-red-300"
-            title={statusError}
-          >
-            {statusError}
-          </span>
-        )}
       </header>
       <div className="flex-1">
         <MonacoEditor

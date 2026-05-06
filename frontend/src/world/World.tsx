@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { type ThreeEvent } from "@react-three/fiber";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   InstancedMesh,
   Matrix4,
@@ -7,7 +8,13 @@ import {
 } from "three";
 
 import type { Vec3 } from "../api/types";
+import { useCrosslinkStore } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
+import {
+  buildPosSourceMap,
+  pointerForEvent,
+} from "../store/sourceMap";
+import { posKey } from "../store/world";
 import type { BlockProviders } from "./atlas";
 import { buildBlockMesh } from "./blockAdapter";
 import { groupByState, type InstanceGroup } from "./instancing";
@@ -23,12 +30,32 @@ export default function World() {
 
   const groups = useMemo(() => groupByState(worldState), [worldState]);
 
+  // Click → editor reveal (#0032). Compute the position-source map lazily on
+  // click using the *current* tick, mirroring the engine's forward-application
+  // semantics. Cheap enough to recompute per click — avoids cache invalidation
+  // headaches when the user scrubs or edits.
+  const onInstanceClick = useCallback((position: Vec3) => {
+    const { replay, tick, sourceIndices } = useReplayStore.getState();
+    if (!replay) return;
+    const posSource = buildPosSourceMap(replay, tick);
+    const entry = posSource.get(posKey(position));
+    if (!entry) return;
+    const pointer = pointerForEvent(sourceIndices, entry.tick, entry.eventIndex);
+    if (!pointer) return;
+    useCrosslinkStore.getState().revealPointer(pointer);
+  }, []);
+
   if (!providers || groups.length === 0) return null;
 
   return (
     <group>
       {groups.map((g) => (
-        <InstanceGroupMesh key={g.groupKey} group={g} providers={providers} />
+        <InstanceGroupMesh
+          key={g.groupKey}
+          group={g}
+          providers={providers}
+          onInstanceClick={onInstanceClick}
+        />
       ))}
     </group>
   );
@@ -37,9 +64,11 @@ export default function World() {
 function InstanceGroupMesh({
   group,
   providers,
+  onInstanceClick,
 }: {
   group: InstanceGroup;
   providers: BlockProviders;
+  onInstanceClick: (position: Vec3) => void;
 }) {
   // Geometry is built once per group key and reused across position changes.
   // The shared material from blockAdapter is the same instance for every
@@ -78,6 +107,7 @@ function InstanceGroupMesh({
       material={built.material}
       capacity={capacity}
       positions={group.positions}
+      onInstanceClick={onInstanceClick}
     />
   );
 }
@@ -87,13 +117,29 @@ function InstancedNode({
   material,
   capacity,
   positions,
+  onInstanceClick,
 }: {
   geometry: BufferGeometry;
   material: Material;
   capacity: number;
   positions: Vec3[];
+  onInstanceClick: (position: Vec3) => void;
 }) {
   const ref = useRef<InstancedMesh>(null);
+
+  const handleClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      const id = e.instanceId;
+      if (id === undefined || id < 0 || id >= positions.length) return;
+      // R3F propagates clicks to every intersected mesh by default — only the
+      // closest hit (smallest distance) is the visually clicked block. Stop
+      // propagation so deeper instances behind the front one don't all fire.
+      e.stopPropagation();
+      const pos = positions[id]!;
+      onInstanceClick(pos);
+    },
+    [positions, onInstanceClick],
+  );
 
   useEffect(() => {
     const mesh = ref.current;
@@ -116,6 +162,7 @@ function InstancedNode({
       // unmount. We manage their lifetimes manually above.
       dispose={null}
       frustumCulled={false}
+      onClick={handleClick}
     />
   );
 }

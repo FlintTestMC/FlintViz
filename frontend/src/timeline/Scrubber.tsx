@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { useCrosslinkStore } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
+import { pointerForTick } from "../store/sourceMap";
 import { buildMarkers, type Marker } from "./markers";
 
 const TRACK_HEIGHT = 36;
@@ -24,6 +26,22 @@ export default function Scrubber() {
   const markers = useMemo(() => buildMarkers(replay), [replay]);
   const breakpoints = replay?.breakpoints ?? [];
   const maxTick = replay?.max_tick ?? 0;
+  const sourceIndices = useReplayStore((s) => s.sourceIndices);
+  const highlightedTicks = useCrosslinkStore((s) => s.highlightedTicks);
+  const revealPointer = useCrosslinkStore((s) => s.revealPointer);
+
+  const onMarkerClick = useCallback(
+    (m: Marker) => {
+      // Pause + jump first so playback state matches the navigation, then
+      // route to the editor. Order matches the #0028 / #0029 handoff
+      // expectations.
+      pause();
+      setTick(m.tick);
+      const pointer = pointerForTick(sourceIndices, m.tick);
+      if (pointer) revealPointer(pointer);
+    },
+    [pause, setTick, sourceIndices, revealPointer],
+  );
 
   const trackRef = useRef<SVGSVGElement | null>(null);
   const draggingRef = useRef(false);
@@ -123,6 +141,7 @@ export default function Scrubber() {
         {markers.map((m) => {
           const cx = tickToX(m.tick, 1000);
           const isAssertion = m.kind === "assertion";
+          const isHighlighted = highlightedTicks.has(m.tick);
           return (
             <g
               key={`m-${m.tick}`}
@@ -130,7 +149,26 @@ export default function Scrubber() {
               onPointerLeave={() =>
                 setHover((h) => (h?.marker === m ? null : h))
               }
+              onClick={(e) => {
+                // Stop propagation so the surrounding `<svg>`'s drag-to-scrub
+                // pointerdown handler doesn't also re-pause + re-set the tick.
+                e.stopPropagation();
+                onMarkerClick(m);
+              }}
+              style={{ cursor: "pointer" }}
             >
+              {isHighlighted && (
+                <circle
+                  cx={cx}
+                  cy={TRACK_HEIGHT / 2}
+                  r={MARKER_R + 4}
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth={1.5}
+                  vectorEffect="non-scaling-stroke"
+                  opacity={0.9}
+                />
+              )}
               <circle
                 cx={cx}
                 cy={TRACK_HEIGHT / 2}

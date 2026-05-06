@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, api } from "../api/client";
 import type { TestSummary } from "../api/types";
+import { showToast } from "../components/toastStore";
 import { useReplayStore } from "../store/replay";
 import { buildTree, type TreeFolder, type TreeNode } from "./buildTree";
 
 export default function TestList() {
   const [summaries, setSummaries] = useState<TestSummary[]>([]);
-  const [listError, setListError] = useState<string | null>(null);
+  const [listFailed, setListFailed] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [openError, setOpenError] = useState<string | null>(null);
 
   const testId = useReplayStore((s) => s.testId);
   const testIdRef = useRef(testId);
@@ -24,16 +24,16 @@ export default function TestList() {
     try {
       const list = await api.listTests(signal);
       setSummaries(list);
-      setListError(null);
+      setListFailed(false);
     } catch (err) {
       if (signal?.aborted) return;
-      setListError(formatError(err));
+      setListFailed(true);
+      showToast({ kind: "error", message: `Failed to list tests: ${formatError(err)}` });
     }
   }, []);
 
   const openTest = useCallback(async (id: string) => {
     const token = ++openTokenRef.current;
-    setOpenError(null);
     try {
       const detail = await api.getTest(id);
       if (token !== openTokenRef.current) return;
@@ -45,7 +45,10 @@ export default function TestList() {
         .setReplay(replayResult.replay, replayResult.errors);
     } catch (err) {
       if (token === openTokenRef.current) {
-        setOpenError(formatError(err));
+        const msg = err instanceof ApiError && err.status === 404
+          ? `Test ${id} was deleted`
+          : `Failed to open ${id}: ${formatError(err)}`;
+        showToast({ kind: "error", message: msg });
       }
     }
   }, []);
@@ -85,11 +88,13 @@ export default function TestList() {
         Tests
       </header>
       <div className="flex-1 overflow-auto py-1 text-sm">
-        {listError && (
-          <div className="px-3 py-2 text-xs text-red-400">{listError}</div>
-        )}
-        {!listError && summaries.length === 0 && (
-          <div className="px-3 py-2 text-xs text-neutral-500">No tests found.</div>
+        {!listFailed && summaries.length === 0 && (
+          <div className="px-3 py-2 text-xs text-neutral-500">
+            No tests found in this directory.{" "}
+            <span className="text-neutral-600">
+              Pass a path to <code>flint-viz serve</code> to point at a different one.
+            </span>
+          </div>
         )}
         <ul className="select-none">
           {tree.map((node) => (
@@ -105,11 +110,6 @@ export default function TestList() {
           ))}
         </ul>
       </div>
-      {openError && (
-        <div className="border-t border-neutral-800 px-3 py-2 text-xs text-red-400">
-          {openError}
-        </div>
-      )}
     </div>
   );
 }

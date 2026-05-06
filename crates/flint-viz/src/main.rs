@@ -82,18 +82,25 @@ fn resolve_test_root(path: Option<&Path>) -> Result<PathBuf, String> {
     let raw = path.unwrap_or_else(|| Path::new("."));
     if !raw.exists() {
         return Err(format!(
-            "test path `{}` does not exist",
+            "test path `{}` does not exist.\n\
+             hint: pass a directory containing your Flint test JSON files, e.g.\n\
+             \tflint-viz serve ~/flint/FlintCLI/FlintBenchmark/tests",
             raw.display()
         ));
     }
     if !raw.is_dir() {
         return Err(format!(
-            "test path `{}` is not a directory",
+            "test path `{}` is not a directory.\n\
+             hint: flint-viz serves a *directory* of tests, not a single test file.",
             raw.display()
         ));
     }
     raw.canonicalize().map_err(|err| {
-        format!("failed to canonicalize test path `{}`: {err}", raw.display())
+        format!(
+            "failed to canonicalize test path `{}`: {err}.\n\
+             hint: check directory permissions or that the path is reachable.",
+            raw.display()
+        )
     })
 }
 
