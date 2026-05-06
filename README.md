@@ -97,6 +97,11 @@ through the API.
 
 ## Asset bundle
 
+bash command:
+```
+./frontend/scripts/fetch-assets.bash
+```
+
 The 3D view renders blocks using vanilla Minecraft textures and models. These
 are **not** bundled in the repo (license-sensitive, gitignored, ~2 MB) — you
 generate them once locally from a vanilla client jar:
