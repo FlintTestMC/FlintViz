@@ -91,7 +91,7 @@ async function doLoad(): Promise<BlockProviders> {
       tasks.push(
         file.async("string").then((text) => {
           try {
-            modelEntries.push([id, JSON.parse(text)]);
+            modelEntries.push([id, normaliseModelJson(JSON.parse(text))]);
           } catch {
             // Malformed JSON shouldn't kill the whole atlas — skip and warn.
             console.warn(`atlas: skipping malformed model ${path}`);
@@ -152,6 +152,52 @@ async function doLoad(): Promise<BlockProviders> {
     atlasTexture,
     atlasSize: atlasImage.width,
   };
+}
+
+// Patches model JSON in place to work around two vanilla quirks deepslate
+// doesn't handle on its own:
+//
+// 1. Since 1.21.4 some texture refs are objects like
+//    `{ "force_translucent": true, "sprite": "minecraft:block/glass" }`
+//    instead of plain strings. deepslate's `getTexture` calls `.startsWith`
+//    on the value and throws on objects (glass_pane, etc. silently fail to
+//    render). Collapse those to the bare sprite string.
+//
+// 2. Entity-rendered blocks (every shulker box, chests, beds, signs) ship
+//    block models with only a `particle` texture and no `parent`/`elements`
+//    — vanilla draws them via entity code. deepslate produces zero quads for
+//    these. Synthesise a `cube_all` parent with the particle texture so they
+//    at least show up as a solid coloured cube in the world view.
+function normaliseModelJson(json: unknown): unknown {
+  if (!json || typeof json !== "object") return json;
+  const model = json as {
+    parent?: string;
+    elements?: unknown[];
+    textures?: Record<string, unknown>;
+  };
+
+  if (model.textures) {
+    for (const k of Object.keys(model.textures)) {
+      const v = model.textures[k];
+      if (v && typeof v === "object" && !Array.isArray(v)) {
+        const sprite = (v as { sprite?: unknown }).sprite;
+        model.textures[k] = typeof sprite === "string" ? sprite : "";
+      }
+    }
+  }
+
+  const hasElements =
+    Array.isArray(model.elements) && model.elements.length > 0;
+  const particle =
+    model.textures && typeof model.textures.particle === "string"
+      ? (model.textures.particle as string)
+      : null;
+  if (!model.parent && !hasElements && particle && !particle.startsWith("#")) {
+    model.parent = "minecraft:block/cube_all";
+    model.textures = { ...model.textures, all: particle };
+  }
+
+  return model;
 }
 
 function imageDataToTexture(img: ImageData): Texture {
