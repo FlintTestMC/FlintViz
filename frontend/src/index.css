@@ -21,3 +21,13 @@ body,
 .slot-glow {
   animation: slot-glow 800ms ease-out;
 }
+
+/* Bump up text on the non-editor panes (sidebar, viz, scrubber, panels). */
+.app-bigger .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+}
+.app-bigger .text-sm {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+}

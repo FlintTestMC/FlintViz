@@ -81,12 +81,15 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       set({ replay: null, parseErrors });
       return;
     }
+    // Seed via rebuildAt so any tick-0 frame is applied. setTick's forward path
+    // assumes the current tick's frames are already in worldState.
+    const { world, player } = rebuildAt(replay, 0);
     set({
       replay,
       parseErrors,
       tick: 0,
-      worldState: new Map(),
-      player: clonePlayer(replay.initial_player),
+      worldState: world,
+      player,
       rotation: 0,
     });
   },

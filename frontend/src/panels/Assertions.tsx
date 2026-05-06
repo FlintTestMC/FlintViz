@@ -30,7 +30,7 @@ export default function Assertions() {
         <span className="font-medium uppercase tracking-wider text-neutral-400">
           Assertions
         </span>
-        <span className="text-[10px] text-neutral-500">tick {tick}</span>
+        <span className="text-xs text-neutral-500">tick {tick}</span>
       </div>
       <div className="flex-1 overflow-y-auto">
         {groups.length === 0 ? (

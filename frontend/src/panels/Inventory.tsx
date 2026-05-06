@@ -71,7 +71,7 @@ export default function Inventory() {
           <span className="font-medium uppercase tracking-wider text-neutral-400">
             Inventory
           </span>
-          <span className="text-[10px] text-neutral-500">
+          <span className="text-xs text-neutral-500">
             {player.game_mode}
           </span>
         </div>

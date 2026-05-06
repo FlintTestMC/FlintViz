@@ -23,9 +23,9 @@ export default function App() {
 
   return (
     <SplitLayout
-      sidebar={<TestList />}
+      sidebar={<div className="app-bigger h-full"><TestList /></div>}
       left={
-        <div className="flex h-full flex-col">
+        <div className="app-bigger flex h-full flex-col">
           <header className="flex items-center justify-between gap-3 border-b border-neutral-800 px-3 py-2 text-sm font-medium">
             <div className="flex items-center gap-3">
               <span>Visualization</span>
@@ -39,7 +39,7 @@ export default function App() {
           <Scrubber />
           <div
             className="grid grid-cols-2 border-t border-neutral-800"
-            style={{ height: 140 }}
+            style={{ height: 180 }}
           >
             <div className="border-r border-neutral-800">
               <Inventory />
