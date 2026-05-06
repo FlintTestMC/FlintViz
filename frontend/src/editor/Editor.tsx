@@ -2,7 +2,7 @@ import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type { editor as monacoEditor, IDisposable } from "monaco-editor";
 import { useCallback, useEffect, useRef } from "react";
 
-import { ApiError, api } from "../api/client";
+import { api } from "../api/client";
 import { showToast } from "../components/toastStore";
 import { useCrosslinkStore, ticksAtOffset } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
@@ -100,24 +100,26 @@ export default function Editor() {
 
   const runReplay = useCallback(async (text: string) => {
     const token = ++replayTokenRef.current;
-    try {
-      const result = await api.replay(text);
-      if (token !== replayTokenRef.current) return;
-      const store = useReplayStore.getState();
-      const prevTick = store.tick;
-      store.setReplay(result.replay, result.errors);
-      if (result.replay && result.errors.length === 0 && prevTick > 0) {
-        useReplayStore.getState().setTick(prevTick);
-      }
-      lastErrorRef.current = null;
-    } catch (err) {
-      if (token !== replayTokenRef.current) return;
-      const msg = formatError(err);
+    const result = await api.replay(text);
+    if (token !== replayTokenRef.current) return;
+    if (!result.ok) {
+      if (result.aborted) return;
+      const msg = result.status === 413
+        ? "replay body too large (max 1 MiB)"
+        : result.err;
       if (msg !== lastErrorRef.current) {
         showToast({ kind: "error", message: msg });
         lastErrorRef.current = msg;
       }
+      return;
     }
+    const store = useReplayStore.getState();
+    const prevTick = store.tick;
+    store.setReplay(result.body.replay, result.body.errors);
+    if (result.body.replay && result.body.errors.length === 0 && prevTick > 0) {
+      useReplayStore.getState().setTick(prevTick);
+    }
+    lastErrorRef.current = null;
   }, []);
 
   const handleChange = useCallback(
@@ -189,8 +191,3 @@ export default function Editor() {
   );
 }
 
-function formatError(err: unknown): string {
-  if (err instanceof ApiError) return err.message;
-  if (err instanceof Error) return err.message;
-  return String(err);
-}

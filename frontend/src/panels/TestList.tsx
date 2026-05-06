@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { ApiError, api } from "../api/client";
+import { api } from "../api/client";
+import { toastOnError } from "../api/toast";
 import type { TestSummary } from "../api/types";
 import { showToast } from "../components/toastStore";
 import { useReplayStore } from "../store/replay";
@@ -21,36 +22,35 @@ export default function TestList() {
   const openTokenRef = useRef(0);
 
   const refreshList = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const list = await api.listTests(signal);
-      setSummaries(list);
-      setListFailed(false);
-    } catch (err) {
-      if (signal?.aborted) return;
-      setListFailed(true);
-      showToast({ kind: "error", message: `Failed to list tests: ${formatError(err)}` });
+    const result = await api.listTests(signal);
+    if (!toastOnError(result, "Failed to list tests")) {
+      if (!result.aborted) setListFailed(true);
+      return;
     }
+    setSummaries(result.body);
+    setListFailed(false);
   }, []);
 
   const openTest = useCallback(async (id: string) => {
     const token = ++openTokenRef.current;
-    try {
-      const detail = await api.getTest(id);
-      if (token !== openTokenRef.current) return;
-      useReplayStore.getState().openTest(detail.id, detail.source);
-      const replayResult = await api.replay(detail.source);
-      if (token !== openTokenRef.current) return;
-      useReplayStore
-        .getState()
-        .setReplay(replayResult.replay, replayResult.errors);
-    } catch (err) {
-      if (token === openTokenRef.current) {
-        const msg = err instanceof ApiError && err.status === 404
+    const detail = await api.getTest(id);
+    if (token !== openTokenRef.current) return;
+    if (!detail.ok) {
+      if (!detail.aborted) {
+        const msg = detail.status === 404
           ? `Test ${id} was deleted`
-          : `Failed to open ${id}: ${formatError(err)}`;
+          : `Failed to open ${id}: ${detail.err}`;
         showToast({ kind: "error", message: msg });
       }
+      return;
     }
+    useReplayStore.getState().openTest(detail.body.id, detail.body.source);
+    const replayResult = await api.replay(detail.body.source);
+    if (token !== openTokenRef.current) return;
+    if (!toastOnError(replayResult, `Failed to open ${id}`)) return;
+    useReplayStore
+      .getState()
+      .setReplay(replayResult.body.replay, replayResult.body.errors);
   }, []);
 
   // Initial fetch.
@@ -228,12 +228,3 @@ function FileView({
   );
 }
 
-function formatError(err: unknown): string {
-  if (err instanceof ApiError) {
-    return err.message;
-  }
-  if (err instanceof Error) {
-    return err.message;
-  }
-  return String(err);
-}

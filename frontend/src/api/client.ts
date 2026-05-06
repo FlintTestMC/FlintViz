@@ -5,53 +5,75 @@ import type {
 } from "./types";
 import { subscribeEvents, type EventsListener } from "./events";
 
-export class ApiError extends Error {
-  readonly status: number;
-  readonly body: string;
-
-  constructor(status: number, body: string, message?: string) {
-    super(message ?? `HTTP ${status}: ${body || "(empty body)"}`);
-    this.name = "ApiError";
-    this.status = status;
-    this.body = body;
-  }
-}
-
-async function ensureOk(res: Response): Promise<Response> {
-  if (res.ok) return res;
-  const body = await res.text().catch(() => "");
-  throw new ApiError(res.status, body);
-}
+export type ApiResult<T> =
+  | { ok: true; status: number; body: T }
+  | { ok: false; status: number; aborted: boolean; err: string };
 
 function encodeId(id: string): string {
   return id.split("/").map(encodeURIComponent).join("/");
 }
 
+function isAbort(err: unknown): boolean {
+  return err instanceof Error && err.name === "AbortError";
+}
+
+async function request<T>(
+  input: RequestInfo,
+  init?: RequestInit,
+): Promise<ApiResult<T>> {
+  let res: Response;
+  try {
+    res = await fetch(input, init);
+  } catch (err) {
+    // Network failure or abort — no HTTP status is available, so use 0.
+    return {
+      ok: false,
+      status: 0,
+      aborted: isAbort(err),
+      err: err instanceof Error ? err.message : String(err),
+    };
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    return {
+      ok: false,
+      status: res.status,
+      aborted: false,
+      err: body || `HTTP ${res.status}`,
+    };
+  }
+  try {
+    const body = (await res.json()) as T;
+    return { ok: true, status: res.status, body };
+  } catch (err) {
+    return {
+      ok: false,
+      status: res.status,
+      aborted: false,
+      err: `failed to parse response: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
 export const api = {
-  async listTests(signal?: AbortSignal): Promise<TestSummary[]> {
-    const res = await ensureOk(await fetch("/api/tests", { signal }));
-    return (await res.json()) as TestSummary[];
+  listTests(signal?: AbortSignal): Promise<ApiResult<TestSummary[]>> {
+    return request<TestSummary[]>("/api/tests", { signal });
   },
 
-  async getTest(id: string, signal?: AbortSignal): Promise<TestDetail> {
-    const res = await ensureOk(
-      await fetch(`/api/tests/${encodeId(id)}`, { signal }),
-    );
-    return (await res.json()) as TestDetail;
+  getTest(id: string, signal?: AbortSignal): Promise<ApiResult<TestDetail>> {
+    return request<TestDetail>(`/api/tests/${encodeId(id)}`, { signal });
   },
 
-  async replay(source: string, signal?: AbortSignal): Promise<ReplayResponse> {
-    const res = await fetch("/api/replay", {
+  replay(
+    source: string,
+    signal?: AbortSignal,
+  ): Promise<ApiResult<ReplayResponse>> {
+    return request<ReplayResponse>("/api/replay", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: source,
       signal,
     });
-    if (res.status === 413) {
-      throw new ApiError(413, "", "replay body too large (max 1 MiB)");
-    }
-    await ensureOk(res);
-    return (await res.json()) as ReplayResponse;
   },
 
   events(onEvent: EventsListener): () => void {

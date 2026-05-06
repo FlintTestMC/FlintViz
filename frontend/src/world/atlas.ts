@@ -115,6 +115,26 @@ async function doLoad(): Promise<BlockProviders> {
 
   await Promise.all(tasks);
 
+  // Preflight `createImageBitmap` on every block texture so a single
+  // undecodable PNG doesn't sink the whole atlas. deepslate's
+  // `TextureAtlas.fromBlobs` runs all decodes inside one `Promise.all`, so
+  // when one blob fails the rejection bubbles out as the browser's generic
+  // "The source image could not be decoded" with no clue which file. Doing
+  // the decode ourselves lets us log the offending id and continue with the
+  // rest — the bad texture just renders as the magenta-checker fallback.
+  const decodableBlobs: { [id: string]: Blob } = {};
+  await Promise.all(
+    Object.entries(textureBlobs).map(async ([id, blob]) => {
+      try {
+        const bmp = await createImageBitmap(blob);
+        bmp.close();
+        decodableBlobs[id] = blob;
+      } catch (err) {
+        console.warn(`atlas: skipping undecodable texture ${id}`, err);
+      }
+    }),
+  );
+
   const models = new Map<string, BlockModel>();
   for (const [id, json] of modelEntries) {
     models.set(id.toString(), BlockModel.fromJson(json));
@@ -141,7 +161,7 @@ async function doLoad(): Promise<BlockProviders> {
     },
   };
 
-  const atlas = await TextureAtlas.fromBlobs(textureBlobs);
+  const atlas = await TextureAtlas.fromBlobs(decodableBlobs);
   const atlasImage = atlas.getTextureAtlas();
   const atlasTexture = imageDataToTexture(atlasImage);
 
