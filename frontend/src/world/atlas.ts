@@ -168,6 +168,9 @@ async function doLoad(): Promise<BlockProviders> {
 //    — vanilla draws them via entity code. deepslate produces zero quads for
 //    these. Synthesise a `cube_all` parent with the particle texture so they
 //    at least show up as a solid coloured cube in the world view.
+//    Skip this for `air` (particle = `missingno`) and inventory-only blocks
+//    like `barrier` / `structure_void` (particle = `item/...`) so they stay
+//    invisible instead of becoming missing-texture cubes.
 function normaliseModelJson(json: unknown): unknown {
   if (!json || typeof json !== "object") return json;
   const model = json as {
@@ -192,7 +195,12 @@ function normaliseModelJson(json: unknown): unknown {
     model.textures && typeof model.textures.particle === "string"
       ? (model.textures.particle as string)
       : null;
-  if (!model.parent && !hasElements && particle && !particle.startsWith("#")) {
+  if (
+    !model.parent &&
+    !hasElements &&
+    particle &&
+    particle.startsWith("minecraft:block/")
+  ) {
     model.parent = "minecraft:block/cube_all";
     model.textures = { ...model.textures, all: particle };
   }
