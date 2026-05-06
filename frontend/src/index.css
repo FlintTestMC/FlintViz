@@ -6,3 +6,18 @@ body,
   height: 100%;
   margin: 0;
 }
+
+@keyframes slot-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.9);
+    background-color: rgba(56, 189, 248, 0.25);
+  }
+  100% {
+    box-shadow: 0 0 0 6px rgba(56, 189, 248, 0);
+    background-color: rgba(23, 23, 23, 1);
+  }
+}
+
+.slot-glow {
+  animation: slot-glow 800ms ease-out;
+}

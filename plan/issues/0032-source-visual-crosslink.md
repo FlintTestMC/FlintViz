@@ -90,3 +90,32 @@ Constraints to respect when implementing the cross-link in the editor:
 ## Handoff from #0021 (JSON schema)
 
 - Schema-validation squiggles use Monaco's internal marker owner; replay-error squiggles use `MARKER_OWNER`. Cross-link decorations (a third visual layer) should be plain decorations, not markers, to avoid touching either set.
+
+## Handoff from #0028 (timeline scrubber)
+
+`frontend/src/timeline/Scrubber.tsx` already renders one marker per event-bearing tick (and the helper `buildMarkers` in `frontend/src/timeline/markers.ts` produces them). The scrubber doesn't yet emit a click-to-source signal — wire that here:
+
+- Markers carry just `{ tick, kind, summary }` today. To resolve "tick was clicked" → source pointer, use the existing rule: `event_index = 0` is the natural target (first emitted entry on that tick — first action when present, else first assertion). Look up `(tick, 0)` in the forward index this issue builds.
+- The `<g>` per marker already binds `onPointerEnter`/`onPointerLeave` for tooltips. Add `onClick` on the same group; don't add it on the surrounding `<svg>` (which owns the drag-to-scrub handler) or the click will fire on every drag.
+- Drag-to-scrub calls `setTick` continuously and pauses playback on pointer-down; both behaviors should remain unchanged when the click-to-source path is added — clicking a marker to navigate the editor should *also* set the playhead, so calling `setTick(marker.tick)` first and then routing the editor reveal afterwards is fine.
+- The scrubber's `<svg>` uses a fixed `viewBox` of 1000×… and `preserveAspectRatio="none"` for horizontal scaling. If you ever surface marker positions to non-SVG consumers, the source of truth for tick→pixel is `tickToX` inside `Scrubber.tsx` — do not duplicate.
+- Tooltips are inline (custom div positioned via `%`). If you replace them with Radix tooltips when wiring click-to-source, that's fine; the existing positioning is %-based off the `viewBox` so pixel math still works.
+
+## Handoff from #0029 (playback controls)
+
+Global keyboard shortcuts now live in `frontend/src/timeline/Controls.tsx` behind the `isEditableTarget` guard (skips when an `<input>`/`<textarea>`/`<select>`/contentEditable element has focus). When you add cursor-driven editor↔timeline highlighting:
+
+- The Monaco editor's textarea host is contentEditable — `isEditableTarget` already excludes it, so playback shortcuts (←/→, space, Home/End, R) never steal keystrokes from the editor. Don't add a second keydown listener; extend the existing one in `Controls.tsx` if you need new shortcuts.
+- `R` is already bound to `rotateClockwise()`. If "click in editor → highlight tick" wants its own shortcut, pick a non-conflicting key.
+
+## Handoff from #0031 (assertion panel)
+
+`frontend/src/panels/Assertions.tsx` groups `AssertionView::Block` by position (`BlockSpec::Multiple` becomes one row). When wiring "click row → editor":
+
+- The grouped row's natural `event_index` is the first of the consecutive run for that group; per the issue's status note, all members of a `BlockSpec::Multiple` group share the same `/timeline/N` pointer, so picking the first event_index is fine. The panel currently doesn't track `event_index` per row — extend `AssertionGroup` with the originating frame index range, or pass the entire frame to `groupAssertions` and have the panel keep a `firstEventIndex` per group.
+- Inventory and `other` rows are one assertion each; their `event_index` is `frame.actions.length + j` where `j` is their offset within `frame.assertions`.
+- The 📍 button publishes via `useCameraStore.flyTo`. Editor reveal should route through the editor-ref store (or event bus) you choose for #0032; the panel already imports `useCameraStore`, so reusing the same module-store pattern keeps imports symmetric.
+
+## Handoff from #0030 (inventory panel)
+
+`frontend/src/panels/Inventory.tsx` reads `frame.inventory_diff?.slots` for its change-glow signal. Reverse indexing inventory clicks → source pointer is *not* tracked by `inventory_diff` itself (the source pointer lives on the originating `ActionEvent`, e.g. `set_slot` / `select_hotbar`, in `frame.actions`). If a future "click slot → editor" path is added: walk `frame.actions` for the matching `set_slot` whose `slot` field equals the clicked slot, and reuse that action's `event_index`.

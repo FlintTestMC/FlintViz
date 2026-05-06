@@ -61,3 +61,17 @@ The editor (`frontend/src/editor/Editor.tsx`) already does limited error renderi
   - **Throw inside the component.** Replace the `console.error` with `throw err`, wrap the 3D pane in an `<ErrorBoundary>` that detects the `Failed to load /mc-assets.zip` substring and renders the asset panel; fall back to a generic error panel otherwise.
 - Last-good-state badge: the world view is already correct here. `World.tsx` reads `worldState` directly from the store; `setReplay(null, errors)` preserves the previous Map, so the rendered scene stays on the last good state when JSON parse fails. The `<StaleBadge />` should overlay on top of `<Scene />` (e.g. as an absolutely-positioned sibling inside the `<div className="flex-1">` that hosts it in `App.tsx`), not inside the `<Canvas>` — HTML-in-3D needs `<Html>` from drei and is overkill for a status badge.
 - `<World />` returns `null` when `worldState.size === 0` or providers haven't loaded. That keeps the canvas visible (background, lights, OrbitControls still active) so the user sees an empty scene rather than a blank pane while loading.
+
+## Handoff from #0028 (timeline scrubber)
+
+`frontend/src/timeline/Scrubber.tsx` already handles its own empty state — when `replay === null` it renders a thin disabled bar with "No replay loaded". That copy is fine for v1; it should *not* fire the global toast, since "no test selected yet" isn't an error. The same goes for the playback controls (`Controls.tsx`), which disable buttons via the `disabled` prop but emit no errors.
+
+When parse errors land but a previous replay survived (`s.parseErrors.length > 0 && s.replay !== null`), the scrubber renders against the *last good* replay, so the playhead and markers continue to work. The stale badge should overlay the 3D pane only — don't gray out or banner the scrubber, since users actively need to scrub through the last-good replay while reviewing the parse error.
+
+## Handoff from #0030 (inventory panel)
+
+`frontend/src/panels/itemIcons.ts` is the second consumer of the asset zip after `world/atlas.ts`. The shared loader `loadAssetZip()` (now in `world/atlas.ts`) memoizes the parsed `JSZip` so a missing zip rejects from both consumers with the same surface message. For this issue:
+
+- A single missing-zip toast (or panel) is correct UX — both `loadBlockProviders()` and `loadItemIcons()` will reject. Subscribe the toast channel once to whichever loader you prefer (recommend `loadBlockProviders()` since the world view fails more visibly); the inventory panel quietly falls back to a text label per item, so missing icons alone don't need their own error surface.
+- `panels/Inventory.tsx` currently catches icon-load failures with a `console.warn` and renders a 4-letter id stub for every slot. That's the v1 "graceful degrade" — when this issue lands, keep the fallback rendering and just route the warn through the toast channel (deduplicate against the world-view toast for the same root cause).
+- `loadItemIcons()` exposes `resetItemIcons()` for tests; if you add a "retry assets" UX, call both `resetBlockProviders()` and `resetItemIcons()` to invalidate the shared zip cache as well (it lives behind `resetBlockProviders()` in `atlas.ts`).

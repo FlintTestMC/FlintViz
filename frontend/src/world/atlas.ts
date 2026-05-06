@@ -29,6 +29,25 @@ const MODEL_PREFIX = "assets/minecraft/models/";
 const TEXTURE_PREFIX = "assets/minecraft/textures/";
 
 let cached: Promise<BlockProviders> | null = null;
+let zipPromise: Promise<JSZip> | null = null;
+
+// Shared parsed-zip singleton. Both `world/atlas.ts` and `panels/itemIcons.ts`
+// (#0030) consume it so the asset zip is parsed exactly once per app load even
+// though the browser would otherwise cache the HTTP response.
+export function loadAssetZip(): Promise<JSZip> {
+  if (zipPromise) return zipPromise;
+  zipPromise = (async () => {
+    const res = await fetch(ASSETS_URL);
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load ${ASSETS_URL} (${res.status}). Run \`npm run assets\` to generate it.`,
+      );
+    }
+    const zipBytes = new Uint8Array(await res.arrayBuffer());
+    return JSZip.loadAsync(zipBytes);
+  })();
+  return zipPromise;
+}
 
 export function loadBlockProviders(): Promise<BlockProviders> {
   if (cached) return cached;
@@ -39,17 +58,11 @@ export function loadBlockProviders(): Promise<BlockProviders> {
 // Reset cache — used by the gallery's reload button and by tests.
 export function resetBlockProviders(): void {
   cached = null;
+  zipPromise = null;
 }
 
 async function doLoad(): Promise<BlockProviders> {
-  const res = await fetch(ASSETS_URL);
-  if (!res.ok) {
-    throw new Error(
-      `Failed to load ${ASSETS_URL} (${res.status}). Run \`npm run assets\` to generate it.`,
-    );
-  }
-  const zipBytes = new Uint8Array(await res.arrayBuffer());
-  const zip = await JSZip.loadAsync(zipBytes);
+  const zip = await loadAssetZip();
 
   const textureBlobs: { [id: string]: Blob } = {};
   const modelEntries: Array<[Identifier, unknown]> = [];
