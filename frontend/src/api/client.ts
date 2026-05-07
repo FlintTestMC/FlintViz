@@ -76,6 +76,39 @@ export const api = {
     });
   },
 
+  async saveTest(
+    id: string,
+    source: string,
+    signal?: AbortSignal,
+  ): Promise<ApiResult<null>> {
+    let res: Response;
+    try {
+      res = await fetch(`/api/tests/${encodeId(id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: source,
+        signal,
+      });
+    } catch (err) {
+      return {
+        ok: false,
+        status: 0,
+        aborted: isAbort(err),
+        err: err instanceof Error ? err.message : String(err),
+      };
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      return {
+        ok: false,
+        status: res.status,
+        aborted: false,
+        err: text || `HTTP ${res.status}`,
+      };
+    }
+    return { ok: true, status: res.status, body: null };
+  },
+
   events(onEvent: EventsListener): () => void {
     return subscribeEvents(onEvent);
   },

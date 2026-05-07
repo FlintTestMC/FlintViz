@@ -46,6 +46,18 @@ export default function Editor() {
         }));
         monaco.editor.setModelMarkers(model, MARKER_OWNER, markers);
       }
+      // Ctrl+S — save the current editor content to disk.
+      ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        const { testId, source } = useReplayStore.getState();
+        if (!testId) return;
+        void api.saveTest(testId, source).then((result) => {
+          if (!result.ok) {
+            showToast({ kind: "error", message: `Save failed: ${result.err}` });
+          } else {
+            showToast({ kind: "info", message: "Saved" });
+          }
+        });
+      });
       // Cursor → timeline highlight (#0032). Resolve the enclosing
       // `/timeline/N` and dispatch the highlighted-tick set on every move.
       const updateHighlight = () => {

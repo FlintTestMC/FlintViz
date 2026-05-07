@@ -127,6 +127,7 @@ The optional flint-steel runtime is staged in M8.
 - [#0041](issues/0041-multi-assert.md)
 - [#0042](issues/0042-brighter-background.md)
 - [#0043](issues/0043-fire-texture-missing.md)
+- [#0044](issues/0044-save-function.md)
 
 ## Verification (end-to-end after M1–M7)
 

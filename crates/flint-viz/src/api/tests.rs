@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use axum::{
     Json, Router,
-    extract::{Path as AxumPath, State},
+    extract::{DefaultBodyLimit, Path as AxumPath, State},
     http::StatusCode,
     routing::get,
 };
@@ -18,10 +18,13 @@ use walkdir::WalkDir;
 use crate::state::AppState;
 use crate::util::relative_id;
 
+const SAVE_BODY_LIMIT: usize = 1024 * 1024;
+
 pub fn router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/tests", get(list_tests))
-        .route("/api/tests/{*id}", get(get_test))
+        .route("/api/tests/{*id}", get(get_test).put(save_test))
+        .layer(DefaultBodyLimit::max(SAVE_BODY_LIMIT))
 }
 
 #[derive(Debug, Serialize)]
@@ -140,6 +143,31 @@ fn load_test(root: &Path, id: &str) -> Result<TestDetail, (StatusCode, &'static 
         spec,
         parse_error,
     })
+}
+
+async fn save_test(
+    State(state): State<Arc<AppState>>,
+    AxumPath(id): AxumPath<String>,
+    body: String,
+) -> Result<StatusCode, (StatusCode, &'static str)> {
+    let root = state.test_root.clone();
+    tokio::task::spawn_blocking(move || write_test(&root, &id, &body))
+        .await
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "task join failed"))?
+}
+
+fn write_test(
+    root: &Path,
+    id: &str,
+    content: &str,
+) -> Result<StatusCode, (StatusCode, &'static str)> {
+    let resolved = resolve_under_root(root, id)?;
+    if !resolved.is_file() {
+        return Err((StatusCode::NOT_FOUND, "test not found"));
+    }
+    std::fs::write(&resolved, content)
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "write failed"))?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// Resolve `id` against `root`, canonicalize, and verify the result lives under `root`.
