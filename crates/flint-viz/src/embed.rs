@@ -27,9 +27,8 @@ async fn serve(uri: Uri) -> Response {
         return resp;
     }
     // SPA fallback for client-side routes.
-    lookup("index.html").unwrap_or_else(|| {
-        (StatusCode::NOT_FOUND, "frontend assets missing").into_response()
-    })
+    lookup("index.html")
+        .unwrap_or_else(|| (StatusCode::NOT_FOUND, "frontend assets missing").into_response())
 }
 
 fn lookup(path: &str) -> Option<Response> {
@@ -38,7 +37,8 @@ fn lookup(path: &str) -> Option<Response> {
     let mut response = Response::new(Body::from(asset.data.into_owned()));
     response.headers_mut().insert(
         header::CONTENT_TYPE,
-        HeaderValue::from_str(mime.as_ref()).unwrap_or(HeaderValue::from_static("application/octet-stream")),
+        HeaderValue::from_str(mime.as_ref())
+            .unwrap_or(HeaderValue::from_static("application/octet-stream")),
     );
     Some(response)
 }

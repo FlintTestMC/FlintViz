@@ -254,7 +254,9 @@ fn apply_action(
             });
         }
         ActionType::SelectHotbar { slot } => {
-            frame.actions.push(ActionEvent::SelectHotbar { slot: *slot });
+            frame
+                .actions
+                .push(ActionEvent::SelectHotbar { slot: *slot });
             if !(1..=9).contains(slot) {
                 errors.push(ReplayError {
                     tick: frame.tick,
@@ -282,8 +284,8 @@ fn apply_action(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::model::AssertionView;
+    use super::*;
 
     fn parse(json: &str) -> TestSpec {
         serde_json::from_str(json).expect("fixture parses")
@@ -379,11 +381,15 @@ mod tests {
         assert_eq!(replay.frames.len(), 1);
         let frame = &replay.frames[0];
         assert_eq!(frame.actions.len(), 1);
-        assert!(matches!(&frame.actions[0], ActionEvent::Fill { region, .. } if region.min == [0,0,0] && region.max == [1,1,1]));
+        assert!(
+            matches!(&frame.actions[0], ActionEvent::Fill { region, .. } if region.min == [0,0,0] && region.max == [1,1,1])
+        );
         // 2 * 2 * 2 = 8 positions
         assert_eq!(frame.block_diff.len(), 8);
         for change in &frame.block_diff {
-            assert!(matches!(change, BlockChange::Set { block, .. } if block.id == "minecraft:dirt"));
+            assert!(
+                matches!(change, BlockChange::Set { block, .. } if block.id == "minecraft:dirt")
+            );
         }
     }
 
@@ -469,7 +475,11 @@ mod tests {
                 assert_eq!(placements[0].block.id, "minecraft:sand");
                 assert_eq!(placements[3].block.id, "minecraft:cactus");
                 assert_eq!(
-                    placements[3].block.properties.get("age").map(String::as_str),
+                    placements[3]
+                        .block
+                        .properties
+                        .get("age")
+                        .map(String::as_str),
                     Some("0")
                 );
             }
@@ -572,7 +582,10 @@ mod tests {
         let replay = compute(&spec);
         assert!(replay.initial_player.inventory.is_empty());
         assert_eq!(replay.initial_player.selected_hotbar, 1);
-        assert!(matches!(replay.initial_player.game_mode, GameMode::Creative));
+        assert!(matches!(
+            replay.initial_player.game_mode,
+            GameMode::Creative
+        ));
     }
 
     #[test]
@@ -597,7 +610,10 @@ mod tests {
         );
         let replay = compute(&spec);
         assert_eq!(replay.initial_player.selected_hotbar, 3);
-        assert!(matches!(replay.initial_player.game_mode, GameMode::Survival));
+        assert!(matches!(
+            replay.initial_player.game_mode,
+            GameMode::Survival
+        ));
         let item = replay
             .initial_player
             .inventory

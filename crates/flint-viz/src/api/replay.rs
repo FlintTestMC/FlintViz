@@ -7,11 +7,7 @@
 
 use std::sync::Arc;
 
-use axum::{
-    Json, Router,
-    extract::DefaultBodyLimit,
-    routing::post,
-};
+use axum::{Json, Router, extract::DefaultBodyLimit, routing::post};
 use flint_core::test_spec::TestSpec;
 use serde::Serialize;
 

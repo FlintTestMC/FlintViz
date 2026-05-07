@@ -8,7 +8,6 @@
 //! and the tick's [`PlayerDelta`] so reverse-scrubbing works in the frontend
 //! store (#0018) without a second pass.
 
-
 use flint_core::test_spec::{GameMode, Item, PlayerSlot};
 
 use super::model::{
@@ -19,7 +18,9 @@ use super::model::{
 /// delta that ended up empty, so callers can lazily allocate without having
 /// to reason about whether something else on this tick already did.
 pub fn inventory_diff_mut(frame: &mut TickFrame) -> &mut PlayerDelta {
-    frame.inventory_diff.get_or_insert_with(PlayerDelta::default)
+    frame
+        .inventory_diff
+        .get_or_insert_with(PlayerDelta::default)
 }
 
 /// Apply a slot write to the running snapshot and record it on the delta.
@@ -52,7 +53,10 @@ pub fn record_slot_change(
 /// currently-selected hotbar slot is consulted; if that slot is empty or the
 /// selection is out of range (`hotbar()` rejects 0 / 10+), `None` is returned
 /// and the frontend will render the action with an "unknown item" badge.
-pub fn resolve_active_item(snapshot: &PlayerSnapshot, override_id: &Option<String>) -> Option<Item> {
+pub fn resolve_active_item(
+    snapshot: &PlayerSnapshot,
+    override_id: &Option<String>,
+) -> Option<Item> {
     if let Some(id) = override_id {
         return Some(Item::new(id));
     }

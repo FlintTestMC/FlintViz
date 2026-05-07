@@ -273,11 +273,7 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let root = dir.path().canonicalize().unwrap();
         fs::create_dir(root.join("sub")).unwrap();
-        fs::write(
-            root.join("sub/a.json"),
-            r#"{"name":"alpha","timeline":[]}"#,
-        )
-        .unwrap();
+        fs::write(root.join("sub/a.json"), r#"{"name":"alpha","timeline":[]}"#).unwrap();
 
         let detail = load_test(&root, "sub/./a.json").unwrap();
         assert_eq!(detail.id, "sub/a.json");

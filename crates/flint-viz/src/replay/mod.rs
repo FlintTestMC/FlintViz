@@ -17,6 +17,7 @@ pub use model::{
     PlayerSnapshot, Replay, ReplayError, SlotChange, SourceSpan, TickFrame,
 };
 
-pub use engine::compute;
-#[allow(unused_imports)] // surfaced as a public knob; first internal user lands in #0026 (highlight tooltip).
+#[allow(unused_imports)]
+// surfaced as a public knob; first internal user lands in #0026 (highlight tooltip).
 pub use engine::MAX_FILL_BLOCKS;
+pub use engine::compute;

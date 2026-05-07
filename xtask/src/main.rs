@@ -37,7 +37,8 @@ fn build(args: &[String]) -> Result<(), String> {
     println!("xtask: npm run build  ({})", frontend.display());
     run("npm", &["run", "build"], &frontend)?;
 
-    let mut cargo_args: Vec<&str> = vec!["build", "-p", "flint-viz", "--features", "embed-frontend"];
+    let mut cargo_args: Vec<&str> =
+        vec!["build", "-p", "flint-viz", "--features", "embed-frontend"];
     if !debug {
         cargo_args.push("--release");
     }
@@ -45,9 +46,7 @@ fn build(args: &[String]) -> Result<(), String> {
     run("cargo", &cargo_args, &workspace)?;
 
     let profile = if debug { "debug" } else { "release" };
-    println!(
-        "xtask: built target/{profile}/flint-viz (with embedded frontend)"
-    );
+    println!("xtask: built target/{profile}/flint-viz (with embedded frontend)");
     Ok(())
 }
 

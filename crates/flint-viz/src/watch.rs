@@ -39,8 +39,7 @@ pub struct FileEvent {
 /// and must be kept alive for the lifetime of the server — dropping it stops
 /// the watch.
 pub fn spawn(state: Arc<AppState>) -> notify::Result<WatcherGuard> {
-    let (raw_tx, raw_rx) =
-        tokio::sync::mpsc::unbounded_channel::<notify::Result<Event>>();
+    let (raw_tx, raw_rx) = tokio::sync::mpsc::unbounded_channel::<notify::Result<Event>>();
 
     let mut watcher = RecommendedWatcher::new(
         move |res| {
@@ -115,9 +114,7 @@ fn is_relevant_kind(kind: &EventKind) -> bool {
     matches!(
         kind,
         EventKind::Create(CreateKind::File | CreateKind::Any)
-            | EventKind::Modify(
-                ModifyKind::Data(_) | ModifyKind::Name(_) | ModifyKind::Any
-            )
+            | EventKind::Modify(ModifyKind::Data(_) | ModifyKind::Name(_) | ModifyKind::Any)
             | EventKind::Remove(_)
     )
 }
