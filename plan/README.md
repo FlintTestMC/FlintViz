@@ -63,6 +63,7 @@ The optional flint-steel runtime is staged in M8.
 | M6  | Timeline & side panels                                          |
 | M7  | Cross-linking & polish                                          |
 | M8  | (Stretch) Real execution via flint-steel                        |
+| M9  | Fixes |
 
 ## Issues
 
@@ -120,6 +121,12 @@ The optional flint-steel runtime is staged in M8.
 
 ### M8 — Stretch: real execution
 - [#0035](issues/0035-flint-steel-runtime.md) — Cargo feature gating real flint-steel execution + UI overlay
+
+### M9 - Fixes
+- [#0040](issues/0040-seperate-actions.md)
+- [#0041](issues/0041-multi-assert.md)
+- [#0042](issues/0042-brighter-background.md)
+- [#0043](issues/0043-fire-texture-missing.md)
 
 ## Verification (end-to-end after M1–M7)
 
