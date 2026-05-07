@@ -24,7 +24,7 @@ export default function Scene() {
       camera={{ position: [6, 6, 6], fov: 50 }}
       className="h-full w-full"
     >
-      <color attach="background" args={["#0a0a0a"]} />
+      <color attach="background" args={["#2d2d2d"]} />
       <ambientLight intensity={0.6} />
       <directionalLight position={[8, 12, 6]} intensity={0.8} />
       <directionalLight position={[-6, 4, -8]} intensity={0.3} />
