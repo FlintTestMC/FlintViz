@@ -7,6 +7,7 @@ import type { PosKey } from "../store/world";
 import AssertionGhosts from "./AssertionGhosts";
 import Camera from "./Camera";
 import CleanupOverlay from "./CleanupOverlay";
+import FailureOverlay from "./FailureOverlay";
 import Highlights from "./Highlights";
 import World from "./World";
 import { useBlockProvidersState } from "./useBlockProviders";
@@ -34,6 +35,7 @@ export default function Scene() {
         <CleanupOverlay />
         <Highlights />
         <AssertionGhosts />
+        <FailureOverlay />
       </SceneRoot>
     </Canvas>
   );

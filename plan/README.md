@@ -14,7 +14,8 @@ view: source on the left, 3D world view + timeline scrubber + inventory/assertio
 right. Editing JSON re-renders the visualization live.
 
 Out of scope for v1: real game-logic execution, recording new tests, multi-test diffing, sharing.
-The optional flint-steel runtime is staged in M8.
+M8 (version 1) adds a viewer for failing flint-steel runs — flint-steel emits a clickable URL on failure that
+opens flint-viz with the failing test loaded and the expected/actual blocks overlaid in 3D.
 
 ## Decisions
 
@@ -62,7 +63,7 @@ The optional flint-steel runtime is staged in M8.
 | M5  | 3D rendering — deepslate, overlays, action highlights           |
 | M6  | Timeline & side panels                                          |
 | M7  | Cross-linking & polish                                          |
-| M8  | (Stretch) Real execution via flint-steel                        |
+| M8  | (Stretch) Open failing flint-steel runs via clickable URL       |
 | M9  | Fixes |
 
 ## Issues
@@ -119,8 +120,8 @@ The optional flint-steel runtime is staged in M8.
 - [#0033](issues/0033-error-states.md) — Friendly UI for invalid JSON, missing path, no tests
 - [#0034](issues/0034-readme.md) — README with screenshots and usage
 
-### M8 — Stretch: real execution
-- [#0035](issues/0035-flint-steel-runtime.md) — Cargo feature gating real flint-steel execution + UI overlay
+### M8 — Stretch: failing-run viewer
+- [#0035](issues/0035-flint-steel-runtime.md) — Open failing flint-steel runs in flint-viz via clickable URL (FailurePayload → ghost-expected + solid-actual overlay)
 
 ### M9 - Fixes
 - [#0040](issues/0040-seperate-actions.md)

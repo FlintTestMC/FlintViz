@@ -197,3 +197,37 @@ export interface Replay {
 export interface FileChangedEvent {
   id: string;
 }
+
+// --- Failure URL payload (#0035) -------------------------------------------
+//
+// Mirrors `flint_core::viz_link::FailurePayload` and friends. Rust enums are
+// serialized externally-tagged by default (no `#[serde(...)]` overrides on
+// these types), so e.g. `InfoType::Block(b)` becomes `{ "Block": b }`.
+
+export type AssertPosition =
+  | { Coordinate: { x: number; y: number; z: number } }
+  | { Slot: { slot: PlayerSlot } };
+
+export type InfoType =
+  | { String: string }
+  | { Block: Block }
+  | { Blocks: Block[] }
+  | { Item: Item }
+  | { Slot: PlayerSlot };
+
+export interface AssertFailure {
+  tick: number;
+  error_message: string;
+  position: AssertPosition;
+  execution_time_ms: number | null;
+  expected: InfoType;
+  actual: InfoType;
+}
+
+export interface FailurePayload {
+  version: number;
+  spec: TestSpec;
+  source_path: string | null;
+  failures: AssertFailure[];
+  total_ticks: number;
+}

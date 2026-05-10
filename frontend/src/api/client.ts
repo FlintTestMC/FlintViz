@@ -1,4 +1,5 @@
 import type {
+  FailurePayload,
   ReplayResponse,
   TestDetail,
   TestSummary,
@@ -111,5 +112,17 @@ export const api = {
 
   events(onEvent: EventsListener): () => void {
     return subscribeEvents(onEvent);
+  },
+
+  decodeFailure(
+    encoded: string,
+    signal?: AbortSignal,
+  ): Promise<ApiResult<FailurePayload>> {
+    return request<FailurePayload>("/api/failure/decode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ encoded }),
+      signal,
+    });
   },
 };

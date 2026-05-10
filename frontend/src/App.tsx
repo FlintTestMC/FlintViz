@@ -7,6 +7,7 @@ import Assertions from "./panels/Assertions";
 import Inventory from "./panels/Inventory";
 import TestList from "./panels/TestList";
 import Controls from "./timeline/Controls";
+import FailureBanner from "./timeline/FailureBanner";
 import Scrubber from "./timeline/Scrubber";
 import Scene from "./world/Scene";
 import SceneToolbar from "./world/SceneToolbar";
@@ -48,6 +49,9 @@ export default function App() {
                 <Scene />
                 <StaleBadge />
               </div>
+            </ErrorBoundary>
+            <ErrorBoundary label="Failure banner">
+              <FailureBanner />
             </ErrorBoundary>
             <ErrorBoundary label="Timeline">
               <Scrubber />
