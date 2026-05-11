@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "../api/client";
 import { showToast } from "../components/toastStore";
+import { isEffectivelyReadOnly } from "../store/config";
 import { useCrosslinkStore, ticksAtOffset } from "../store/crosslink";
-import { isReadOnly, useFailureStore } from "../store/failure";
 import { useReplayStore } from "../store/replay";
 import { formatJsonText } from "./formatJson";
 import { MARKER_OWNER, parseErrorsToMarkers } from "./markers";
@@ -52,7 +52,7 @@ export default function Editor() {
       ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
         const { testId, source } = useReplayStore.getState();
         if (!testId) return;
-        if (isReadOnly(useFailureStore.getState())) {
+        if (isEffectivelyReadOnly()) {
           showToast({ kind: "info", message: "Read-only mode — not saved" });
           return;
         }
@@ -158,7 +158,7 @@ export default function Editor() {
       ed.setValue(result.text);
       if (position) ed.setPosition(position);
     }
-    if (isReadOnly(useFailureStore.getState())) {
+    if (isEffectivelyReadOnly()) {
       showToast({ kind: "info", message: "Formatted (read-only, not saved)" });
       return;
     }

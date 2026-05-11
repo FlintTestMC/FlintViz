@@ -4,6 +4,7 @@ use axum::Router;
 
 use crate::state::AppState;
 
+pub mod config;
 pub mod events;
 pub mod failure;
 pub mod replay;
@@ -15,4 +16,5 @@ pub fn router() -> Router<Arc<AppState>> {
         .merge(replay::router())
         .merge(events::router())
         .merge(failure::router())
+        .merge(config::router())
 }

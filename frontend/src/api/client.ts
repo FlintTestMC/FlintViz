@@ -1,6 +1,7 @@
 import type {
   FailurePayload,
   ReplayResponse,
+  ServerConfig,
   TestDetail,
   TestSummary,
 } from "./types";
@@ -57,6 +58,10 @@ async function request<T>(
 }
 
 export const api = {
+  getConfig(signal?: AbortSignal): Promise<ApiResult<ServerConfig>> {
+    return request<ServerConfig>("/api/config", { signal });
+  },
+
   listTests(signal?: AbortSignal): Promise<ApiResult<TestSummary[]>> {
     return request<TestSummary[]>("/api/tests", { signal });
   },

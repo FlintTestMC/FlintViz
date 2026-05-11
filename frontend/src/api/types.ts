@@ -11,6 +11,10 @@ export interface TestSummary {
   parse_error?: string;
 }
 
+export interface ServerConfig {
+  readonly: boolean;
+}
+
 // Permissive — full TimelineEntry typing is deferred to #0021 (JSON schema).
 export type TimelineEntry = Record<string, unknown>;
 

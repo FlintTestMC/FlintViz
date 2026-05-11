@@ -38,7 +38,7 @@ pub struct FileEvent {
 /// Spawn the watcher. The returned guard owns the underlying `notify::Watcher`
 /// and must be kept alive for the lifetime of the server — dropping it stops
 /// the watch.
-pub fn spawn(state: Arc<AppState>) -> notify::Result<WatcherGuard> {
+pub fn spawn(state: Arc<AppState>, root: PathBuf) -> notify::Result<WatcherGuard> {
     let (raw_tx, raw_rx) = tokio::sync::mpsc::unbounded_channel::<notify::Result<Event>>();
 
     let mut watcher = RecommendedWatcher::new(
@@ -50,9 +50,8 @@ pub fn spawn(state: Arc<AppState>) -> notify::Result<WatcherGuard> {
         },
         Config::default(),
     )?;
-    watcher.watch(&state.test_root, RecursiveMode::Recursive)?;
+    watcher.watch(&root, RecursiveMode::Recursive)?;
 
-    let root = state.test_root.clone();
     let tx = state.file_events.clone();
     tokio::spawn(process_events(raw_rx, root, tx));
 

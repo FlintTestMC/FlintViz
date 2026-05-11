@@ -13,7 +13,8 @@ pub struct Cli {
 pub enum Command {
     /// Serve the visualizer on a local HTTP port.
     Serve {
-        /// Directory to scan for Flint test JSON files. Defaults to the current directory.
+        /// Directory to scan for Flint test JSON files. If omitted, the
+        /// server starts in read-only mode (failure-URL viewer only).
         path: Option<PathBuf>,
 
         /// Port to bind on 127.0.0.1.

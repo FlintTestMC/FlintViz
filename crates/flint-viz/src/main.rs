@@ -42,15 +42,23 @@ async fn run_serve(
     open: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let test_root = resolve_test_root(path.as_deref())?;
-    tracing::info!("test root: {}", test_root.display());
+    let readonly = test_root.is_none();
+    match &test_root {
+        Some(root) => tracing::info!("test root: {}", root.display()),
+        None => tracing::info!(
+            "no path given — running in read-only mode (failure-URL viewer only)"
+        ),
+    }
 
-    let state = AppState::new(test_root);
+    let state = AppState::new(test_root.clone(), readonly);
 
-    let _watcher = match watch::spawn(state.clone()) {
-        Ok(guard) => guard,
-        Err(err) => {
-            return Err(format!("failed to start file watcher: {err}").into());
-        }
+    let _watcher = if let Some(root) = test_root {
+        Some(
+            watch::spawn(state.clone(), root)
+                .map_err(|err| format!("failed to start file watcher: {err}"))?,
+        )
+    } else {
+        None
     };
 
     let api = Router::new()
@@ -78,8 +86,10 @@ async fn run_serve(
     Ok(())
 }
 
-fn resolve_test_root(path: Option<&Path>) -> Result<PathBuf, String> {
-    let raw = path.unwrap_or_else(|| Path::new("."));
+fn resolve_test_root(path: Option<&Path>) -> Result<Option<PathBuf>, String> {
+    let Some(raw) = path else {
+        return Ok(None);
+    };
     if !raw.exists() {
         return Err(format!(
             "test path `{}` does not exist.\n\
@@ -95,13 +105,15 @@ fn resolve_test_root(path: Option<&Path>) -> Result<PathBuf, String> {
             raw.display()
         ));
     }
-    raw.canonicalize().map_err(|err| {
-        format!(
-            "failed to canonicalize test path `{}`: {err}.\n\
-             hint: check directory permissions or that the path is reachable.",
-            raw.display()
-        )
-    })
+    raw.canonicalize()
+        .map(Some)
+        .map_err(|err| {
+            format!(
+                "failed to canonicalize test path `{}`: {err}.\n\
+                 hint: check directory permissions or that the path is reachable.",
+                raw.display()
+            )
+        })
 }
 
 async fn healthz(State(_state): State<Arc<AppState>>) -> &'static str {
