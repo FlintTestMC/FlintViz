@@ -14,7 +14,7 @@ clap = { version = "4", features = ["derive"] }
 # back to the git tag once a release including viz_link ships.
 flint-core = { git = "https://github.com/FlintTestMC/flint-core.git" }
 mime_guess = { version = "2", optional = true }
-notify = "6"
+notify = "8"
 rust-embed = { version = "8", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

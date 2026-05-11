@@ -10,6 +10,7 @@ RUN apk add --no-cache nodejs npm musl-dev
 WORKDIR /build
 
 COPY Cargo.toml Cargo.lock ./
+COPY .cargo ./.cargo
 COPY xtask ./xtask
 COPY crates ./crates
 COPY frontend ./frontend
@@ -27,4 +28,4 @@ FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=builder /flint-viz /flint-viz
 
 EXPOSE 7878
-ENTRYPOINT ["/flint-viz"]
+ENTRYPOINT ["/flint-viz serve"]
