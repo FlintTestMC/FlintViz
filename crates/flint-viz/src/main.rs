@@ -7,6 +7,7 @@ mod state;
 mod util;
 mod watch;
 
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -26,7 +27,12 @@ async fn main() -> ExitCode {
 
     let cli = Cli::parse();
     match cli.command {
-        Command::Serve { path, port, open } => match run_serve(path, port, open).await {
+        Command::Serve {
+            path,
+            host,
+            port,
+            open,
+        } => match run_serve(path, host, port, open).await {
             Ok(()) => ExitCode::SUCCESS,
             Err(err) => {
                 eprintln!("error: {err}");
@@ -38,6 +44,7 @@ async fn main() -> ExitCode {
 
 async fn run_serve(
     path: Option<PathBuf>,
+    host: IpAddr,
     port: u16,
     open: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -71,10 +78,15 @@ async fn run_serve(
     #[cfg(not(feature = "embed-frontend"))]
     let app = api;
 
-    let addr = format!("127.0.0.1:{port}");
+    let addr = SocketAddr::new(host, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    let url = format!("http://{addr}");
-    tracing::info!("flint-viz listening on {url}");
+    let display_host = if host.is_unspecified() {
+        IpAddr::V4(Ipv4Addr::LOCALHOST)
+    } else {
+        host
+    };
+    let url = format!("http://{}", SocketAddr::new(display_host, port));
+    tracing::info!("flint-viz listening on {url} (bound to {addr})");
 
     if open {
         if let Err(err) = webbrowser::open(&url) {

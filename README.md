@@ -58,7 +58,10 @@ flint-viz serve <PATH>
 - `<PATH>` — directory to scan (recursively) for Flint test JSON. Defaults to
   the current directory. Must exist and be a directory; `flint-viz` exits with
   a `hint:` line if not.
-- `-p, --port <N>` — bind port on `127.0.0.1` (default `7878`).
+- `--host <IP>` — bind address (default `127.0.0.1`). Use `0.0.0.0` to expose
+  the server outside the host, e.g. when running in Docker:
+  `docker run -p 7878:7878 flint-viz --host 0.0.0.0`.
+- `-p, --port <N>` — bind port (default `7878`).
 - `--open` — open the URL in the system browser after start.
 
 Open <http://localhost:7878>. The sidebar lists every test under `<PATH>`;

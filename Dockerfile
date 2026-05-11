@@ -28,4 +28,4 @@ FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=builder /flint-viz /flint-viz
 
 EXPOSE 7878
-ENTRYPOINT ["/flint-viz", "serve"]
+ENTRYPOINT ["/flint-viz", "serve", "--host", "0.0.0.0"]
