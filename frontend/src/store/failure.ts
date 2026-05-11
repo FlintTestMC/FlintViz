@@ -27,6 +27,10 @@ export interface FailureState {
   setVisible: (visible: boolean) => void;
 }
 
+/** True when the editor buffer came from an inline URL payload and can't be saved to disk. */
+export const isReadOnly = (s: FailureState): boolean =>
+  s.status.kind === "loaded" && s.status.sourceMode === "inline";
+
 export const useFailureStore = create<FailureState>((set) => ({
   status: { kind: "idle" },
   visible: true,
