@@ -18,7 +18,8 @@ COPY frontend ./frontend
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \
     --mount=type=cache,target=/build/frontend/node_modules \
-    cargo xtask build \
+    (cd frontend && npm ci && npm run assets) \
+ && cargo xtask build \
  && cp /build/target/release/flint-viz /flint-viz \
  && strip /flint-viz
 
