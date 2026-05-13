@@ -130,6 +130,7 @@ opens flint-viz with the failing test loaded and the expected/actual blocks over
 - [#0042](issues/0042-brighter-background.md)
 - [#0043](issues/0043-fire-texture-missing.md)
 - [#0044](issues/0044-save-function.md)
+- [#0048](issues/0048-default-block-properties.md) — fill in default block properties so bare/partial blocks render correctly
 
 ### Packaging & release
 - [#0046](issues/0046-deb-package.md) — `.deb` package for Ubuntu via `cargo-deb` (+ `cargo xtask deb`)
