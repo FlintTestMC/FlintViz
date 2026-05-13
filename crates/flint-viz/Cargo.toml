@@ -2,10 +2,34 @@
 name = "flint-viz"
 version = "0.1.0"
 edition = "2024"
+description = "Web-based 3D visualizer for Flint Minecraft tests"
+license = "GPL-2.0-only"
+authors = ["JunkyDeveloper <jonas.bauer.edv@gmail.com>"]
+homepage = "https://github.com/FlintTestMC/FlintVisulizer"
+repository = "https://github.com/FlintTestMC/FlintVisulizer"
+readme = "../../README.md"
 
 [features]
 default = []
 embed-frontend = ["dep:rust-embed", "dep:mime_guess"]
+
+[package.metadata.deb]
+maintainer = "JunkyDeveloper <jonas.bauer.edv@gmail.com>"
+copyright = "2026, JunkyDeveloper. Licensed under GPL-2.0-only."
+section = "utility"
+priority = "optional"
+extended-description = """
+flint-viz is a local web server and 3D viewer for inspecting Flint Minecraft
+framework test outputs. It watches a directory of test JSON files and renders
+block placements, entity state, and assertions in the browser at
+http://localhost:7878.
+"""
+depends = "$auto"
+assets = [
+    ["target/release/flint-viz", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/flint-viz/README", "644"],
+    ["../../LICENSE", "usr/share/doc/flint-viz/copyright", "644"],
+]
 
 [dependencies]
 axum = "0.8"

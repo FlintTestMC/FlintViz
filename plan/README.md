@@ -65,6 +65,7 @@ opens flint-viz with the failing test loaded and the expected/actual blocks over
 | M7  | Cross-linking & polish                                          |
 | M8  | (Stretch) Open failing flint-steel runs via clickable URL       |
 | M9  | Fixes |
+| P&R | Packaging & release (`.deb`, multi-platform CI)                 |
 
 ## Issues
 
@@ -129,6 +130,10 @@ opens flint-viz with the failing test loaded and the expected/actual blocks over
 - [#0042](issues/0042-brighter-background.md)
 - [#0043](issues/0043-fire-texture-missing.md)
 - [#0044](issues/0044-save-function.md)
+
+### Packaging & release
+- [#0046](issues/0046-deb-package.md) — `.deb` package for Ubuntu via `cargo-deb` (+ `cargo xtask deb`)
+- [#0047](issues/0047-release-workflow.md) — GitHub Actions release workflow (linux/mac/windows + `.deb`)
 
 ## Verification (end-to-end after M1–M7)
 
