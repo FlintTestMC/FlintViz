@@ -15,7 +15,7 @@ export const SPEEDS: Speed[] = [0.5, 1, 2, 4];
 // when no later event exists, so stepping never silently no-ops at end-of-test.
 export function nextEventTick(replay: Replay, tick: number): number {
   for (const f of replay.frames) {
-    if (f.tick > tick && (f.actions.length > 0 || f.assertions.length > 0)) {
+    if (f.tick > tick && f.events.length > 0) {
       return f.tick;
     }
   }
@@ -25,7 +25,7 @@ export function nextEventTick(replay: Replay, tick: number): number {
 export function prevEventTick(replay: Replay, tick: number): number {
   let best = -1;
   for (const f of replay.frames) {
-    if (f.tick < tick && (f.actions.length > 0 || f.assertions.length > 0)) {
+    if (f.tick < tick && f.events.length > 0) {
       best = f.tick;
     } else if (f.tick >= tick) {
       break;

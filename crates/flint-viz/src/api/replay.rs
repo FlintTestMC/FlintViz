@@ -94,7 +94,7 @@ mod tests {
         let resp = parse(body);
         let replay = resp.replay.expect("replay present");
         assert_eq!(replay.frames.len(), 1);
-        assert_eq!(replay.frames[0].block_diff.len(), 1);
+        assert_eq!(replay.frames[0].events.len(), 1);
     }
 
     #[test]

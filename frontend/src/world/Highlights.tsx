@@ -1,20 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { BoxGeometry, EdgesGeometry } from "three";
 
-import type { Aabb, Vec3 } from "../api/types";
+import type { Aabb, TickEvent, Vec3 } from "../api/types";
 import { useReplayStore } from "../store/replay";
 
 const PULSE_MS = 600;
 
 // One-shot pulse on tick change for the blocks affected by the new tick's
-// `block_diff`. Mounted under `<SceneRoot>` so #0036's scene rotation rotates
-// highlights with the world. Skipped during playback to avoid lag (#0029).
-//
-// Each pulse is a fresh React subtree keyed on the tick + a monotonic counter
-// so re-entering the same tick (e.g. scrub left then right) restarts the
-// animation; existing pulses unmount on key change.
+// events. When the event-picker (#0040) has selected a single event N, only
+// that event's positions flash. Skipped during playback to avoid lag (#0029).
 export default function Highlights() {
   const tick = useReplayStore((s) => s.tick);
+  const eventIndex = useReplayStore((s) => s.eventIndex);
   const frames = useReplayStore((s) => s.replay?.frames ?? null);
   const playback = useReplayStore((s) => s.playback);
 
@@ -23,27 +20,44 @@ export default function Highlights() {
     return frames.find((f) => f.tick === tick) ?? null;
   }, [frames, tick]);
 
-  // Bump on every tick change so re-pulsing works even when the same tick is
-  // re-entered (the dependency changes via tick itself, but a fresh key also
-  // forces full subtree remount so timers start clean).
   const [pulseId, setPulseId] = useState(0);
   useEffect(() => {
     setPulseId((n) => n + 1);
-  }, [tick]);
+  }, [tick, eventIndex]);
 
   if (!frame || playback === "playing") return null;
 
-  const cubes: { pos: Vec3; color: string }[] = [];
-  for (const change of frame.block_diff) {
-    cubes.push({
-      pos: change.pos,
-      color: change.kind === "set" ? "#4ade80" : "#f87171",
-    });
-  }
+  const events: TickEvent[] =
+    eventIndex == null
+      ? frame.events
+      : frame.events[eventIndex]
+        ? [frame.events[eventIndex]!]
+        : [];
 
+  const cubes: { pos: Vec3; color: string }[] = [];
   const fills: Aabb[] = [];
-  for (const action of frame.actions) {
-    if (action.kind === "fill") fills.push(action.region);
+  for (const event of events) {
+    switch (event.kind) {
+      case "place":
+        cubes.push({ pos: event.pos, color: "#4ade80" });
+        break;
+      case "remove":
+        cubes.push({ pos: event.pos, color: "#f87171" });
+        break;
+      case "place_each":
+        for (const p of event.placements) {
+          cubes.push({ pos: p.pos, color: "#4ade80" });
+        }
+        break;
+      case "fill":
+        fills.push(event.region);
+        break;
+      case "use_item_on":
+        cubes.push({ pos: event.pos, color: "#22d3ee" });
+        break;
+      default:
+        break;
+    }
   }
 
   return (
@@ -71,7 +85,6 @@ function HighlightCube({ pos, color }: { pos: Vec3; color: string }) {
     const step = () => {
       const elapsed = performance.now() - start;
       const t = Math.min(1, elapsed / PULSE_MS);
-      // Ease out: bright → transparent.
       setOpacity(0.6 * (1 - t));
       if (t < 1) raf = requestAnimationFrame(step);
     };

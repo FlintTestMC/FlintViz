@@ -1,22 +1,33 @@
 import { useMemo } from "react";
 
-import type { AssertionView, Block, Item, PlayerSlot, Vec3 } from "../api/types";
+import type {
+  AssertionView,
+  Block,
+  Item,
+  PlayerSlot,
+  TickEvent,
+  Vec3,
+} from "../api/types";
 import { useCrosslinkStore } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
 import { pointerForEvent } from "../store/sourceMap";
 import { useCameraStore } from "../world/cameraStore";
 import { slotLabel } from "./Inventory";
 
-// Current-tick assertion list. Reads `frame.assertions` directly (the engine
-// emits assert-only ticks as their own frames per #0015). Block-position rows
-// expose a 📍 button that publishes a fly-to target via `cameraStore` —
-// inventory and `other` rows are read-only summaries.
+// Current-tick assertion list. Reads the assert-kind entries from
+// `frame.events`. Block-position rows expose a 📍 button that publishes a
+// fly-to target via `cameraStore` — inventory and `other` rows are read-only
+// summaries.
 //
-// `BlockSpec::Multiple` produces N adjacent `AssertionView::Block` entries at
-// the same coord; we group by position and render one row per group with the
+// `BlockSpec::Multiple` produces N adjacent `assert_block` events at the same
+// coord; we group by position and render one row per group with the
 // alternatives joined by "OR" (mirrors the AssertionGhosts label).
+//
+// When the event picker (#0040) has selected event N: show that single
+// assertion if it is an assert_*; otherwise show nothing.
 export default function Assertions() {
   const tick = useReplayStore((s) => s.tick);
+  const eventIndex = useReplayStore((s) => s.eventIndex);
   const frames = useReplayStore((s) => s.replay?.frames ?? null);
   const sourceIndices = useReplayStore((s) => s.sourceIndices);
   const revealPointer = useCrosslinkStore((s) => s.revealPointer);
@@ -25,8 +36,23 @@ export default function Assertions() {
     if (!frames) return [];
     const frame = frames.find((f) => f.tick === tick);
     if (!frame) return [];
-    return groupAssertions(frame.assertions, frame.actions.length);
-  }, [frames, tick]);
+    const events: TickEvent[] =
+      eventIndex != null
+        ? frame.events[eventIndex]
+          ? [frame.events[eventIndex]!]
+          : []
+        : frame.events;
+    const all: { idx: number; view: AssertionView }[] = [];
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i]!;
+      if (ev.kind !== "assert") continue;
+      // Reveal-in-editor maps to the parent event's index, not the view's
+      // position within the assert. eventIndex (when set) is the real index.
+      const parentIdx = eventIndex != null ? eventIndex : i;
+      for (const v of ev.views) all.push({ idx: parentIdx, view: v });
+    }
+    return groupAssertions(all);
+  }, [frames, tick, eventIndex]);
 
   const onRowClick = (firstEventIndex: number) => {
     const pointer = pointerForEvent(sourceIndices, tick, firstEventIndex);
@@ -73,44 +99,39 @@ type AssertionGroup =
     }
   | { kind: "other"; description: string; firstEventIndex: number };
 
-// `actionCount` lets us project assertion offsets into the merged
-// `(actions ++ assertions)` event_index space the source map uses (#0016).
 function groupAssertions(
-  views: AssertionView[],
-  actionCount: number,
+  entries: { idx: number; view: AssertionView }[],
 ): AssertionGroup[] {
   const blocksByPos = new Map<
     string,
     { position: Vec3; expecteds: Block[]; firstEventIndex: number }
   >();
   const others: AssertionGroup[] = [];
-  for (let j = 0; j < views.length; j++) {
-    const v = views[j]!;
-    const eventIndex = actionCount + j;
-    if (v.kind === "block") {
-      const key = `${v.position[0]},${v.position[1]},${v.position[2]}`;
+  for (const { idx, view } of entries) {
+    if (view.kind === "block") {
+      const key = `${view.position[0]},${view.position[1]},${view.position[2]}`;
       const existing = blocksByPos.get(key);
       if (existing) {
-        existing.expecteds.push(v.expected);
+        existing.expecteds.push(view.expected);
       } else {
         blocksByPos.set(key, {
-          position: v.position,
-          expecteds: [v.expected],
-          firstEventIndex: eventIndex,
+          position: view.position,
+          expecteds: [view.expected],
+          firstEventIndex: idx,
         });
       }
-    } else if (v.kind === "inventory") {
+    } else if (view.kind === "inventory") {
       others.push({
         kind: "inventory",
-        slot: v.slot,
-        expected: v.expected,
-        firstEventIndex: eventIndex,
+        slot: view.slot,
+        expected: view.expected,
+        firstEventIndex: idx,
       });
     } else {
       others.push({
         kind: "other",
-        description: v.description,
-        firstEventIndex: eventIndex,
+        description: view.description,
+        firstEventIndex: idx,
       });
     }
   }
@@ -172,8 +193,6 @@ function BlockRow({
   const flyTo = useCameraStore((s) => s.flyTo);
   const ids = expecteds.map((b) => shortId(b.id)).join(" OR ");
   const onFly = () => {
-    // Visual centre of the block — same `+ 0.5` convention the camera framing
-    // uses (#0031 handoff from #0024).
     flyTo([position[0] + 0.5, position[1] + 0.5, position[2] + 0.5]);
   };
   return (

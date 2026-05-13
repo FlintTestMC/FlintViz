@@ -11,10 +11,9 @@ pub mod model;
 pub mod player;
 pub mod source_map;
 
-#[allow(unused_imports)] // re-exported for the engine modules landing in #0014+.
+#[allow(unused_imports)]
 pub use model::{
-    Aabb, ActionEvent, AssertionView, BlockChange, GameModeChange, HotbarChange, PlayerDelta,
-    PlayerSnapshot, Replay, ReplayError, SlotChange, SourceSpan, TickFrame,
+    Aabb, AssertionView, PlayerSnapshot, Replay, ReplayError, SourceSpan, TickEvent, TickFrame,
 };
 
 #[allow(unused_imports)]

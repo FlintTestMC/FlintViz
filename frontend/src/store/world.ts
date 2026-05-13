@@ -1,16 +1,27 @@
-// Pure helpers for forward-/reverse-applying replay diffs to the world map and
-// player snapshot. No store coupling so they're trivially testable.
+// Pure helpers for forward-applying replay events to the world map and player
+// snapshot. No store coupling so they're trivially testable.
+//
+// MAINTENANCE NOTE: `applyEvent` must stay in lockstep with the engine's
+// `apply_action` in `crates/flint-viz/src/replay/engine.rs`. The Rust engine
+// emits TickEvents into the wire; the frontend re-runs the same semantics to
+// derive world + inventory state. Any new event kind needs both sides updated.
 
 import type {
   Block,
-  PlayerDelta,
+  Item,
   PlayerSnapshot,
   Replay,
+  TickEvent,
   TickFrame,
   Vec3,
 } from "../api/types";
 
 export type PosKey = string;
+
+// Mirrors `MAX_FILL_BLOCKS` in the engine. The backend never expanded fills
+// since #0040 moved the expansion frontend-side; this is where we draw the
+// line.
+const MAX_FILL_BLOCKS = 100_000;
 
 export function posKey(pos: Vec3): PosKey {
   return `${pos[0]},${pos[1]},${pos[2]}`;
@@ -24,73 +35,80 @@ export function clonePlayer(p: PlayerSnapshot): PlayerSnapshot {
   };
 }
 
-// Mutates `world` and `player` to apply one frame's diffs forward.
+// Apply a single TickEvent to (world, player). Assertions are no-ops.
+export function applyEvent(
+  world: Map<PosKey, Block>,
+  player: PlayerSnapshot,
+  event: TickEvent,
+): void {
+  switch (event.kind) {
+    case "place":
+      world.set(posKey(event.pos), event.block);
+      return;
+    case "place_each":
+      for (const p of event.placements) {
+        world.set(posKey(p.pos), p.block);
+      }
+      return;
+    case "fill": {
+      const { min, max } = event.region;
+      const dx = max[0] - min[0] + 1;
+      const dy = max[1] - min[1] + 1;
+      const dz = max[2] - min[2] + 1;
+      if (dx <= 0 || dy <= 0 || dz <= 0) return;
+      const volume = dx * dy * dz;
+      if (volume > MAX_FILL_BLOCKS) {
+        console.warn(
+          `applyEvent: fill volume ${volume} exceeds cap ${MAX_FILL_BLOCKS}; skipped`,
+        );
+        return;
+      }
+      for (let x = min[0]; x <= max[0]; x++) {
+        for (let y = min[1]; y <= max[1]; y++) {
+          for (let z = min[2]; z <= max[2]; z++) {
+            world.set(posKey([x, y, z]), event.block);
+          }
+        }
+      }
+      return;
+    }
+    case "remove":
+      world.delete(posKey(event.pos));
+      return;
+    case "set_slot":
+      if (event.item == null) {
+        delete player.inventory[event.slot];
+      } else {
+        player.inventory[event.slot] = {
+          id: event.item,
+          count: event.count,
+        } as Item;
+      }
+      return;
+    case "select_hotbar":
+      if (event.slot >= 1 && event.slot <= 9) {
+        player.selected_hotbar = event.slot;
+      }
+      return;
+    case "use_item_on":
+    case "assert":
+      return;
+  }
+}
+
+// Mutates `world` and `player` to apply one frame's events forward.
 export function applyForward(
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
   frame: TickFrame,
 ): void {
-  for (const change of frame.block_diff) {
-    if (change.kind === "set") {
-      world.set(posKey(change.pos), change.block);
-    } else {
-      world.delete(posKey(change.pos));
-    }
-  }
-  if (frame.inventory_diff) {
-    applyPlayerForward(player, frame.inventory_diff);
+  for (const event of frame.events) {
+    applyEvent(world, player, event);
   }
 }
 
-function applyPlayerForward(
-  player: PlayerSnapshot,
-  delta: PlayerDelta,
-): void {
-  if (delta.slots) {
-    for (const s of delta.slots) {
-      if (s.item == null) {
-        delete player.inventory[s.slot];
-      } else {
-        player.inventory[s.slot] = s.item;
-      }
-    }
-  }
-  if (delta.selected_hotbar) {
-    player.selected_hotbar = delta.selected_hotbar.slot;
-  }
-  if (delta.game_mode) {
-    player.game_mode = delta.game_mode.mode;
-  }
-}
-
-// Reverses a player delta using its `previous` fields. Used for backward
-// scrubbing of player state. Block reverse-scrub is not supported here — the
-// store rebuilds the world map from initial state instead, since `BlockChange`
-// carries no `previous` payload.
-export function applyPlayerReverse(
-  player: PlayerSnapshot,
-  delta: PlayerDelta,
-): void {
-  if (delta.game_mode) {
-    player.game_mode = delta.game_mode.previous;
-  }
-  if (delta.selected_hotbar) {
-    player.selected_hotbar = delta.selected_hotbar.previous;
-  }
-  if (delta.slots) {
-    for (let i = delta.slots.length - 1; i >= 0; i--) {
-      const s = delta.slots[i]!;
-      if (s.previous == null) {
-        delete player.inventory[s.slot];
-      } else {
-        player.inventory[s.slot] = s.previous;
-      }
-    }
-  }
-}
-
-// Rebuilds the full state at `targetTick` from the initial player snapshot,
-// walking the sparse frames. O(N) where N = frames with tick <= targetTick.
+// Rebuild full state at `targetTick` from the initial player snapshot. O(N)
+// where N is the number of events with tick <= targetTick.
 export function rebuildAt(
   replay: Replay,
   targetTick: number,
@@ -104,8 +122,7 @@ export function rebuildAt(
   return { world, player };
 }
 
-// Walks frames in `(currentTick, targetTick]` forward and applies them to the
-// given `world` and `player` in place. Caller guarantees `targetTick > currentTick`.
+// Walk frames in `(currentTick, targetTick]` forward and apply them in place.
 export function stepForwardTo(
   replay: Replay,
   world: Map<PosKey, Block>,
@@ -117,5 +134,20 @@ export function stepForwardTo(
     if (frame.tick <= currentTick) continue;
     if (frame.tick > targetTick) break;
     applyForward(world, player, frame);
+  }
+}
+
+// Apply the first `(eventIndex + 1)` events of `frame` to (world, player). For
+// the event picker (#0040): user picks event N → rebuild to tick-1, then call
+// this with eventIndex=N.
+export function applyEventsUpTo(
+  world: Map<PosKey, Block>,
+  player: PlayerSnapshot,
+  frame: TickFrame,
+  eventIndex: number,
+): void {
+  const upTo = Math.min(eventIndex, frame.events.length - 1);
+  for (let i = 0; i <= upTo; i++) {
+    applyEvent(world, player, frame.events[i]!);
   }
 }

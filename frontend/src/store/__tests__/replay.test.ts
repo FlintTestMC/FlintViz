@@ -8,41 +8,26 @@ function makeReplay(overrides: Partial<Replay> = {}): Replay {
   const frames: TickFrame[] = [
     {
       tick: 1,
-      actions: [
+      events: [
         { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
       ],
-      block_diff: [
-        { kind: "set", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
-      ],
-      inventory_diff: null,
-      assertions: [],
     },
     {
       tick: 3,
-      actions: [
+      events: [
         { kind: "place", pos: [1, 0, 0], block: { id: "minecraft:dirt" } },
+        {
+          kind: "set_slot",
+          slot: "hotbar1",
+          item: "minecraft:dirt",
+          count: 63,
+        },
+        { kind: "select_hotbar", slot: 2 },
       ],
-      block_diff: [
-        { kind: "set", pos: [1, 0, 0], block: { id: "minecraft:dirt" } },
-      ],
-      inventory_diff: {
-        slots: [
-          {
-            slot: "hotbar1",
-            item: { id: "minecraft:dirt", count: 63 },
-            previous: { id: "minecraft:dirt", count: 64 },
-          },
-        ],
-        selected_hotbar: { slot: 2, previous: 1 },
-      },
-      assertions: [],
     },
     {
       tick: 5,
-      actions: [{ kind: "remove", pos: [0, 0, 0] }],
-      block_diff: [{ kind: "remove", pos: [0, 0, 0] }],
-      inventory_diff: null,
-      assertions: [],
+      events: [{ kind: "remove", pos: [0, 0, 0] }],
     },
   ];
 
@@ -69,6 +54,7 @@ function resetStore(): void {
     replay: null,
     parseErrors: [],
     tick: 0,
+    eventIndex: null,
     worldState: new Map(),
     player: { inventory: {}, selected_hotbar: 1, game_mode: "Creative" },
     playback: "paused",
@@ -94,7 +80,7 @@ describe("rebuildAt", () => {
     expect(player.inventory.hotbar1).toEqual({ id: "minecraft:dirt", count: 63 });
   });
 
-  it("removes blocks per BlockChange::Remove", () => {
+  it("removes blocks per Remove event", () => {
     const replay = makeReplay();
     const { world } = rebuildAt(replay, 5);
     expect(world.has(posKey([0, 0, 0]))).toBe(false);
@@ -114,7 +100,6 @@ describe("setTick — forward", () => {
     expect(worldState.size).toBe(2);
     expect(player.selected_hotbar).toBe(2);
 
-    // Forward across more frames.
     useReplayStore.getState().setTick(5);
     ({ tick, worldState } = useReplayStore.getState());
     expect(tick).toBe(5);
@@ -139,7 +124,6 @@ describe("setTick — backward", () => {
     useReplayStore.getState().setTick(2);
     const { tick, worldState, player } = useReplayStore.getState();
     expect(tick).toBe(2);
-    // Tick 1 frame is included; tick 3 is not.
     expect(worldState.size).toBe(1);
     expect(worldState.get(posKey([0, 0, 0]))).toEqual({ id: "minecraft:stone" });
     expect(player.selected_hotbar).toBe(1);
@@ -242,8 +226,71 @@ describe("setReplay", () => {
     const { replay: r, parseErrors, tick, worldState } = useReplayStore.getState();
     expect(r).toBeNull();
     expect(parseErrors.length).toBe(1);
-    // tick + worldState are intentionally retained — last-good state UX (#0033).
     expect(tick).toBe(3);
     expect(worldState.size).toBe(2);
+  });
+});
+
+describe("setEventIndex", () => {
+  it("locks world to tick-1 + events[0..=idx]", () => {
+    resetStore();
+    const replay = makeReplay();
+    useReplayStore.getState().setReplay(replay, []);
+    // Multi-event tick 3: [place dirt @ (1,0,0), set_slot, select_hotbar].
+    useReplayStore.getState().setTick(3);
+    // After tick 3 default, two blocks placed, hotbar=2, hotbar1.count=63.
+    expect(useReplayStore.getState().player.selected_hotbar).toBe(2);
+
+    // Step to event 0 only: only first event (place dirt) applied on top of
+    // the tick-2 state (which has place stone from tick 1). Inventory should
+    // be back to initial (count 64, hotbar=1).
+    useReplayStore.getState().setEventIndex(0);
+    const after0 = useReplayStore.getState();
+    expect(after0.eventIndex).toBe(0);
+    expect(after0.worldState.get(posKey([1, 0, 0]))).toEqual({
+      id: "minecraft:dirt",
+    });
+    expect(after0.player.selected_hotbar).toBe(1);
+    expect(after0.player.inventory.hotbar1).toEqual({
+      id: "minecraft:dirt",
+      count: 64,
+    });
+
+    // Step to event 1: set_slot applied.
+    useReplayStore.getState().setEventIndex(1);
+    expect(useReplayStore.getState().player.inventory.hotbar1).toEqual({
+      id: "minecraft:dirt",
+      count: 63,
+    });
+    expect(useReplayStore.getState().player.selected_hotbar).toBe(1);
+
+    // [all] resets to full-tick state.
+    useReplayStore.getState().setEventIndex(null);
+    expect(useReplayStore.getState().eventIndex).toBeNull();
+    expect(useReplayStore.getState().player.selected_hotbar).toBe(2);
+  });
+
+  it("setTick resets eventIndex to null", () => {
+    resetStore();
+    const replay = makeReplay();
+    useReplayStore.getState().setReplay(replay, []);
+    useReplayStore.getState().setTick(3);
+    useReplayStore.getState().setEventIndex(1);
+    expect(useReplayStore.getState().eventIndex).toBe(1);
+    useReplayStore.getState().setTick(5);
+    expect(useReplayStore.getState().eventIndex).toBeNull();
+  });
+
+  it("play() resets eventIndex to null and restores full-tick state", () => {
+    resetStore();
+    const replay = makeReplay();
+    useReplayStore.getState().setReplay(replay, []);
+    useReplayStore.getState().setTick(3);
+    useReplayStore.getState().setEventIndex(0);
+    expect(useReplayStore.getState().player.selected_hotbar).toBe(1);
+    useReplayStore.getState().play();
+    expect(useReplayStore.getState().eventIndex).toBeNull();
+    expect(useReplayStore.getState().player.selected_hotbar).toBe(2);
+    expect(useReplayStore.getState().playback).toBe("playing");
   });
 });

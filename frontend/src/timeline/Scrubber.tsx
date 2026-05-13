@@ -1,26 +1,27 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useCrosslinkStore } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
-import { pointerForTick } from "../store/sourceMap";
-import { buildMarkers, type Marker } from "./markers";
+import { pointerForEvent, pointerForTick } from "../store/sourceMap";
+import { buildMarkers, eventKindLabel, type Marker } from "./markers";
 
 const TRACK_HEIGHT = 36;
 const PADDING_X = 12;
 const MARKER_R = 3.5;
 
 // Horizontal SVG scrubber. Drag the playhead to move `tick`; markers light up
-// every event-bearing tick (bolder for assert-only ticks) and breakpoints
-// render as red flags.
+// every event-bearing tick (bolder for assert-only ticks, ringed for ticks
+// with ≥ 2 events) and breakpoints render as red flags.
 //
-// Memoization: marker positions derive only from `replay`. Tick changes never
-// recompute markers; only the playhead/tooltip move. The store clamps + early-
-// returns equal targets, so pointermove handlers fire setTick directly without
-// throttling.
+// Marker click jumps + reveals source. For multi-event ticks, clicking opens
+// a vertical picker popup above the marker; rows let the user step inside
+// the tick (#0040).
 export default function Scrubber() {
   const replay = useReplayStore((s) => s.replay);
   const tick = useReplayStore((s) => s.tick);
   const setTick = useReplayStore((s) => s.setTick);
+  const setEventIndex = useReplayStore((s) => s.setEventIndex);
+  const eventIndex = useReplayStore((s) => s.eventIndex);
   const pause = useReplayStore((s) => s.pause);
 
   const markers = useMemo(() => buildMarkers(replay), [replay]);
@@ -30,18 +31,58 @@ export default function Scrubber() {
   const highlightedTicks = useCrosslinkStore((s) => s.highlightedTicks);
   const revealPointer = useCrosslinkStore((s) => s.revealPointer);
 
+  const [pickerForTick, setPickerForTick] = useState<number | null>(null);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+
   const onMarkerClick = useCallback(
     (m: Marker) => {
-      // Pause + jump first so playback state matches the navigation, then
-      // route to the editor. Order matches the #0028 / #0029 handoff
-      // expectations.
       pause();
+      const wasOnSameTick = tick === m.tick;
       setTick(m.tick);
       const pointer = pointerForTick(sourceIndices, m.tick);
       if (pointer) revealPointer(pointer);
+      if (m.hasMultipleEvents) {
+        if (wasOnSameTick && pickerForTick === m.tick) {
+          setPickerForTick(null);
+        } else {
+          setPickerForTick(m.tick);
+        }
+      } else {
+        setPickerForTick(null);
+      }
     },
-    [pause, setTick, sourceIndices, revealPointer],
+    [pause, setTick, sourceIndices, revealPointer, tick, pickerForTick],
   );
+
+  // Close the picker on outside click. We *don't* stopPropagation so a click
+  // on the scrubber track still scrubs (#0040 outcome).
+  useEffect(() => {
+    if (pickerForTick === null) return;
+    const onDocDown = (e: PointerEvent) => {
+      const picker = pickerRef.current;
+      if (picker && e.target instanceof Node && picker.contains(e.target)) {
+        return;
+      }
+      // Marker click handles toggle itself; doc handler must not race ahead.
+      if (
+        e.target instanceof Element &&
+        e.target.closest('[data-marker="1"]')
+      ) {
+        return;
+      }
+      setPickerForTick(null);
+    };
+    document.addEventListener("pointerdown", onDocDown);
+    return () => document.removeEventListener("pointerdown", onDocDown);
+  }, [pickerForTick]);
+
+  // Picker only makes sense while on its tick; if the user navigates away
+  // (via setTick from another route), close it.
+  useEffect(() => {
+    if (pickerForTick !== null && pickerForTick !== tick) {
+      setPickerForTick(null);
+    }
+  }, [tick, pickerForTick]);
 
   const trackRef = useRef<SVGSVGElement | null>(null);
   const draggingRef = useRef(false);
@@ -98,6 +139,11 @@ export default function Scrubber() {
     );
   }
 
+  const pickerFrame =
+    pickerForTick !== null
+      ? replay.frames.find((f) => f.tick === pickerForTick)
+      : null;
+
   return (
     <div className="relative border-t border-neutral-800 bg-neutral-950">
       <svg
@@ -142,6 +188,8 @@ export default function Scrubber() {
           const cx = tickToX(m.tick, 1000);
           const isAssertion = m.kind === "assertion";
           const isHighlighted = highlightedTicks.has(m.tick);
+          const baseR = isAssertion ? MARKER_R + 1.5 : MARKER_R;
+          const r = m.hasMultipleEvents ? baseR + 1 : baseR;
           return (
             <g
               key={`m-${m.tick}`}
@@ -149,9 +197,12 @@ export default function Scrubber() {
               onPointerLeave={() =>
                 setHover((h) => (h?.marker === m ? null : h))
               }
+              onPointerDown={(e) => {
+                // Block svg's drag-to-scrub handler (which calls
+                // setPointerCapture and can eat the subsequent click).
+                e.stopPropagation();
+              }}
               onClick={(e) => {
-                // Stop propagation so the surrounding `<svg>`'s drag-to-scrub
-                // pointerdown handler doesn't also re-pause + re-set the tick.
                 e.stopPropagation();
                 onMarkerClick(m);
               }}
@@ -161,7 +212,7 @@ export default function Scrubber() {
                 <circle
                   cx={cx}
                   cy={TRACK_HEIGHT / 2}
-                  r={MARKER_R + 4}
+                  r={r + 4}
                   fill="none"
                   stroke="#38bdf8"
                   strokeWidth={1.5}
@@ -169,20 +220,37 @@ export default function Scrubber() {
                   opacity={0.9}
                 />
               )}
+              {m.hasMultipleEvents && !isHighlighted && (
+                <circle
+                  cx={cx}
+                  cy={TRACK_HEIGHT / 2}
+                  r={r + 2}
+                  fill="none"
+                  stroke="#7dd3fc"
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                  opacity={0.6}
+                />
+              )}
               <circle
                 cx={cx}
                 cy={TRACK_HEIGHT / 2}
-                r={isAssertion ? MARKER_R + 1.5 : MARKER_R}
+                r={r}
                 fill={isAssertion ? "#fbbf24" : "#a3a3a3"}
                 stroke={isAssertion ? "#facc15" : "transparent"}
                 strokeWidth={isAssertion ? 1.5 : 0}
                 vectorEffect="non-scaling-stroke"
               />
-              {/* Larger invisible hit region for hover/click on dense tracks */}
-              <circle
-                cx={cx}
-                cy={TRACK_HEIGHT / 2}
-                r={8}
+              {/* Larger invisible hit region for hover/click on dense tracks.
+                  Tall + wide so clicks anywhere near the marker land. The
+                  data-marker attr lets the document-level outside-click
+                  handler distinguish a marker click from a track click. */}
+              <rect
+                data-marker="1"
+                x={cx - 12}
+                y={0}
+                width={24}
+                height={TRACK_HEIGHT}
                 fill="transparent"
               />
             </g>
@@ -235,13 +303,62 @@ export default function Scrubber() {
         tick {tick} / {maxTick}
       </div>
 
-      {hover && (
+      {hover && pickerForTick === null && (
         <div
           className="pointer-events-none absolute -top-7 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-neutral-800 px-2 py-1 text-[11px] text-neutral-100 shadow-lg ring-1 ring-neutral-700"
           style={{ left: `${(hover.x / 1000) * 100}%` }}
         >
           <span className="text-neutral-400">t={hover.marker.tick}</span>{" "}
           {hover.marker.summary}
+        </div>
+      )}
+
+      {pickerFrame && (
+        <div
+          ref={pickerRef}
+          className="absolute z-20"
+          style={{
+            left: `${(tickToX(pickerFrame.tick, 1000) / 1000) * 100}%`,
+            bottom: "calc(100% + 4px)",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <div className="flex min-w-[120px] flex-col gap-0.5 rounded bg-neutral-900 p-1 text-[11px] text-neutral-100 shadow-xl ring-1 ring-neutral-700">
+            <button
+              type="button"
+              onClick={() => {
+                setEventIndex(null);
+              }}
+              className={`rounded px-2 py-0.5 text-left hover:bg-neutral-800 ${
+                eventIndex === null ? "bg-neutral-800 text-sky-300" : ""
+              }`}
+            >
+              [all]
+            </button>
+            {pickerFrame.events.map((ev, i) => (
+              <button
+                key={`pe-${i}`}
+                type="button"
+                onClick={() => {
+                  setEventIndex(i);
+                  const ptr = pointerForEvent(
+                    sourceIndices,
+                    pickerFrame.tick,
+                    i,
+                  );
+                  if (ptr) revealPointer(ptr);
+                }}
+                className={`rounded px-2 py-0.5 text-left hover:bg-neutral-800 ${
+                  eventIndex === i ? "bg-neutral-800 text-sky-300" : ""
+                }`}
+              >
+                <span className="mr-1 text-neutral-500 tabular-nums">
+                  {i}.
+                </span>
+                {eventKindLabel(ev)}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

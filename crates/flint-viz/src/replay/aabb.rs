@@ -18,6 +18,7 @@ impl Aabb {
 
 /// Iterate every integer position contained in `aabb` (inclusive on both ends).
 /// Yields nothing if any axis is inverted.
+#[allow(dead_code)]
 pub fn iter_aabb(aabb: Aabb) -> impl Iterator<Item = [i32; 3]> {
     let Aabb { min, max } = aabb;
     (min[0]..=max[0]).flat_map(move |x| {

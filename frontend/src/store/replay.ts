@@ -8,6 +8,7 @@ import type {
 } from "../api/types";
 import { buildSourceIndices, type SourceIndices } from "./sourceMap";
 import {
+  applyEventsUpTo,
   clonePlayer,
   rebuildAt,
   stepForwardTo,
@@ -33,6 +34,9 @@ export interface ReplayState {
   replay: Replay | null;
   parseErrors: ParseError[];
   tick: number;
+  // null = "all events" (default). non-null = picker is locked on event N of
+  // the current tick; world/player reflect tick-1 + events[0..=eventIndex].
+  eventIndex: number | null;
   worldState: Map<PosKey, Block>;
   player: PlayerSnapshot;
   playback: Playback;
@@ -43,6 +47,7 @@ export interface ReplayState {
   setSource: (source: string) => void;
   setReplay: (replay: Replay | null, parseErrors: ParseError[]) => void;
   setTick: (tick: number) => void;
+  setEventIndex: (idx: number | null) => void;
   play: () => void;
   pause: () => void;
   stepForward: () => void;
@@ -57,6 +62,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
   replay: null,
   parseErrors: [],
   tick: 0,
+  eventIndex: null,
   worldState: new Map(),
   player: { ...DEFAULT_PLAYER, inventory: {} },
   playback: "paused",
@@ -70,6 +76,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       replay: null,
       parseErrors: [],
       tick: 0,
+      eventIndex: null,
       worldState: new Map(),
       player: { ...DEFAULT_PLAYER, inventory: {} },
       playback: "paused",
@@ -87,13 +94,12 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       set({ replay: null, parseErrors });
       return;
     }
-    // Seed via rebuildAt so any tick-0 frame is applied. setTick's forward path
-    // assumes the current tick's frames are already in worldState.
     const { world, player } = rebuildAt(replay, 0);
     set({
       replay,
       parseErrors,
       tick: 0,
+      eventIndex: null,
       worldState: world,
       player,
       rotation: 0,
@@ -104,23 +110,71 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
   setTick: (target) => {
     const { replay, tick, worldState, player } = get();
     if (!replay) {
-      set({ tick: Math.max(0, target) });
+      set({ tick: Math.max(0, target), eventIndex: null });
       return;
     }
     const clamped = Math.max(0, Math.min(target, replay.max_tick));
-    if (clamped === tick) return;
+    if (clamped === tick) {
+      // Even if tick is unchanged, calling setTick implies a navigation away
+      // from any event-step selection.
+      if (get().eventIndex !== null) set({ eventIndex: null });
+      return;
+    }
     if (clamped > tick) {
       const nextWorld = new Map(worldState);
       const nextPlayer = clonePlayer(player);
       stepForwardTo(replay, nextWorld, nextPlayer, tick, clamped);
-      set({ tick: clamped, worldState: nextWorld, player: nextPlayer });
+      set({
+        tick: clamped,
+        eventIndex: null,
+        worldState: nextWorld,
+        player: nextPlayer,
+      });
     } else {
       const { world, player: rebuilt } = rebuildAt(replay, clamped);
-      set({ tick: clamped, worldState: world, player: rebuilt });
+      set({
+        tick: clamped,
+        eventIndex: null,
+        worldState: world,
+        player: rebuilt,
+      });
     }
   },
 
-  play: () => set({ playback: "playing" }),
+  setEventIndex: (idx) => {
+    const { replay, tick } = get();
+    if (!replay) return;
+    if (idx === null) {
+      const { world, player } = rebuildAt(replay, tick);
+      set({ eventIndex: null, worldState: world, player });
+      return;
+    }
+    const frame = replay.frames.find((f) => f.tick === tick);
+    if (!frame || frame.events.length === 0) {
+      set({ eventIndex: null });
+      return;
+    }
+    const clamped = Math.max(0, Math.min(idx, frame.events.length - 1));
+    // Rebuild from initial state to just before this tick, then walk
+    // events[0..=clamped] forward.
+    const base = rebuildAt(replay, tick === 0 ? -1 : tick - 1);
+    applyEventsUpTo(base.world, base.player, frame, clamped);
+    set({
+      eventIndex: clamped,
+      worldState: base.world,
+      player: base.player,
+    });
+  },
+
+  play: () => {
+    const { eventIndex, replay, tick } = get();
+    if (eventIndex !== null && replay) {
+      // Playback always operates on full-tick state; reset the picker first.
+      const { world, player } = rebuildAt(replay, tick);
+      set({ eventIndex: null, worldState: world, player });
+    }
+    set({ playback: "playing" });
+  },
   pause: () => set({ playback: "paused" }),
   stepForward: () => get().setTick(get().tick + 1),
   stepBack: () => get().setTick(get().tick - 1),

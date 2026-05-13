@@ -5,7 +5,7 @@
 // is computed lazily from `frame.actions` because `BlockChange` doesn't carry
 // `event_index`.
 
-import type { ActionEvent, Replay, Vec3 } from "../api/types";
+import type { Replay, TickEvent, Vec3 } from "../api/types";
 import { posKey, type PosKey } from "./world";
 
 export interface SourceIndices {
@@ -95,42 +95,42 @@ export function buildPosSourceMap(
   const map = new Map<PosKey, PosSourceEntry>();
   for (const frame of replay.frames) {
     if (frame.tick > targetTick) break;
-    for (let e = 0; e < frame.actions.length; e++) {
-      const action = frame.actions[e]!;
-      writeActionPositions(action, frame.tick, e, map);
+    for (let e = 0; e < frame.events.length; e++) {
+      writeEventPositions(frame.events[e]!, frame.tick, e, map);
     }
   }
   return map;
 }
 
-function writeActionPositions(
-  action: ActionEvent,
+function writeEventPositions(
+  event: TickEvent,
   tick: number,
   eventIndex: number,
   out: Map<PosKey, PosSourceEntry>,
 ): void {
-  switch (action.kind) {
+  switch (event.kind) {
     case "place":
-      out.set(posKey(action.pos), { tick, eventIndex });
+      out.set(posKey(event.pos), { tick, eventIndex });
       return;
     case "place_each":
-      for (const pl of action.placements) {
+      for (const pl of event.placements) {
         out.set(posKey(pl.pos), { tick, eventIndex });
       }
       return;
     case "fill":
-      for (const pos of iterAabb(action.region.min, action.region.max)) {
+      for (const pos of iterAabb(event.region.min, event.region.max)) {
         out.set(posKey(pos), { tick, eventIndex });
       }
       return;
     case "remove":
-      out.set(posKey(action.pos), { tick, eventIndex });
+      out.set(posKey(event.pos), { tick, eventIndex });
       return;
     case "use_item_on":
-      out.set(posKey(action.pos), { tick, eventIndex });
+      out.set(posKey(event.pos), { tick, eventIndex });
       return;
     case "set_slot":
     case "select_hotbar":
+    case "assert":
       return;
   }
 }

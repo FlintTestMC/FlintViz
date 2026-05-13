@@ -6,12 +6,9 @@ import { nextBreakpoint, nextEventTick, prevEventTick } from "../playback";
 function frame(tick: number, hasEvent = true): TickFrame {
   return {
     tick,
-    actions: hasEvent
+    events: hasEvent
       ? [{ kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } }]
       : [],
-    block_diff: [],
-    inventory_diff: null,
-    assertions: [],
   };
 }
 

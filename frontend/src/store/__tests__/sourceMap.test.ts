@@ -28,8 +28,8 @@ describe("buildSourceIndices", () => {
       [
         { tick: 1, event_index: 0, json_pointer: "/timeline/0" },
         { tick: 2, event_index: 0, json_pointer: "/timeline/1" },
-        { tick: 2, event_index: 1, json_pointer: "/timeline/1" }, // BlockSpec::Multiple
-        { tick: 5, event_index: 0, json_pointer: "/timeline/0" }, // at: [1, 5]
+        { tick: 2, event_index: 1, json_pointer: "/timeline/1" },
+        { tick: 5, event_index: 0, json_pointer: "/timeline/0" },
       ],
     );
     const idx = buildSourceIndices(replay);
@@ -57,16 +57,13 @@ describe("buildPosSourceMap", () => {
       [
         {
           tick: 1,
-          actions: [
+          events: [
             {
               kind: "fill",
               region: { min: [0, 0, 0], max: [1, 0, 1] },
               block: { id: "minecraft:stone" },
             },
           ],
-          block_diff: [],
-          inventory_diff: null,
-          assertions: [],
         },
       ],
       [],
@@ -82,21 +79,15 @@ describe("buildPosSourceMap", () => {
       [
         {
           tick: 1,
-          actions: [
+          events: [
             { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
           ],
-          block_diff: [],
-          inventory_diff: null,
-          assertions: [],
         },
         {
           tick: 3,
-          actions: [
+          events: [
             { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:dirt" } },
           ],
-          block_diff: [],
-          inventory_diff: null,
-          assertions: [],
         },
       ],
       [],
@@ -107,18 +98,42 @@ describe("buildPosSourceMap", () => {
     expect(at3).toEqual({ tick: 3, eventIndex: 0 });
   });
 
-  it("ignores non-block actions", () => {
+  it("ignores non-block events", () => {
     const replay = makeReplay(
       [
         {
           tick: 1,
-          actions: [
+          events: [
             { kind: "select_hotbar", slot: 3 },
             { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
           ],
-          block_diff: [],
-          inventory_diff: null,
-          assertions: [],
+        },
+      ],
+      [],
+    );
+    const map = buildPosSourceMap(replay, 1);
+    expect(map.size).toBe(1);
+    expect(map.get(posKey([0, 0, 0]))).toEqual({ tick: 1, eventIndex: 1 });
+  });
+
+  it("ignores assertion events", () => {
+    const replay = makeReplay(
+      [
+        {
+          tick: 1,
+          events: [
+            {
+              kind: "assert",
+              views: [
+                {
+                  kind: "block",
+                  position: [0, 0, 0],
+                  expected: { id: "minecraft:stone" },
+                },
+              ],
+            },
+            { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
+          ],
         },
       ],
       [],

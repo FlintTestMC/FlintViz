@@ -6,21 +6,22 @@ import {
   type Material,
 } from "three";
 
-import type { AssertionView, Block, Vec3 } from "../api/types";
+import type { AssertionView, Block, TickEvent, Vec3 } from "../api/types";
 import { useReplayStore } from "../store/replay";
 import type { BlockProviders } from "./atlas";
 import { buildBlockMesh, getSharedMaterial } from "./blockAdapter";
 import { useBlockProviders } from "./useBlockProviders";
 
-// Translucent "expected block" overlay for the current tick. Renders one ghost
-// per `AssertionView::Block`, grouped by position so `BlockSpec::Multiple`
-// expansions (which produce N entries at the same coord) don't visually stack.
-// Inventory and other assertion kinds live in the assertion panel (#0031).
+// Translucent "expected block" overlay for the current tick. Walks every
+// `assert` event's `views` and renders one ghost per block-kind view, grouped
+// by position. When the event picker (#0040) has selected event N: render only
+// that single assert event's block views (or nothing if N is not an assert).
 //
 // Mounted under `<SceneRoot>` so #0036's rotation rotates ghosts with the
 // world.
 export default function AssertionGhosts() {
   const tick = useReplayStore((s) => s.tick);
+  const eventIndex = useReplayStore((s) => s.eventIndex);
   const frames = useReplayStore((s) => s.replay?.frames ?? null);
   const providers = useBlockProviders();
 
@@ -28,8 +29,18 @@ export default function AssertionGhosts() {
     if (!frames) return [];
     const frame = frames.find((f) => f.tick === tick);
     if (!frame) return [];
-    return groupByPosition(frame.assertions);
-  }, [frames, tick]);
+    const events: TickEvent[] =
+      eventIndex != null
+        ? frame.events[eventIndex]
+          ? [frame.events[eventIndex]!]
+          : []
+        : frame.events;
+    const views: AssertionView[] = [];
+    for (const ev of events) {
+      if (ev.kind === "assert") views.push(...ev.views);
+    }
+    return groupByPosition(views);
+  }, [frames, tick, eventIndex]);
 
   if (!providers || groups.length === 0) return null;
 
@@ -54,9 +65,9 @@ interface GhostGroup {
   alternativeCount: number;
 }
 
-function groupByPosition(assertions: AssertionView[]): GhostGroup[] {
+function groupByPosition(views: AssertionView[]): GhostGroup[] {
   const byKey = new Map<string, GhostGroup>();
-  for (const a of assertions) {
+  for (const a of views) {
     if (a.kind !== "block") continue;
     const key = `${a.position[0]},${a.position[1]},${a.position[2]}`;
     const existing = byKey.get(key);

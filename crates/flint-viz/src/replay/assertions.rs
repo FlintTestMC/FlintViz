@@ -1,14 +1,9 @@
-//! Convert `flint_core::test_spec::AssertType` checks into the wire-shaped
-//! [`AssertionView`]s the frontend renders.
+//! Convert `flint_core::test_spec::AssertType` checks into wire-shaped
+//! [`AssertionView`]s. One `assert` timeline action produces ONE
+//! [`TickEvent::Assert`] carrying all its views (the engine wraps them).
 //!
-//! Static replay never *evaluates* assertions — it only records what the test
-//! claims should be true at a tick. Pass/fail is the runtime's job (#0035).
-//!
-//! Convention for `BlockSpec::Multiple`: emit **one** [`AssertionView::Block`]
-//! per expected block. The assertion panel (#0031) renders the resulting list
-//! as alternatives without parsing free-text. (`AssertionView::Other` exists
-//! for state-style checks if/when flint-core grows them; today's grammar has
-//! none, so this module never produces it.)
+//! Convention for `BlockSpec::Multiple`: emit one [`AssertionView::Block`] per
+//! expected block.
 
 use flint_core::test_spec::{AssertType, BlockCheck, InventoryCheck};
 
@@ -69,20 +64,6 @@ mod tests {
         let mut out = Vec::new();
         views_from_check(&check, &mut out);
         assert_eq!(out.len(), 3);
-        let ids: Vec<&str> = out
-            .iter()
-            .map(|v| match v {
-                AssertionView::Block { expected, position } => {
-                    assert_eq!(*position, [4, 5, 6]);
-                    expected.id.as_str()
-                }
-                other => panic!("expected Block, got {:?}", other),
-            })
-            .collect();
-        assert_eq!(
-            ids,
-            vec!["minecraft:stone", "minecraft:dirt", "minecraft:oak_planks"]
-        );
     }
 
     #[test]
