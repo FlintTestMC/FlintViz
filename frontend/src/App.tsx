@@ -13,6 +13,7 @@ import { useReplayStore } from "./store/replay";
 import Controls from "./timeline/Controls";
 import FailureBanner from "./timeline/FailureBanner";
 import Scrubber from "./timeline/Scrubber";
+import CompassGizmo from "./world/CompassGizmo";
 import Scene from "./world/Scene";
 import SceneToolbar from "./world/SceneToolbar";
 import BlockGallery from "./world/__debug__/BlockGallery";
@@ -73,6 +74,9 @@ export default function App() {
               <div className="relative flex-1 min-h-0">
                 <Scene />
                 <StaleBadge />
+                <ErrorBoundary label="Compass">
+                  <CompassGizmo />
+                </ErrorBoundary>
               </div>
             </ErrorBoundary>
             <ErrorBoundary label="Failure banner">
