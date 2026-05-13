@@ -86,17 +86,19 @@ export default function App() {
               <Scrubber />
             </ErrorBoundary>
             <div
-              className="grid grid-cols-2 border-t border-neutral-800"
+              className="grid grid-cols-2 grid-rows-1 border-t border-neutral-800"
               style={{ height: 180 }}
             >
-              <div className="border-r border-neutral-800">
+              <div className="min-h-0 overflow-hidden border-r border-neutral-800">
                 <ErrorBoundary label="Inventory">
                   <Inventory />
                 </ErrorBoundary>
               </div>
-              <ErrorBoundary label="Assertions">
-                <Assertions />
-              </ErrorBoundary>
+              <div className="min-h-0 overflow-hidden">
+                <ErrorBoundary label="Assertions">
+                  <Assertions />
+                </ErrorBoundary>
+              </div>
             </div>
           </div>
         }

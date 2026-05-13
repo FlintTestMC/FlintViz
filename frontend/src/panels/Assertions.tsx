@@ -8,9 +8,11 @@ import type {
   TickEvent,
   Vec3,
 } from "../api/types";
+import { activeAltIndex, useAssertionsStore } from "../store/assertions";
 import { useCrosslinkStore } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
 import { pointerForEvent } from "../store/sourceMap";
+import { posKey } from "../store/world";
 import { useCameraStore } from "../world/cameraStore";
 import { slotLabel } from "./Inventory";
 
@@ -19,12 +21,13 @@ import { slotLabel } from "./Inventory";
 // fly-to target via `cameraStore` — inventory and `other` rows are read-only
 // summaries.
 //
-// `BlockSpec::Multiple` produces N adjacent `assert_block` events at the same
-// coord; we group by position and render one row per group with the
-// alternatives joined by "OR" (mirrors the AssertionGhosts label).
+// `BlockSpec::Multiple` produces N adjacent `assert_block` views at the same
+// coord; we group by position and render one row per group. The currently-
+// shown alternative (per cycling / lock / picker priority from #0041) is
+// bolded; a `<select>` lets the user pin one alt or pick `Auto`.
 //
-// When the event picker (#0040) has selected event N: show that single
-// assertion if it is an assert_*; otherwise show nothing.
+// When the event picker (#0040) has selected event N: show only that event's
+// assertions if it is an assert; otherwise show nothing.
 export default function Assertions() {
   const tick = useReplayStore((s) => s.tick);
   const eventIndex = useReplayStore((s) => s.eventIndex);
@@ -46,16 +49,22 @@ export default function Assertions() {
     for (let i = 0; i < events.length; i++) {
       const ev = events[i]!;
       if (ev.kind !== "assert") continue;
-      // Reveal-in-editor maps to the parent event's index, not the view's
-      // position within the assert. eventIndex (when set) is the real index.
       const parentIdx = eventIndex != null ? eventIndex : i;
       for (const v of ev.views) all.push({ idx: parentIdx, view: v });
     }
     return groupAssertions(all);
   }, [frames, tick, eventIndex]);
 
-  const onRowClick = (firstEventIndex: number) => {
-    const pointer = pointerForEvent(sourceIndices, tick, firstEventIndex);
+  const onReveal = (entry: {
+    eventIndex: number;
+    pointerSuffix?: string;
+  }) => {
+    const pointer = pointerForEvent(
+      sourceIndices,
+      tick,
+      entry.eventIndex,
+      entry.pointerSuffix,
+    );
     if (pointer) revealPointer(pointer);
   };
 
@@ -67,7 +76,7 @@ export default function Assertions() {
         </span>
         <span className="text-xs text-neutral-500">tick {tick}</span>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {groups.length === 0 ? (
           <div className="flex h-full items-center justify-center text-[11px] italic text-neutral-500">
             No assertions at this tick
@@ -75,7 +84,12 @@ export default function Assertions() {
         ) : (
           <ul className="space-y-1">
             {groups.map((g, i) => (
-              <Row key={`${g.kind}-${i}`} group={g} onReveal={onRowClick} />
+              <Row
+                key={`${g.kind}-${i}`}
+                group={g}
+                pickerActive={eventIndex !== null}
+                onReveal={onReveal}
+              />
             ))}
           </ul>
         )}
@@ -89,22 +103,28 @@ type AssertionGroup =
       kind: "block";
       position: Vec3;
       expecteds: Block[];
-      firstEventIndex: number;
+      pointerSuffixes: (string | undefined)[];
+      eventIndices: number[];
     }
   | {
       kind: "inventory";
       slot: PlayerSlot;
       expected: Item | null;
-      firstEventIndex: number;
+      eventIndex: number;
     }
-  | { kind: "other"; description: string; firstEventIndex: number };
+  | { kind: "other"; description: string; eventIndex: number };
 
 function groupAssertions(
   entries: { idx: number; view: AssertionView }[],
 ): AssertionGroup[] {
   const blocksByPos = new Map<
     string,
-    { position: Vec3; expecteds: Block[]; firstEventIndex: number }
+    {
+      position: Vec3;
+      expecteds: Block[];
+      pointerSuffixes: (string | undefined)[];
+      eventIndices: number[];
+    }
   >();
   const others: AssertionGroup[] = [];
   for (const { idx, view } of entries) {
@@ -113,11 +133,14 @@ function groupAssertions(
       const existing = blocksByPos.get(key);
       if (existing) {
         existing.expecteds.push(view.expected);
+        existing.pointerSuffixes.push(view.pointer_suffix);
+        existing.eventIndices.push(idx);
       } else {
         blocksByPos.set(key, {
           position: view.position,
           expecteds: [view.expected],
-          firstEventIndex: idx,
+          pointerSuffixes: [view.pointer_suffix],
+          eventIndices: [idx],
         });
       }
     } else if (view.kind === "inventory") {
@@ -125,34 +148,31 @@ function groupAssertions(
         kind: "inventory",
         slot: view.slot,
         expected: view.expected,
-        firstEventIndex: idx,
+        eventIndex: idx,
       });
     } else {
       others.push({
         kind: "other",
         description: view.description,
-        firstEventIndex: idx,
+        eventIndex: idx,
       });
     }
   }
   const grouped: AssertionGroup[] = [];
   for (const g of blocksByPos.values()) {
-    grouped.push({
-      kind: "block",
-      position: g.position,
-      expecteds: g.expecteds,
-      firstEventIndex: g.firstEventIndex,
-    });
+    grouped.push({ kind: "block", ...g });
   }
   return grouped.concat(others);
 }
 
 function Row({
   group,
+  pickerActive,
   onReveal,
 }: {
   group: AssertionGroup;
-  onReveal: (firstEventIndex: number) => void;
+  pickerActive: boolean;
+  onReveal: (entry: { eventIndex: number; pointerSuffix?: string }) => void;
 }) {
   switch (group.kind) {
     case "block":
@@ -160,7 +180,10 @@ function Row({
         <BlockRow
           position={group.position}
           expecteds={group.expecteds}
-          onReveal={() => onReveal(group.firstEventIndex)}
+          pointerSuffixes={group.pointerSuffixes}
+          eventIndices={group.eventIndices}
+          pickerActive={pickerActive}
+          onReveal={onReveal}
         />
       );
     case "inventory":
@@ -168,14 +191,18 @@ function Row({
         <InventoryRow
           slot={group.slot}
           expected={group.expected}
-          onReveal={() => onReveal(group.firstEventIndex)}
+          onReveal={() =>
+            onReveal({ eventIndex: group.eventIndex, pointerSuffix: undefined })
+          }
         />
       );
     case "other":
       return (
         <OtherRow
           description={group.description}
-          onReveal={() => onReveal(group.firstEventIndex)}
+          onReveal={() =>
+            onReveal({ eventIndex: group.eventIndex, pointerSuffix: undefined })
+          }
         />
       );
   }
@@ -184,29 +211,84 @@ function Row({
 function BlockRow({
   position,
   expecteds,
+  pointerSuffixes,
+  eventIndices,
+  pickerActive,
   onReveal,
 }: {
   position: Vec3;
   expecteds: Block[];
-  onReveal: () => void;
+  pointerSuffixes: (string | undefined)[];
+  eventIndices: number[];
+  pickerActive: boolean;
+  onReveal: (entry: { eventIndex: number; pointerSuffix?: string }) => void;
 }) {
   const flyTo = useCameraStore((s) => s.flyTo);
-  const ids = expecteds.map((b) => shortId(b.id)).join(" OR ");
+  const cycleIndex = useAssertionsStore((s) => s.cycleIndex);
+  const key = posKey(position);
+  const lock = useAssertionsStore((s) => s.locks[key]);
+  const lockAlt = useAssertionsStore((s) => s.lock);
+  const unlockAlt = useAssertionsStore((s) => s.unlock);
+
+  const altCount = expecteds.length;
+  const active = activeAltIndex(altCount, cycleIndex, lock, null);
+  const isMulti = altCount > 1;
+
   const onFly = () => {
     flyTo([position[0] + 0.5, position[1] + 0.5, position[2] + 0.5]);
   };
+  const onClickReveal = () => {
+    onReveal({
+      eventIndex: eventIndices[active]!,
+      pointerSuffix: pointerSuffixes[active],
+    });
+  };
+
   return (
     <li className="flex items-center gap-2 rounded bg-neutral-900 px-2 py-1 ring-1 ring-neutral-800">
       <KindBadge label="block" color="amber" />
       <button
         type="button"
-        onClick={onReveal}
+        onClick={onClickReveal}
         title="Reveal in editor"
-        className="flex-1 truncate text-left hover:underline"
+        className="min-w-0 flex-1 truncate text-left hover:underline"
       >
-        expect <span className="text-neutral-100">{ids}</span>
+        expect{" "}
+        {expecteds.map((b, i) => (
+          <span key={i}>
+            {i > 0 ? <span className="text-neutral-500"> OR </span> : null}
+            <span
+              className={
+                i === active
+                  ? "font-semibold text-neutral-100"
+                  : "text-neutral-400"
+              }
+            >
+              {shortId(b.id)}
+            </span>
+          </span>
+        ))}
         <span className="text-neutral-500"> @ ({position.join(",")})</span>
       </button>
+      {isMulti && !pickerActive ? (
+        <select
+          aria-label="Lock alternative"
+          value={lock ?? ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "") unlockAlt(key);
+            else lockAlt(key, Number(v));
+          }}
+          className="shrink-0 rounded bg-neutral-800 px-1 py-0.5 text-[10px] text-neutral-200 ring-1 ring-neutral-700 hover:bg-neutral-700"
+        >
+          <option value="">Auto (cycling)</option>
+          {expecteds.map((b, i) => (
+            <option key={i} value={i}>
+              {shortId(b.id)}
+            </option>
+          ))}
+        </select>
+      ) : null}
       <button
         type="button"
         onClick={onFly}
@@ -239,7 +321,7 @@ function InventoryRow({
         type="button"
         onClick={onReveal}
         title="Reveal in editor"
-        className="flex-1 truncate text-left hover:underline"
+        className="min-w-0 flex-1 truncate text-left hover:underline"
       >
         {text}
       </button>
@@ -261,7 +343,7 @@ function OtherRow({
         type="button"
         onClick={onReveal}
         title="Reveal in editor"
-        className="flex-1 truncate text-left hover:underline"
+        className="min-w-0 flex-1 truncate text-left hover:underline"
       >
         {description}
       </button>

@@ -12,10 +12,13 @@ use super::model::AssertionView;
 pub fn views_from_check(check: &AssertType, out: &mut Vec<AssertionView>) {
     match check {
         AssertType::Block(BlockCheck { pos, is }) => {
-            for expected in is.to_vec() {
+            let alts = is.to_vec();
+            let multi = alts.len() > 1;
+            for (i, expected) in alts.into_iter().enumerate() {
                 out.push(AssertionView::Block {
                     position: *pos,
                     expected,
+                    pointer_suffix: if multi { Some(format!("/is/{i}")) } else { None },
                 });
             }
         }
@@ -43,9 +46,14 @@ mod tests {
         views_from_check(&check, &mut out);
         assert_eq!(out.len(), 1);
         match &out[0] {
-            AssertionView::Block { position, expected } => {
+            AssertionView::Block {
+                position,
+                expected,
+                pointer_suffix,
+            } => {
                 assert_eq!(*position, [1, 2, 3]);
                 assert_eq!(expected.id, "minecraft:stone");
+                assert!(pointer_suffix.is_none());
             }
             other => panic!("expected Block, got {:?}", other),
         }
@@ -64,6 +72,14 @@ mod tests {
         let mut out = Vec::new();
         views_from_check(&check, &mut out);
         assert_eq!(out.len(), 3);
+        for (i, expected) in ["/is/0", "/is/1", "/is/2"].iter().enumerate() {
+            match &out[i] {
+                AssertionView::Block { pointer_suffix, .. } => {
+                    assert_eq!(pointer_suffix.as_deref(), Some(*expected));
+                }
+                other => panic!("expected Block, got {:?}", other),
+            }
+        }
     }
 
     #[test]

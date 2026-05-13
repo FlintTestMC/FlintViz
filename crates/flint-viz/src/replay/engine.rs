@@ -246,7 +246,9 @@ mod tests {
             TickEvent::Assert { views } => {
                 assert_eq!(views.len(), 1);
                 match &views[0] {
-                    AssertionView::Block { position, expected } => {
+                    AssertionView::Block {
+                        position, expected, ..
+                    } => {
                         assert_eq!(*position, [0, 100, 0]);
                         assert_eq!(expected.id, "minecraft:stone");
                     }

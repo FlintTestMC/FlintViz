@@ -7,15 +7,16 @@ import {
 } from "three";
 
 import type { AssertionView, Block, TickEvent, Vec3 } from "../api/types";
+import { activeAltIndex, useAssertionsStore } from "../store/assertions";
 import { useReplayStore } from "../store/replay";
+import { posKey } from "../store/world";
 import type { BlockProviders } from "./atlas";
 import { buildBlockMesh, getSharedMaterial } from "./blockAdapter";
 import { useBlockProviders } from "./useBlockProviders";
 
 // Translucent "expected block" overlay for the current tick. Walks every
-// `assert` event's `views` and renders one ghost per block-kind view, grouped
-// by position. When the event picker (#0040) has selected event N: render only
-// that single assert event's block views (or nothing if N is not an assert).
+// `assert` event's `views` and renders one ghost per *position*, cycling /
+// locked / picker-pinned across the alternatives at that position (#0041).
 //
 // Mounted under `<SceneRoot>` so #0036's rotation rotates ghosts with the
 // world.
@@ -35,11 +36,14 @@ export default function AssertionGhosts() {
           ? [frame.events[eventIndex]!]
           : []
         : frame.events;
-    const views: AssertionView[] = [];
-    for (const ev of events) {
-      if (ev.kind === "assert") views.push(...ev.views);
+    const entries: { idx: number; view: AssertionView }[] = [];
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i]!;
+      if (ev.kind !== "assert") continue;
+      const parentIdx = eventIndex != null ? eventIndex : i;
+      for (const v of ev.views) entries.push({ idx: parentIdx, view: v });
     }
-    return groupByPosition(views);
+    return groupByPosition(entries);
   }, [frames, tick, eventIndex]);
 
   if (!providers || groups.length === 0) return null;
@@ -49,9 +53,8 @@ export default function AssertionGhosts() {
       {groups.map((g) => (
         <Ghost
           key={`${g.pos[0]},${g.pos[1]},${g.pos[2]}`}
-          pos={g.pos}
-          expected={g.expected}
-          alternativeCount={g.alternativeCount}
+          group={g}
+          pickerActive={eventIndex !== null}
           providers={providers}
         />
       ))}
@@ -61,23 +64,29 @@ export default function AssertionGhosts() {
 
 interface GhostGroup {
   pos: Vec3;
-  expected: Block;
-  alternativeCount: number;
+  expecteds: Block[];
+  pointerSuffixes: (string | undefined)[];
+  eventIndices: number[];
 }
 
-function groupByPosition(views: AssertionView[]): GhostGroup[] {
+function groupByPosition(
+  entries: { idx: number; view: AssertionView }[],
+): GhostGroup[] {
   const byKey = new Map<string, GhostGroup>();
-  for (const a of views) {
-    if (a.kind !== "block") continue;
-    const key = `${a.position[0]},${a.position[1]},${a.position[2]}`;
+  for (const { idx, view } of entries) {
+    if (view.kind !== "block") continue;
+    const key = `${view.position[0]},${view.position[1]},${view.position[2]}`;
     const existing = byKey.get(key);
     if (existing) {
-      existing.alternativeCount += 1;
+      existing.expecteds.push(view.expected);
+      existing.pointerSuffixes.push(view.pointer_suffix);
+      existing.eventIndices.push(idx);
     } else {
       byKey.set(key, {
-        pos: a.position,
-        expected: a.expected,
-        alternativeCount: 1,
+        pos: view.position,
+        expecteds: [view.expected],
+        pointerSuffixes: [view.pointer_suffix],
+        eventIndices: [idx],
       });
     }
   }
@@ -115,17 +124,25 @@ function extractProps(block: Block): Record<string, string> {
   return out;
 }
 
+function shortId(id: string): string {
+  return id.startsWith("minecraft:") ? id.slice("minecraft:".length) : id;
+}
+
 function Ghost({
-  pos,
-  expected,
-  alternativeCount,
+  group,
+  pickerActive,
   providers,
 }: {
-  pos: Vec3;
-  expected: Block;
-  alternativeCount: number;
+  group: GhostGroup;
+  pickerActive: boolean;
   providers: BlockProviders;
 }) {
+  const cycleIndex = useAssertionsStore((s) => s.cycleIndex);
+  const lock = useAssertionsStore((s) => s.locks[posKey(group.pos)]);
+  const altCount = group.expecteds.length;
+  const active = activeAltIndex(altCount, cycleIndex, lock, null);
+  const expected = group.expecteds[active]!;
+
   const built = useMemo(
     () => buildBlockMesh(expected.id, extractProps(expected), providers),
     [expected, providers],
@@ -145,10 +162,10 @@ function Ghost({
   if (!built) return null;
 
   const ghostMat = getGhostMaterial(providers);
-  const label = alternativeCount > 1 ? `asserted +${alternativeCount - 1}` : "asserted";
+  const label = labelFor(group, active, lock !== undefined, pickerActive);
 
   return (
-    <group position={[pos[0], pos[1], pos[2]]}>
+    <group position={[group.pos[0], group.pos[1], group.pos[2]]}>
       <mesh
         geometry={built.geometry}
         material={ghostMat}
@@ -174,4 +191,18 @@ function Ghost({
       </Html>
     </group>
   );
+}
+
+function labelFor(
+  group: GhostGroup,
+  active: number,
+  locked: boolean,
+  pickerActive: boolean,
+): string {
+  const altCount = group.expecteds.length;
+  if (altCount <= 1) return "asserted";
+  const id = shortId(group.expecteds[active]!.id);
+  if (pickerActive) return id;
+  if (locked) return `${id} 🔒`;
+  return `${id} …+${altCount - 1}`;
 }

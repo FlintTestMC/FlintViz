@@ -95,6 +95,12 @@ pub enum AssertionView {
     Block {
         position: [i32; 3],
         expected: Block,
+        /// JSON-pointer suffix appended to the parent event's `source_map`
+        /// pointer to reach the originating `is` array element when the
+        /// source `BlockCheck` used `BlockSpec::Multiple` (`/is/<i>`).
+        /// `None` for `BlockSpec::Single`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pointer_suffix: Option<String>,
     },
     Inventory {
         slot: PlayerSlot,
@@ -211,6 +217,7 @@ mod tests {
                 AssertionView::Block {
                     position: [1, 1, 1],
                     expected: Block::new("minecraft:stone"),
+                    pointer_suffix: None,
                 },
                 AssertionView::Other {
                     description: "expected_count >= 3".into(),

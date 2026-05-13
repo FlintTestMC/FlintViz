@@ -134,7 +134,14 @@ export type TickEvent =
 // One check inside a `TickEvent::Assert`. BlockSpec::Multiple alternatives
 // expand to one `block` view per alternative; all share the same parent event.
 export type AssertionView =
-  | { kind: "block"; position: Vec3; expected: Block }
+  | {
+      kind: "block";
+      position: Vec3;
+      expected: Block;
+      // Appended to the parent event's `source_map` pointer when the original
+      // check used `BlockSpec::Multiple` (e.g. "/is/1"). Absent for Single.
+      pointer_suffix?: string;
+    }
   | { kind: "inventory"; slot: PlayerSlot; expected: Item | null }
   | { kind: "other"; description: string };
 

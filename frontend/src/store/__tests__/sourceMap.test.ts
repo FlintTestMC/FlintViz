@@ -38,6 +38,11 @@ describe("buildSourceIndices", () => {
     expect(pointerForEvent(idx, 2, 1)).toBe("/timeline/1");
     expect(pointerForEvent(idx, 99, 0)).toBeNull();
 
+    // suffix composes with the resolved base pointer (#0041).
+    expect(pointerForEvent(idx, 2, 1, "/is/2")).toBe("/timeline/1/is/2");
+    expect(pointerForEvent(idx, 2, 1, undefined)).toBe("/timeline/1");
+    expect(pointerForEvent(idx, 99, 0, "/is/0")).toBeNull();
+
     expect(pointerForTick(idx, 2)).toBe("/timeline/1");
 
     expect(Array.from(idx.pointerToTicks.get("/timeline/0")!)).toEqual([1, 5]);
