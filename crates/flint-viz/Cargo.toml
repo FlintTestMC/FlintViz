@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Web-based 3D visualizer for Flint Minecraft tests"
 license = "GPL-2.0-only"
-authors = ["JunkyDeveloper <jonas.bauer.edv@gmail.com>"]
+authors = ["JunkyDeveloper <junkydeveloper@gmail.com"]
 homepage = "https://github.com/FlintTestMC/FlintVisulizer"
 repository = "https://github.com/FlintTestMC/FlintVisulizer"
 readme = "../../README.md"
@@ -14,7 +14,7 @@ default = []
 embed-frontend = ["dep:rust-embed", "dep:mime_guess"]
 
 [package.metadata.deb]
-maintainer = "JunkyDeveloper <jonas.bauer.edv@gmail.com>"
+maintainer = "JunkyDeveloper <junkydeveloper@gmail.com"
 copyright = "2026, JunkyDeveloper. Licensed under GPL-2.0-only."
 section = "utility"
 priority = "optional"
