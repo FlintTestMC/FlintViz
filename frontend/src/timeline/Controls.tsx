@@ -24,7 +24,6 @@ export default function Controls() {
   const setTick = useReplayStore((s) => s.setTick);
   const play = useReplayStore((s) => s.play);
   const pause = useReplayStore((s) => s.pause);
-  const rotateClockwise = useReplayStore((s) => s.rotateClockwise);
 
   const disabled = !replay;
   const atEnd = !!replay && tick >= replay.max_tick;
@@ -98,17 +97,11 @@ export default function Controls() {
           e.preventDefault();
           goEnd();
           break;
-        case "r":
-        case "R":
-          if (e.ctrlKey || e.metaKey || e.altKey) return;
-          e.preventDefault();
-          rotateClockwise();
-          break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-    // togglePlay/stepFwd/stepBack/goStart/goEnd/rotateClockwise are stable closures
+    // togglePlay/stepFwd/stepBack/goStart/goEnd are stable closures
     // over store getters — re-binding on every render is not necessary, but cheap.
   });
 

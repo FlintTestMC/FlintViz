@@ -58,7 +58,6 @@ function resetStore(): void {
     worldState: new Map(),
     player: { inventory: {}, selected_hotbar: 1, game_mode: "Creative" },
     playback: "paused",
-    rotation: 0,
   });
 }
 
@@ -168,39 +167,6 @@ describe("playback controls", () => {
     expect(useReplayStore.getState().tick).toBe(1);
     useReplayStore.getState().stepBack();
     expect(useReplayStore.getState().tick).toBe(0);
-  });
-});
-
-describe("rotation", () => {
-  it("setRotation writes the explicit value", () => {
-    resetStore();
-    useReplayStore.getState().setRotation(2);
-    expect(useReplayStore.getState().rotation).toBe(2);
-  });
-
-  it("rotateClockwise wraps after 270°", () => {
-    resetStore();
-    const { rotateClockwise } = useReplayStore.getState();
-    rotateClockwise();
-    rotateClockwise();
-    rotateClockwise();
-    rotateClockwise();
-    expect(useReplayStore.getState().rotation).toBe(0);
-  });
-
-  it("setReplay resets rotation to 0", () => {
-    resetStore();
-    useReplayStore.getState().setRotation(3);
-    const replay = makeReplay();
-    useReplayStore.getState().setReplay(replay, []);
-    expect(useReplayStore.getState().rotation).toBe(0);
-  });
-
-  it("openTest resets rotation to 0", () => {
-    resetStore();
-    useReplayStore.getState().setRotation(2);
-    useReplayStore.getState().openTest("foo", "{}");
-    expect(useReplayStore.getState().rotation).toBe(0);
   });
 });
 

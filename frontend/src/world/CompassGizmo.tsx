@@ -1,9 +1,8 @@
 import { Html } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
-import { Group, Quaternion, Vector3 } from "three";
+import { useRef } from "react";
+import { Group } from "three";
 
-import { useReplayStore } from "../store/replay";
 import { mainCameraRef } from "./Camera";
 
 // Blender-style orientation indicator. A separate <Canvas> overlay so the
@@ -11,8 +10,6 @@ import { mainCameraRef } from "./Camera";
 // camera is fixed; only the gizmo group's quaternion changes per frame.
 //
 // Axes follow Minecraft world conventions: +X east, +Y up, +Z south.
-
-const Y_AXIS = new Vector3(0, 1, 0);
 
 // Arm length / radius and sphere radius were tuned so the assembly fills
 // roughly the inner 70 % of a 96 px viewport at zoom 40.
@@ -42,28 +39,22 @@ export default function CompassGizmo() {
 
 function GizmoContent() {
   const groupRef = useRef<Group>(null);
-  const rotation = useReplayStore((s) => s.rotation);
-
-  // Scratch quaternion reused every frame to avoid GC pressure.
-  const sceneQ = useMemo(() => new Quaternion(), []);
 
   useFrame(() => {
     const group = groupRef.current;
     const cam = mainCameraRef;
     if (!group || !cam) return;
 
-    // Mirror what the user sees: the on-screen world orientation is
-    // (camera_view) ∘ (scene_rotation). The overlay camera is fixed, so we
-    // bake that product into the gizmo group's local rotation.
-    sceneQ.setFromAxisAngle(Y_AXIS, (rotation * Math.PI) / 2);
-    group.quaternion.copy(cam.quaternion).invert().multiply(sceneQ);
+    // Mirror what the user sees: the overlay camera is fixed, so invert the
+    // main camera's orientation into the gizmo group's local rotation.
+    group.quaternion.copy(cam.quaternion).invert();
   });
 
   return (
     <group ref={groupRef}>
-      <Arm axis="x" color="#ff4444" label="E" />
-      <Arm axis="y" color="#44dd44" label="U" />
-      <Arm axis="z" color="#5577ff" label="S" />
+      <Arm axis="x" color="#ff4444" label="East" />
+      <Arm axis="y" color="#44dd44" label="Up" />
+      <Arm axis="z" color="#5577ff" label="South" />
     </group>
   );
 }

@@ -17,11 +17,6 @@ import {
 
 export type Playback = "paused" | "playing";
 
-// Quarter-turn rotations around Y. 0 = identity; 1 = 90° CCW (looking down -Y).
-// Persisted in the replay store (not overlayStore) because it must reset on
-// test load alongside `tick` / `worldState` (#0036 handoff).
-export type Rotation = 0 | 1 | 2 | 3;
-
 const DEFAULT_PLAYER: PlayerSnapshot = {
   inventory: {},
   selected_hotbar: 1,
@@ -40,7 +35,6 @@ export interface ReplayState {
   worldState: Map<PosKey, Block>;
   player: PlayerSnapshot;
   playback: Playback;
-  rotation: Rotation;
   sourceIndices: SourceIndices;
 
   openTest: (testId: string, source: string) => void;
@@ -52,8 +46,6 @@ export interface ReplayState {
   pause: () => void;
   stepForward: () => void;
   stepBack: () => void;
-  setRotation: (rotation: Rotation) => void;
-  rotateClockwise: () => void;
 }
 
 export const useReplayStore = create<ReplayState>((set, get) => ({
@@ -66,7 +58,6 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
   worldState: new Map(),
   player: { ...DEFAULT_PLAYER, inventory: {} },
   playback: "paused",
-  rotation: 0,
   sourceIndices: buildSourceIndices(null),
 
   openTest: (testId, source) => {
@@ -80,7 +71,6 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       worldState: new Map(),
       player: { ...DEFAULT_PLAYER, inventory: {} },
       playback: "paused",
-      rotation: 0,
       sourceIndices: buildSourceIndices(null),
     });
   },
@@ -102,7 +92,6 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       eventIndex: null,
       worldState: world,
       player,
-      rotation: 0,
       sourceIndices: buildSourceIndices(replay),
     });
   },
@@ -178,8 +167,4 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
   pause: () => set({ playback: "paused" }),
   stepForward: () => get().setTick(get().tick + 1),
   stepBack: () => get().setTick(get().tick - 1),
-
-  setRotation: (rotation) => set({ rotation }),
-  rotateClockwise: () =>
-    set((s) => ({ rotation: (((s.rotation + 1) % 4) as Rotation) })),
 }));
