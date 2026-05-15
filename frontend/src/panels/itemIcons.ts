@@ -30,10 +30,6 @@ export function loadItemIcons(): Promise<IconIndex> {
   return cached;
 }
 
-export function resetItemIcons(): void {
-  cached = null;
-}
-
 async function doLoad(): Promise<IconIndex> {
   const zip = await loadAssetZip();
 
@@ -191,10 +187,4 @@ function stripPrefix(ref: string): string {
 function normaliseTextureRef(ref: string): string {
   // Texture refs in models are like "minecraft:item/stick" or "block/stone".
   return stripPrefix(ref);
-}
-
-export function getItemIconUrl(index: IconIndex, itemId: string): string | null {
-  // Allow callers to pass either bare ("stone") or namespaced ("minecraft:stone").
-  if (itemId.includes(":")) return index.byId.get(itemId) ?? null;
-  return index.byId.get(`minecraft:${itemId}`) ?? null;
 }

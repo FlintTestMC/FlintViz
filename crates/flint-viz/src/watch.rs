@@ -89,10 +89,10 @@ async fn process_events(
                 continue;
             }
             let now = Instant::now();
-            if let Some(prev) = last_emit.get(&id) {
-                if now.duration_since(*prev) < DEBOUNCE_WINDOW {
-                    continue;
-                }
+            if let Some(prev) = last_emit.get(&id)
+                && now.duration_since(*prev) < DEBOUNCE_WINDOW
+            {
+                continue;
             }
             last_emit.insert(id.clone(), now);
             // `send` only fails when there are zero active receivers; that's

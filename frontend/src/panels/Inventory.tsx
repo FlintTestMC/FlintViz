@@ -39,7 +39,7 @@ export function slotLabel(slot: PlayerSlot): string {
   }
 }
 
-export function selectedHotbarSlot(n: number): PlayerSlot | null {
+function selectedHotbarSlot(n: number): PlayerSlot | null {
   if (n < 1 || n > 9) return null;
   return `hotbar${n}` as PlayerSlot;
 }

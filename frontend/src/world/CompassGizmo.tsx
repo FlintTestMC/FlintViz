@@ -12,17 +12,18 @@ import { mainCameraRef } from "./Camera";
 // Axes follow Minecraft world conventions: +X east, +Y up, +Z south.
 
 // Arm length / radius and sphere radius were tuned so the assembly fills
-// roughly the inner 70 % of a 96 px viewport at zoom 40.
+// the inner portion of a 128 px viewport at zoom 40, leaving margin for
+// the axis labels.
 const ARM_LENGTH = 1.0;
 const ARM_RADIUS = 0.04;
 const TIP_RADIUS = 0.13;
-const LABEL_OFFSET = ARM_LENGTH + 0.28;
+const LABEL_OFFSET = ARM_LENGTH + 0.55;
 
 export default function CompassGizmo() {
   return (
     <div
       className="pointer-events-none absolute top-2 right-2"
-      style={{ width: 96, height: 96 }}
+      style={{ width: 150, height: 150 }}
     >
       <Canvas
         orthographic

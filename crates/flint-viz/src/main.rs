@@ -88,10 +88,8 @@ async fn run_serve(
     let url = format!("http://{}", SocketAddr::new(display_host, port));
     tracing::info!("flint-viz listening on {url} (bound to {addr})");
 
-    if open {
-        if let Err(err) = webbrowser::open(&url) {
-            tracing::warn!("failed to open browser: {err}");
-        }
+    if open && let Err(err) = webbrowser::open(&url) {
+        tracing::warn!("failed to open browser: {err}");
     }
 
     axum::serve(listener, app).await?;

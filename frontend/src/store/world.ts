@@ -36,7 +36,7 @@ export function clonePlayer(p: PlayerSnapshot): PlayerSnapshot {
 }
 
 // Apply a single TickEvent to (world, player). Assertions are no-ops.
-export function applyEvent(
+function applyEvent(
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
   event: TickEvent,
@@ -97,7 +97,7 @@ export function applyEvent(
 }
 
 // Mutates `world` and `player` to apply one frame's events forward.
-export function applyForward(
+function applyForward(
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
   frame: TickFrame,

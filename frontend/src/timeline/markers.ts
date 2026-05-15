@@ -59,7 +59,7 @@ export function summariseFrame(frame: TickFrame): string {
   return `${parts.slice(0, 2).join(" • ")} • +${parts.length - 2} more`;
 }
 
-export function summariseEvent(event: TickEvent): string {
+function summariseEvent(event: TickEvent): string {
   switch (event.kind) {
     case "place":
       return `place ${shortBlockId(event.block.id)} @ ${pos(event.pos)}`;

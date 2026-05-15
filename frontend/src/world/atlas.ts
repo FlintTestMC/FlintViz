@@ -55,12 +55,6 @@ export function loadBlockProviders(): Promise<BlockProviders> {
   return cached;
 }
 
-// Reset cache — used by the gallery's reload button and by tests.
-export function resetBlockProviders(): void {
-  cached = null;
-  zipPromise = null;
-}
-
 async function doLoad(): Promise<BlockProviders> {
   const zip = await loadAssetZip();
 

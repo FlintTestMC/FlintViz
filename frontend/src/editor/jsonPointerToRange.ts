@@ -14,7 +14,7 @@ export type JsonNode =
   | { kind: "boolean"; start: number; end: number }
   | { kind: "null"; start: number; end: number };
 
-export interface JsonProp {
+interface JsonProp {
   keyStart: number;
   keyEnd: number;
   key: string;

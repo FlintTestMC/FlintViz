@@ -4,7 +4,7 @@ import type { Replay } from "../api/types";
 import { useReplayStore } from "../store/replay";
 
 // 1× = 1 tick per 1000 ms (#0029).
-export const TICK_MS = 1000;
+const TICK_MS = 1000;
 
 export type Speed = 0.5 | 1 | 2 | 4;
 export const SPEEDS: Speed[] = [0.5, 1, 2, 4];

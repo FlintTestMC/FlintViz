@@ -62,7 +62,7 @@ mod tests {
         assert_eq!(stored.count, 4);
 
         apply_slot_change(&mut snap, PlayerSlot::Hotbar1, None, 0);
-        assert!(snap.inventory.get(&PlayerSlot::Hotbar1).is_none());
+        assert!(!snap.inventory.contains_key(&PlayerSlot::Hotbar1));
     }
 
     #[test]
@@ -82,8 +82,10 @@ mod tests {
 
     #[test]
     fn resolve_active_item_falls_back_to_selected_hotbar() {
-        let mut snap = PlayerSnapshot::default();
-        snap.selected_hotbar = 3;
+        let mut snap = PlayerSnapshot {
+            selected_hotbar: 3,
+            ..Default::default()
+        };
         snap.inventory.insert(
             PlayerSlot::Hotbar3,
             Item {
