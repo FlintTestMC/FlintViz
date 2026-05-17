@@ -59,4 +59,78 @@ describe("groupByState", () => {
     );
     expect(groups[0]!.props.power).toBe("0");
   });
+
+  describe("default properties (#0048)", () => {
+    const defaults = {
+      "minecraft:oak_stairs": {
+        facing: "north",
+        half: "bottom",
+        shape: "straight",
+        waterlogged: "false",
+      },
+      "minecraft:oak_fence": {
+        north: "false",
+        east: "false",
+        south: "false",
+        west: "false",
+        waterlogged: "false",
+      },
+    };
+
+    it("fills defaults for a block declared with no props", () => {
+      const groups = groupByState(
+        world([[[0, 0, 0], { id: "minecraft:oak_stairs" }]]),
+        defaults,
+      );
+      expect(groups[0]!.props).toEqual({
+        facing: "north",
+        half: "bottom",
+        shape: "straight",
+        waterlogged: "false",
+      });
+    });
+
+    it("keeps user props and defaults the rest", () => {
+      const groups = groupByState(
+        world([[[0, 0, 0], { id: "minecraft:oak_stairs", facing: "east" }]]),
+        defaults,
+      );
+      expect(groups[0]!.props).toEqual({
+        facing: "east",
+        half: "bottom",
+        shape: "straight",
+        waterlogged: "false",
+      });
+    });
+
+    it("passes unknown ids through unchanged", () => {
+      const groups = groupByState(
+        world([[[0, 0, 0], { id: "modid:custom_block", foo: "bar" }]]),
+        defaults,
+      );
+      expect(groups[0]!.props).toEqual({ foo: "bar" });
+      expect(groups).toHaveLength(1);
+    });
+
+    it("collapses {id, ...defaults} and {id} into one group", () => {
+      const groups = groupByState(
+        world([
+          [[0, 0, 0], { id: "minecraft:oak_stairs" }],
+          [
+            [1, 0, 0],
+            {
+              id: "minecraft:oak_stairs",
+              facing: "north",
+              half: "bottom",
+              shape: "straight",
+              waterlogged: "false",
+            },
+          ],
+        ]),
+        defaults,
+      );
+      expect(groups).toHaveLength(1);
+      expect(groups[0]!.positions).toHaveLength(2);
+    });
+  });
 });

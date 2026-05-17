@@ -1,5 +1,6 @@
 import type { Block, Vec3 } from "../api/types";
 import type { PosKey } from "../store/world";
+import type { BlockDefaults } from "./blockDefaults";
 
 export interface InstanceGroup {
   groupKey: string;
@@ -14,11 +15,12 @@ export interface InstanceGroup {
 // with the same id+props in any order.
 export function groupByState(
   worldState: Map<PosKey, Block>,
+  defaults: BlockDefaults = {},
 ): InstanceGroup[] {
   const groups = new Map<string, InstanceGroup>();
 
   for (const [posKey, block] of worldState) {
-    const props = extractProps(block);
+    const props = extractProps(block, defaults);
     const groupKey = makeGroupKey(block.id, props);
 
     let group = groups.get(groupKey);
@@ -35,15 +37,32 @@ export function groupByState(
 // Builds the `Record<string, string>` deepslate expects, dropping `id` and
 // coercing every property value to its string form (Rust replay engine emits
 // strings already, but the wire `Block` type is permissive).
-function extractProps(block: Block): Record<string, string> {
-  const props: Record<string, string> = {};
-  const keys = Object.keys(block).filter((k) => k !== "id").sort();
-  for (const k of keys) {
+//
+// `defaults` (#0048) are merged *underneath* the block's own props
+// (`{ ...defaults, ...userProps }`) so a test that omits a property still
+// renders in Minecraft's default state. Keys are emitted sorted so the group
+// key stays stable — and a block with explicit `facing=north` collapses into
+// the same group as a bare block defaulted to `facing=north`, which is correct
+// since they render identically. Unknown ids contribute no defaults and pass
+// through unchanged.
+function extractProps(
+  block: Block,
+  defaults: BlockDefaults,
+): Record<string, string> {
+  const lookupId = block.id.includes(":")
+    ? block.id
+    : `minecraft:${block.id}`;
+  const blockDefaults = defaults[lookupId] ?? defaults[block.id] ?? {};
+  const merged: Record<string, string> = { ...blockDefaults };
+  for (const k of Object.keys(block)) {
+    if (k === "id") continue;
     const v = (block as Record<string, unknown>)[k];
     if (v == null) continue;
-    props[k] = String(v);
+    merged[k] = String(v);
   }
-  return props;
+  const sorted: Record<string, string> = {};
+  for (const k of Object.keys(merged).sort()) sorted[k] = merged[k]!;
+  return sorted;
 }
 
 function makeGroupKey(

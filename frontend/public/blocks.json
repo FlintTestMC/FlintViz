@@ -1,0 +1,5873 @@
+{
+  "blocks": [
+    {
+      "name": "grass_block",
+      "default_properties": [
+        "SNOWY=false"
+      ]
+    },
+    {
+      "name": "podzol",
+      "default_properties": [
+        "SNOWY=false"
+      ]
+    },
+    {
+      "name": "pale_oak_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "oak_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "spruce_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "birch_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "jungle_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "acacia_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "cherry_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "dark_oak_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "pale_oak_sapling",
+      "default_properties": [
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "mangrove_propagule",
+      "default_properties": [
+        "AGE_4=0",
+        "HANGING=false",
+        "STAGE=0",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "water",
+      "default_properties": [
+        "LEVEL=0"
+      ]
+    },
+    {
+      "name": "lava",
+      "default_properties": [
+        "LEVEL=0"
+      ]
+    },
+    {
+      "name": "suspicious_sand",
+      "default_properties": [
+        "DUSTED=0"
+      ]
+    },
+    {
+      "name": "suspicious_gravel",
+      "default_properties": [
+        "DUSTED=0"
+      ]
+    },
+    {
+      "name": "oak_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "spruce_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "birch_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "jungle_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "acacia_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "cherry_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "dark_oak_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "pale_oak_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "mangrove_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "mangrove_roots",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "muddy_mangrove_roots",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "bamboo_block",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_spruce_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_birch_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_jungle_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_acacia_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_cherry_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_dark_oak_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_pale_oak_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_oak_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_mangrove_log",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_bamboo_block",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "oak_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "spruce_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "birch_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "jungle_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "acacia_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "cherry_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "dark_oak_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "mangrove_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_oak_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_spruce_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_birch_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_jungle_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_acacia_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_cherry_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_dark_oak_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_pale_oak_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_mangrove_wood",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "oak_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "azalea_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "flowering_azalea_leaves",
+      "default_properties": [
+        "DISTANCE=7",
+        "PERSISTENT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dispenser",
+      "default_properties": [
+        "FACING=north",
+        "TRIGGERED=false"
+      ]
+    },
+    {
+      "name": "note_block",
+      "default_properties": [
+        "NOTEBLOCK_INSTRUMENT=harp",
+        "NOTE=0",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "white_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "orange_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "magenta_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "light_blue_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "yellow_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "lime_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "pink_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "gray_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "light_gray_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "cyan_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "purple_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "blue_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "brown_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "green_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "red_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "black_bed",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OCCUPIED=false",
+        "BED_PART=foot"
+      ]
+    },
+    {
+      "name": "powered_rail",
+      "default_properties": [
+        "POWERED=false",
+        "RAIL_SHAPE_STRAIGHT=north_south",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "detector_rail",
+      "default_properties": [
+        "POWERED=false",
+        "RAIL_SHAPE_STRAIGHT=north_south",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "sticky_piston",
+      "default_properties": [
+        "EXTENDED=false",
+        "FACING=north"
+      ]
+    },
+    {
+      "name": "tall_seagrass",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "piston",
+      "default_properties": [
+        "EXTENDED=false",
+        "FACING=north"
+      ]
+    },
+    {
+      "name": "piston_head",
+      "default_properties": [
+        "FACING=north",
+        "SHORT=false",
+        "PISTON_TYPE=normal"
+      ]
+    },
+    {
+      "name": "moving_piston",
+      "default_properties": [
+        "FACING=north",
+        "PISTON_TYPE=normal"
+      ]
+    },
+    {
+      "name": "tnt",
+      "default_properties": [
+        "UNSTABLE=false"
+      ]
+    },
+    {
+      "name": "chiseled_bookshelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "SLOT_0_OCCUPIED=false",
+        "SLOT_1_OCCUPIED=false",
+        "SLOT_2_OCCUPIED=false",
+        "SLOT_3_OCCUPIED=false",
+        "SLOT_4_OCCUPIED=false",
+        "SLOT_5_OCCUPIED=false"
+      ]
+    },
+    {
+      "name": "acacia_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oak_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_shelf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false",
+        "SIDE_CHAIN_PART=unconnected",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "wall_torch",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "fire",
+      "default_properties": [
+        "AGE_15=0",
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "UP=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "creaking_heart",
+      "default_properties": [
+        "AXIS=y",
+        "CREAKING_HEART_STATE=uprooted",
+        "NATURAL=false"
+      ]
+    },
+    {
+      "name": "oak_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "redstone_wire",
+      "default_properties": [
+        "EAST_REDSTONE=none",
+        "NORTH_REDSTONE=none",
+        "POWER=0",
+        "SOUTH_REDSTONE=none",
+        "WEST_REDSTONE=none"
+      ]
+    },
+    {
+      "name": "wheat",
+      "default_properties": [
+        "AGE_7=0"
+      ]
+    },
+    {
+      "name": "farmland",
+      "default_properties": [
+        "MOISTURE=0"
+      ]
+    },
+    {
+      "name": "furnace",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "oak_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oak_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "ladder",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "rail",
+      "default_properties": [
+        "RAIL_SHAPE=north_south",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cobblestone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oak_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oak_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_hanging_sign",
+      "default_properties": [
+        "ATTACHED=false",
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oak_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_wall_hanging_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "lever",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "stone_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "iron_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "oak_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "spruce_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "birch_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "jungle_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "acacia_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "cherry_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "mangrove_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "bamboo_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "redstone_ore",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "deepslate_redstone_ore",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "redstone_torch",
+      "default_properties": [
+        "LIT=true"
+      ]
+    },
+    {
+      "name": "redstone_wall_torch",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LIT=true"
+      ]
+    },
+    {
+      "name": "stone_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "snow",
+      "default_properties": [
+        "LAYERS=1"
+      ]
+    },
+    {
+      "name": "cactus",
+      "default_properties": [
+        "AGE_15=0"
+      ]
+    },
+    {
+      "name": "sugar_cane",
+      "default_properties": [
+        "AGE_15=0"
+      ]
+    },
+    {
+      "name": "jukebox",
+      "default_properties": [
+        "HAS_RECORD=false"
+      ]
+    },
+    {
+      "name": "oak_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "basalt",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "polished_basalt",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "soul_wall_torch",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "copper_wall_torch",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "nether_portal",
+      "default_properties": [
+        "HORIZONTAL_AXIS=x"
+      ]
+    },
+    {
+      "name": "carved_pumpkin",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "jack_o_lantern",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "cake",
+      "default_properties": [
+        "BITES=0"
+      ]
+    },
+    {
+      "name": "repeater",
+      "default_properties": [
+        "DELAY=1",
+        "HORIZONTAL_FACING=north",
+        "LOCKED=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "oak_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "brown_mushroom_block",
+      "default_properties": [
+        "DOWN=true",
+        "EAST=true",
+        "NORTH=true",
+        "SOUTH=true",
+        "UP=true",
+        "WEST=true"
+      ]
+    },
+    {
+      "name": "red_mushroom_block",
+      "default_properties": [
+        "DOWN=true",
+        "EAST=true",
+        "NORTH=true",
+        "SOUTH=true",
+        "UP=true",
+        "WEST=true"
+      ]
+    },
+    {
+      "name": "mushroom_stem",
+      "default_properties": [
+        "DOWN=true",
+        "EAST=true",
+        "NORTH=true",
+        "SOUTH=true",
+        "UP=true",
+        "WEST=true"
+      ]
+    },
+    {
+      "name": "iron_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_bars",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "iron_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_chain",
+      "default_properties": [
+        "AXIS=y",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "attached_pumpkin_stem",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "attached_melon_stem",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "pumpkin_stem",
+      "default_properties": [
+        "AGE_7=0"
+      ]
+    },
+    {
+      "name": "melon_stem",
+      "default_properties": [
+        "AGE_7=0"
+      ]
+    },
+    {
+      "name": "vine",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "UP=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "glow_lichen",
+      "default_properties": [
+        "DOWN=false",
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "UP=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "resin_clump",
+      "default_properties": [
+        "DOWN=false",
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "UP=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "oak_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "stone_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mud_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mycelium",
+      "default_properties": [
+        "SNOWY=false"
+      ]
+    },
+    {
+      "name": "resin_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "resin_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "resin_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "nether_brick_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "nether_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "nether_wart",
+      "default_properties": [
+        "AGE_3=0"
+      ]
+    },
+    {
+      "name": "brewing_stand",
+      "default_properties": [
+        "HAS_BOTTLE_0=false",
+        "HAS_BOTTLE_1=false",
+        "HAS_BOTTLE_2=false"
+      ]
+    },
+    {
+      "name": "water_cauldron",
+      "default_properties": [
+        "LEVEL_CAULDRON=1"
+      ]
+    },
+    {
+      "name": "powder_snow_cauldron",
+      "default_properties": [
+        "LEVEL_CAULDRON=1"
+      ]
+    },
+    {
+      "name": "end_portal_frame",
+      "default_properties": [
+        "EYE=false",
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "redstone_lamp",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "cocoa",
+      "default_properties": [
+        "AGE_2=0",
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "sandstone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "ender_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "tripwire_hook",
+      "default_properties": [
+        "ATTACHED=false",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "tripwire",
+      "default_properties": [
+        "ATTACHED=false",
+        "DISARMED=false",
+        "EAST=false",
+        "NORTH=false",
+        "POWERED=false",
+        "SOUTH=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "spruce_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "command_block",
+      "default_properties": [
+        "CONDITIONAL=false",
+        "FACING=north"
+      ]
+    },
+    {
+      "name": "cobblestone_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "mossy_cobblestone_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "carrots",
+      "default_properties": [
+        "AGE_7=0"
+      ]
+    },
+    {
+      "name": "potatoes",
+      "default_properties": [
+        "AGE_7=0"
+      ]
+    },
+    {
+      "name": "oak_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "spruce_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "birch_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "jungle_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "acacia_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "cherry_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "mangrove_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "bamboo_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "skeleton_skull",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "skeleton_wall_skull",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "wither_skeleton_skull",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "wither_skeleton_wall_skull",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "zombie_head",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "zombie_wall_head",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "player_head",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "player_wall_head",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "creeper_head",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "creeper_wall_head",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "dragon_head",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "dragon_wall_head",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "piglin_head",
+      "default_properties": [
+        "POWERED=false",
+        "ROTATION_16=0"
+      ]
+    },
+    {
+      "name": "piglin_wall_head",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "anvil",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "chipped_anvil",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "damaged_anvil",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "trapped_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "light_weighted_pressure_plate",
+      "default_properties": [
+        "POWER=0"
+      ]
+    },
+    {
+      "name": "heavy_weighted_pressure_plate",
+      "default_properties": [
+        "POWER=0"
+      ]
+    },
+    {
+      "name": "comparator",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "MODE_COMPARATOR=compare",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "daylight_detector",
+      "default_properties": [
+        "INVERTED=false",
+        "POWER=0"
+      ]
+    },
+    {
+      "name": "hopper",
+      "default_properties": [
+        "ENABLED=true",
+        "FACING_HOPPER=down"
+      ]
+    },
+    {
+      "name": "quartz_pillar",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "quartz_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "activator_rail",
+      "default_properties": [
+        "POWERED=false",
+        "RAIL_SHAPE_STRAIGHT=north_south",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dropper",
+      "default_properties": [
+        "FACING=north",
+        "TRIGGERED=false"
+      ]
+    },
+    {
+      "name": "white_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "orange_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "magenta_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "light_blue_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "yellow_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "lime_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "pink_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "gray_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "light_gray_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "cyan_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "purple_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "blue_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "brown_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "green_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "red_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "black_stained_glass_pane",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "acacia_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_mosaic_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "barrier",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "light",
+      "default_properties": [
+        "LEVEL=15",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "iron_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "prismarine_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "prismarine_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_prismarine_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "prismarine_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "prismarine_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_prismarine_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "hay_block",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "sunflower",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "lilac",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "rose_bush",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "peony",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "tall_grass",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "large_fern",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "white_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "orange_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "magenta_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "light_blue_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "yellow_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "lime_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "pink_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "gray_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "light_gray_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "cyan_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "purple_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "blue_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "brown_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "green_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "red_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "black_banner",
+      "default_properties": [
+        "ROTATION_16=8"
+      ]
+    },
+    {
+      "name": "white_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "orange_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "magenta_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "light_blue_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "yellow_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "lime_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "pink_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "gray_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "light_gray_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "cyan_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "purple_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "blue_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "brown_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "green_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "red_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "black_wall_banner",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "red_sandstone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oak_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "birch_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "jungle_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "acacia_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cherry_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mangrove_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "bamboo_mosaic_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "stone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_stone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "sandstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cut_sandstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "petrified_oak_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cobblestone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "stone_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mud_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "nether_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "quartz_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "red_sandstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cut_red_sandstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "purpur_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "spruce_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "birch_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "jungle_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "acacia_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "cherry_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "mangrove_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "bamboo_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "spruce_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "birch_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "jungle_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "acacia_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "cherry_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "dark_oak_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "pale_oak_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "mangrove_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "bamboo_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "spruce_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "birch_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "jungle_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "acacia_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "cherry_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "dark_oak_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "pale_oak_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "mangrove_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "bamboo_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "end_rod",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "chorus_plant",
+      "default_properties": [
+        "DOWN=false",
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "UP=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "chorus_flower",
+      "default_properties": [
+        "AGE_5=0"
+      ]
+    },
+    {
+      "name": "purpur_pillar",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "purpur_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "torchflower_crop",
+      "default_properties": [
+        "AGE_1=0"
+      ]
+    },
+    {
+      "name": "pitcher_crop",
+      "default_properties": [
+        "AGE_4=0",
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "pitcher_plant",
+      "default_properties": [
+        "DOUBLE_BLOCK_HALF=lower"
+      ]
+    },
+    {
+      "name": "beetroots",
+      "default_properties": [
+        "AGE_3=0"
+      ]
+    },
+    {
+      "name": "repeating_command_block",
+      "default_properties": [
+        "CONDITIONAL=false",
+        "FACING=north"
+      ]
+    },
+    {
+      "name": "chain_command_block",
+      "default_properties": [
+        "CONDITIONAL=false",
+        "FACING=north"
+      ]
+    },
+    {
+      "name": "frosted_ice",
+      "default_properties": [
+        "AGE_3=0"
+      ]
+    },
+    {
+      "name": "bone_block",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "observer",
+      "default_properties": [
+        "FACING=south",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "white_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "orange_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "magenta_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "light_blue_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "yellow_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "lime_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "pink_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "gray_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "light_gray_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "cyan_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "purple_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "blue_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "brown_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "green_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "red_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "black_shulker_box",
+      "default_properties": [
+        "FACING=up"
+      ]
+    },
+    {
+      "name": "white_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "orange_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "magenta_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "light_blue_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "yellow_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "lime_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "pink_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "gray_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "light_gray_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "cyan_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "purple_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "blue_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "brown_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "green_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "red_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "black_glazed_terracotta",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "kelp",
+      "default_properties": [
+        "AGE_25=0"
+      ]
+    },
+    {
+      "name": "turtle_egg",
+      "default_properties": [
+        "EGGS=1",
+        "HATCH=0"
+      ]
+    },
+    {
+      "name": "sniffer_egg",
+      "default_properties": [
+        "HATCH=0"
+      ]
+    },
+    {
+      "name": "dried_ghast",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DRIED_GHAST_HYDRATION_LEVELS=0",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "dead_tube_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_brain_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_bubble_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_fire_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_horn_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "tube_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "brain_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "bubble_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "fire_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "horn_coral",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_tube_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_brain_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_bubble_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_fire_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_horn_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "tube_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "brain_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "bubble_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "fire_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "horn_coral_fan",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_tube_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_brain_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_bubble_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_fire_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "dead_horn_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "tube_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "brain_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "bubble_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "fire_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "horn_coral_wall_fan",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "sea_pickle",
+      "default_properties": [
+        "PICKLES=1",
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "conduit",
+      "default_properties": [
+        "WATERLOGGED=true"
+      ]
+    },
+    {
+      "name": "bamboo",
+      "default_properties": [
+        "AGE_1=0",
+        "BAMBOO_LEAVES=none",
+        "STAGE=0"
+      ]
+    },
+    {
+      "name": "bubble_column",
+      "default_properties": [
+        "DRAG=true"
+      ]
+    },
+    {
+      "name": "polished_granite_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_red_sandstone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mossy_stone_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_diorite_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mossy_cobblestone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "end_stone_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "stone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_sandstone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_quartz_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "granite_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "andesite_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "red_nether_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_andesite_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "diorite_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_granite_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_red_sandstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mossy_stone_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_diorite_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "mossy_cobblestone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "end_stone_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_sandstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "smooth_quartz_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "granite_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "andesite_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "red_nether_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_andesite_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "diorite_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "prismarine_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "red_sandstone_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "mossy_stone_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "granite_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "stone_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "mud_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "nether_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "andesite_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "red_nether_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "sandstone_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "end_stone_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "diorite_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "scaffolding",
+      "default_properties": [
+        "BOTTOM=false",
+        "STABILITY_DISTANCE=7",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "loom",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "barrel",
+      "default_properties": [
+        "FACING=north",
+        "OPEN=false"
+      ]
+    },
+    {
+      "name": "smoker",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "blast_furnace",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "grindstone",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "lectern",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HAS_BOOK=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "stonecutter",
+      "default_properties": [
+        "HORIZONTAL_FACING=north"
+      ]
+    },
+    {
+      "name": "bell",
+      "default_properties": [
+        "BELL_ATTACHMENT=floor",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "soul_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_lantern",
+      "default_properties": [
+        "HANGING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "campfire",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LIT=true",
+        "SIGNAL_FIRE=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "soul_campfire",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LIT=true",
+        "SIGNAL_FIRE=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "sweet_berry_bush",
+      "default_properties": [
+        "AGE_3=0"
+      ]
+    },
+    {
+      "name": "warped_stem",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_warped_stem",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "warped_hyphae",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_warped_hyphae",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "crimson_stem",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_crimson_stem",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "crimson_hyphae",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "stripped_crimson_hyphae",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "weeping_vines",
+      "default_properties": [
+        "AGE_25=0"
+      ]
+    },
+    {
+      "name": "twisting_vines",
+      "default_properties": [
+        "AGE_25=0"
+      ]
+    },
+    {
+      "name": "crimson_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "warped_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "crimson_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "warped_fence",
+      "default_properties": [
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "crimson_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "warped_fence_gate",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "IN_WALL=false",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "crimson_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "warped_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "crimson_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "warped_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "crimson_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_sign",
+      "default_properties": [
+        "ROTATION_16=8",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crimson_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "warped_wall_sign",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "structure_block",
+      "default_properties": [
+        "STRUCTUREBLOCK_MODE=load"
+      ]
+    },
+    {
+      "name": "jigsaw",
+      "default_properties": [
+        "ORIENTATION=north_up"
+      ]
+    },
+    {
+      "name": "test_block",
+      "default_properties": [
+        "TEST_BLOCK_MODE=start"
+      ]
+    },
+    {
+      "name": "composter",
+      "default_properties": [
+        "LEVEL_COMPOSTER=0"
+      ]
+    },
+    {
+      "name": "target",
+      "default_properties": [
+        "POWER=0"
+      ]
+    },
+    {
+      "name": "bee_nest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LEVEL_HONEY=0"
+      ]
+    },
+    {
+      "name": "beehive",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "LEVEL_HONEY=0"
+      ]
+    },
+    {
+      "name": "respawn_anchor",
+      "default_properties": [
+        "RESPAWN_ANCHOR_CHARGES=0"
+      ]
+    },
+    {
+      "name": "blackstone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "blackstone_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "blackstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "polished_blackstone_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_pressure_plate",
+      "default_properties": [
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_button",
+      "default_properties": [
+        "ATTACH_FACE=wall",
+        "HORIZONTAL_FACING=north",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "polished_blackstone_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "white_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "orange_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "magenta_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "light_blue_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "yellow_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "lime_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pink_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "gray_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "light_gray_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cyan_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "purple_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "blue_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "brown_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "green_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "red_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "black_candle",
+      "default_properties": [
+        "CANDLES=1",
+        "LIT=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "white_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "orange_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "magenta_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "light_blue_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "yellow_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "lime_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "pink_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "gray_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "light_gray_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "cyan_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "purple_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "blue_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "brown_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "green_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "red_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "black_candle_cake",
+      "default_properties": [
+        "LIT=false"
+      ]
+    },
+    {
+      "name": "amethyst_cluster",
+      "default_properties": [
+        "FACING=up",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "large_amethyst_bud",
+      "default_properties": [
+        "FACING=up",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "medium_amethyst_bud",
+      "default_properties": [
+        "FACING=up",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "small_amethyst_bud",
+      "default_properties": [
+        "FACING=up",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "tuff_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "tuff_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "tuff_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "polished_tuff_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_tuff_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_tuff_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "tuff_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "tuff_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "tuff_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "sculk_sensor",
+      "default_properties": [
+        "POWER=0",
+        "SCULK_SENSOR_PHASE=inactive",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "calibrated_sculk_sensor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "POWER=0",
+        "SCULK_SENSOR_PHASE=inactive",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "sculk_vein",
+      "default_properties": [
+        "DOWN=false",
+        "EAST=false",
+        "NORTH=false",
+        "SOUTH=false",
+        "UP=false",
+        "WATERLOGGED=false",
+        "WEST=false"
+      ]
+    },
+    {
+      "name": "sculk_catalyst",
+      "default_properties": [
+        "BLOOM=false"
+      ]
+    },
+    {
+      "name": "sculk_shrieker",
+      "default_properties": [
+        "CAN_SUMMON=false",
+        "SHRIEKING=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_cut_copper_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_cut_copper_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_door",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "DOOR_HINGE=left",
+        "OPEN=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_trapdoor",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "OPEN=false",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_grate",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_bulb",
+      "default_properties": [
+        "LIT=false",
+        "POWERED=false"
+      ]
+    },
+    {
+      "name": "copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_chest",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "CHEST_TYPE=single",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_copper_golem_statue",
+      "default_properties": [
+        "COPPER_GOLEM_POSE=standing",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "exposed_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "weathered_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "oxidized_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_exposed_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_weathered_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "waxed_oxidized_lightning_rod",
+      "default_properties": [
+        "FACING=up",
+        "POWERED=false",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pointed_dripstone",
+      "default_properties": [
+        "DRIPSTONE_THICKNESS=tip",
+        "VERTICAL_DIRECTION=up",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cave_vines",
+      "default_properties": [
+        "AGE_25=0",
+        "BERRIES=false"
+      ]
+    },
+    {
+      "name": "cave_vines_plant",
+      "default_properties": [
+        "BERRIES=false"
+      ]
+    },
+    {
+      "name": "pink_petals",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "FLOWER_AMOUNT=1"
+      ]
+    },
+    {
+      "name": "wildflowers",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "FLOWER_AMOUNT=1"
+      ]
+    },
+    {
+      "name": "leaf_litter",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "SEGMENT_AMOUNT=1"
+      ]
+    },
+    {
+      "name": "big_dripleaf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "TILT=none",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "big_dripleaf_stem",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "small_dripleaf",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "DOUBLE_BLOCK_HALF=lower",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "hanging_roots",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "deepslate",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "cobbled_deepslate_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cobbled_deepslate_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "cobbled_deepslate_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "polished_deepslate_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_deepslate_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "polished_deepslate_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "deepslate_tile_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "deepslate_tile_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "deepslate_tile_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "deepslate_brick_stairs",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "HALF=bottom",
+        "STAIRS_SHAPE=straight",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "deepslate_brick_slab",
+      "default_properties": [
+        "SLAB_TYPE=bottom",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "deepslate_brick_wall",
+      "default_properties": [
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "UP=true",
+        "WATERLOGGED=false",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "infested_deepslate",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "ochre_froglight",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "verdant_froglight",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "pearlescent_froglight",
+      "default_properties": [
+        "AXIS=y"
+      ]
+    },
+    {
+      "name": "decorated_pot",
+      "default_properties": [
+        "CRACKED=false",
+        "HORIZONTAL_FACING=north",
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "crafter",
+      "default_properties": [
+        "CRAFTING=false",
+        "ORIENTATION=north_up",
+        "TRIGGERED=false"
+      ]
+    },
+    {
+      "name": "trial_spawner",
+      "default_properties": [
+        "OMINOUS=false",
+        "TRIAL_SPAWNER_STATE=inactive"
+      ]
+    },
+    {
+      "name": "vault",
+      "default_properties": [
+        "HORIZONTAL_FACING=north",
+        "OMINOUS=false",
+        "VAULT_STATE=inactive"
+      ]
+    },
+    {
+      "name": "heavy_core",
+      "default_properties": [
+        "WATERLOGGED=false"
+      ]
+    },
+    {
+      "name": "pale_moss_carpet",
+      "default_properties": [
+        "BOTTOM=true",
+        "EAST_WALL=none",
+        "NORTH_WALL=none",
+        "SOUTH_WALL=none",
+        "WEST_WALL=none"
+      ]
+    },
+    {
+      "name": "pale_hanging_moss",
+      "default_properties": [
+        "TIP=true"
+      ]
+    }
+  ]
+}
