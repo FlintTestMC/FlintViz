@@ -4,6 +4,9 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
+const DEFAULT_LINUX_TARGET: &str = "x86_64-unknown-linux-gnu";
+const DEFAULT_WINDOWS_TARGET: &str = "x86_64-pc-windows-gnu";
+
 fn main() -> ExitCode {
     let mut args = env::args().skip(1);
     let cmd = args.next();
@@ -13,10 +16,10 @@ fn main() -> ExitCode {
         Some("build") => build(&rest),
         Some("deb") => deb(&rest),
         Some(other) => Err(format!(
-            "unknown task `{other}`. Try: build [--debug] [--target <triple>], deb [--target <triple>]"
+            "unknown task `{other}`. Try: build [linux|windows] [--debug] [--target <triple>], deb [--target <triple>]"
         )),
         None => Err(
-            "no task given. Try: cargo xtask build [--debug] [--target <triple>]  |  cargo xtask deb [--target <triple>]".into()
+            "no task given. Try: cargo xtask build [linux|windows] [--debug] [--target <triple>]  |  cargo xtask deb [--target <triple>]".into()
         ),
     };
 
@@ -30,8 +33,11 @@ fn main() -> ExitCode {
 }
 
 fn build(args: &[String]) -> Result<(), String> {
-    let debug = args.iter().any(|a| a == "--debug");
-    let target = parse_target(args)?;
+    let config = parse_build_config(args)?;
+    build_project(config.debug, config.target)
+}
+
+fn build_project(debug: bool, target: Option<String>) -> Result<(), String> {
     let workspace = workspace_root()?;
     let frontend = workspace.join("frontend");
 
@@ -59,10 +65,7 @@ fn build(args: &[String]) -> Result<(), String> {
     run("cargo", &cargo_args, &workspace)?;
 
     let profile = if debug { "debug" } else { "release" };
-    let out = match target.as_deref() {
-        Some(t) => format!("target/{t}/{profile}/flint-viz"),
-        None => format!("target/{profile}/flint-viz"),
-    };
+    let out = binary_path(target.as_deref(), profile);
     println!("xtask: built {out} (with embedded frontend)");
     Ok(())
 }
@@ -72,10 +75,10 @@ fn deb(args: &[String]) -> Result<(), String> {
         return Err("cargo xtask deb requires a release build; remove --debug".into());
     }
     ensure_cargo_deb()?;
-    build(args)?;
 
     let workspace = workspace_root()?;
     let target = parse_target(args)?;
+    build_project(false, target.clone())?;
 
     let mut deb_args: Vec<&str> = vec!["deb", "-p", "flint-viz", "--no-build", "--no-strip"];
     if let Some(t) = target.as_deref() {
@@ -93,6 +96,65 @@ fn deb(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Debug)]
+struct BuildConfig {
+    debug: bool,
+    target: Option<String>,
+}
+
+fn parse_build_config(args: &[String]) -> Result<BuildConfig, String> {
+    let debug = args.iter().any(|a| a == "--debug");
+    let target_override = parse_target(args)?;
+    let os = parse_build_os(args)?;
+    let default_target = match os {
+        BuildOs::Linux => DEFAULT_LINUX_TARGET,
+        BuildOs::Windows => DEFAULT_WINDOWS_TARGET,
+    };
+
+    Ok(BuildConfig {
+        debug,
+        target: Some(target_override.unwrap_or_else(|| default_target.to_string())),
+    })
+}
+
+enum BuildOs {
+    Linux,
+    Windows,
+}
+
+fn parse_build_os(args: &[String]) -> Result<BuildOs, String> {
+    let mut os = None;
+    let mut iter = args.iter();
+
+    while let Some(arg) = iter.next() {
+        if arg == "--target" {
+            iter.next();
+            continue;
+        }
+        if arg.starts_with("--") {
+            continue;
+        }
+
+        let parsed = match arg.as_str() {
+            "linux" => BuildOs::Linux,
+            "windows" => BuildOs::Windows,
+            other => {
+                return Err(format!(
+                    "unknown build OS `{other}`. Try: cargo xtask build [linux|windows] [--debug] [--target <triple>]"
+                ));
+            }
+        };
+
+        if os.replace(parsed).is_some() {
+            return Err(
+                "only one build OS may be specified. Try: cargo xtask build [linux|windows]".into(),
+            );
+        }
+    }
+
+    Ok(os.unwrap_or(BuildOs::Linux))
+}
+
 fn parse_target(args: &[String]) -> Result<Option<String>, String> {
     let mut iter = args.iter();
     while let Some(a) = iter.next() {
@@ -108,6 +170,22 @@ fn parse_target(args: &[String]) -> Result<Option<String>, String> {
         }
     }
     Ok(None)
+}
+
+fn binary_path(target: Option<&str>, profile: &str) -> String {
+    let name = match target {
+        Some(t) if is_windows_target(t) => "flint-viz.exe",
+        _ => "flint-viz",
+    };
+
+    match target {
+        Some(t) => format!("target/{t}/{profile}/{name}"),
+        None => format!("target/{profile}/{name}"),
+    }
+}
+
+fn is_windows_target(target: &str) -> bool {
+    target.contains("windows")
 }
 
 fn ensure_npm() -> Result<(), String> {
@@ -154,4 +232,56 @@ fn workspace_root() -> Result<PathBuf, String> {
         .parent()
         .map(Path::to_path_buf)
         .ok_or_else(|| format!("cannot derive workspace root from {manifest}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn args(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| value.to_string()).collect()
+    }
+
+    #[test]
+    fn build_defaults_to_linux_target() {
+        let config = parse_build_config(&args(&[])).unwrap();
+
+        assert!(!config.debug);
+        assert_eq!(config.target.as_deref(), Some(DEFAULT_LINUX_TARGET));
+    }
+
+    #[test]
+    fn build_accepts_explicit_windows_target() {
+        let config = parse_build_config(&args(&["windows", "--debug"])).unwrap();
+
+        assert!(config.debug);
+        assert_eq!(config.target.as_deref(), Some(DEFAULT_WINDOWS_TARGET));
+    }
+
+    #[test]
+    fn target_override_wins_over_os_default() {
+        let config =
+            parse_build_config(&args(&["windows", "--target", "x86_64-pc-windows-msvc"])).unwrap();
+
+        assert_eq!(config.target.as_deref(), Some("x86_64-pc-windows-msvc"));
+    }
+
+    #[test]
+    fn rejects_unknown_build_os() {
+        let err = parse_build_config(&args(&["macos"])).unwrap_err();
+
+        assert!(err.contains("unknown build OS `macos`"));
+    }
+
+    #[test]
+    fn binary_path_uses_exe_for_windows_targets() {
+        assert_eq!(
+            binary_path(Some("x86_64-pc-windows-gnu"), "release"),
+            "target/x86_64-pc-windows-gnu/release/flint-viz.exe"
+        );
+        assert_eq!(
+            binary_path(Some("x86_64-unknown-linux-gnu"), "debug"),
+            "target/x86_64-unknown-linux-gnu/debug/flint-viz"
+        );
+    }
 }

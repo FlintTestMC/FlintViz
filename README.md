@@ -26,12 +26,20 @@ spinning up a real Minecraft server.
 git clone https://github.com/FlintTestMC/FlintViz
 cd FlintViz
 cargo xtask build           # builds the frontend, then a release binary with assets embedded
-./target/release/flint-viz serve ./path/to/tests --open
+./target/x86_64-unknown-linux-gnu/release/flint-viz serve ./path/to/tests --open
 ```
 
-`cargo xtask build` runs `npm ci && npm run build` in `frontend/`, then
+`cargo xtask build` defaults to Linux. Use `cargo xtask build linux` or
+`cargo xtask build windows` to pick an OS explicitly, or pass
+`--target <triple>` to override the default target. Every variant runs
+`npm ci`, `npm run assets`, and `npm run build` in `frontend/`, then
 `cargo build -p flint-viz --features embed-frontend --release`. It bails with a
 clear error if `npm` is missing. Pass `--debug` to skip `--release`.
+
+The default targets are:
+
+- Linux: `x86_64-unknown-linux-gnu`
+- Windows: `x86_64-pc-windows-gnu`
 
 ### `cargo install`
 
