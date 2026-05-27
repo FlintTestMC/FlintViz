@@ -189,12 +189,20 @@ Set `RUST_LOG` for more verbose tracing:
 RUST_LOG=flint_viz=debug,tower_http=debug cargo run -p flint-viz -- serve .
 ```
 
+### Maintainer docs
+
+For code-review and implementation context, see [docs/README.md](docs/README.md).
+Those docs describe the current architecture, API contract, replay contract,
+frontend data flow, and development workflows. The `plan/` directory is kept as
+historical planning material.
+
 ### Layout
 
 ```
 crates/flint-viz/   axum server, CLI, replay engine, embed
 frontend/           Vite + React + R3F SPA
 xtask/              cargo xtask build
+docs/               current maintainer docs
 plan/               per-issue plan; see plan/README.md
 ```
 
