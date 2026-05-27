@@ -109,6 +109,7 @@ opens flint-viz with the failing test loaded and the expected/actual blocks over
 - [#0026](issues/0026-action-highlights.md) — Per-tick placed/removed/filled visual highlights
 - [#0027](issues/0027-assertion-ghost-overlay.md) — Ghost-render asserted blocks at current tick
 - [#0036](issues/0036-rotate-blocks.md) — Rotate the entire test scene (90°/180°/270° + mirror)
+- [#0050](issues/0050-use-item-on-visualization.md) — Face marker + item badge for `use_item_on`
 
 ### M6 — Timeline & panels
 - [#0028](issues/0028-timeline-scrubber.md) — Horizontal scrubber with event markers + breakpoints
