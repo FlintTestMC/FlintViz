@@ -1,0 +1,14 @@
+target
+**/node_modules
+frontend/dist
+.git
+.gitignore
+.vscode
+.idea
+docs
+plan
+tests
+*.log
+Dockerfile
+.dockerignore
+README.md

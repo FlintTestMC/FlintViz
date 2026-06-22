@@ -39,7 +39,7 @@ export function slotLabel(slot: PlayerSlot): string {
   }
 }
 
-export function selectedHotbarSlot(n: number): PlayerSlot | null {
+function selectedHotbarSlot(n: number): PlayerSlot | null {
   if (n < 1 || n > 9) return null;
   return `hotbar${n}` as PlayerSlot;
 }
@@ -58,8 +58,12 @@ export default function Inventory() {
   const changedSlots = useMemo(() => {
     if (!frames) return new Set<PlayerSlot>();
     const frame = frames.find((f) => f.tick === tick);
-    const slots = frame?.inventory_diff?.slots ?? [];
-    return new Set(slots.map((c) => c.slot));
+    if (!frame) return new Set<PlayerSlot>();
+    const out = new Set<PlayerSlot>();
+    for (const ev of frame.events) {
+      if (ev.kind === "set_slot") out.add(ev.slot);
+    }
+    return out;
   }, [frames, tick]);
 
   const selectedSlot = selectedHotbarSlot(player.selected_hotbar);

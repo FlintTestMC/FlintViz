@@ -1,12 +1,17 @@
 import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Vector3 } from "three";
+import { Vector3, type Camera as ThreeCamera } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useReplayStore } from "../store/replay";
 import { computeFraming, type Framing } from "./cameraFraming";
 import { useCameraStore } from "./cameraStore";
+
+// Shared handle for the main R3F camera so overlay canvases (separate R3F
+// trees, e.g. CompassGizmo) can read its quaternion in useFrame without going
+// through a store. Read-only outside this file.
+export let mainCameraRef: ThreeCamera | null = null;
 
 // Per-frame lerp rate. With `t = 1 - exp(-RATE * dt)` and RATE ≈ 6, a 0.4 s
 // transition reaches ~91 % of its target — matches the "about 400 ms" feel
@@ -32,6 +37,13 @@ const SETTLE_EPSILON = 0.001;
 export default function Camera() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const camera = useThree((s) => s.camera);
+
+  useEffect(() => {
+    mainCameraRef = camera;
+    return () => {
+      mainCameraRef = null;
+    };
+  }, [camera]);
 
   const cleanup = useReplayStore((s) => s.replay?.cleanup_region ?? null);
   const worldState = useReplayStore((s) => s.worldState);

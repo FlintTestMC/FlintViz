@@ -11,6 +11,10 @@ export interface TestSummary {
   parse_error?: string;
 }
 
+export interface ServerConfig {
+  readonly: boolean;
+}
+
 // Permissive — full TimelineEntry typing is deferred to #0021 (JSON schema).
 export type TimelineEntry = Record<string, unknown>;
 
@@ -104,11 +108,9 @@ export interface Aabb {
   max: Vec3;
 }
 
-export type BlockChange =
-  | { kind: "set"; pos: Vec3; block: Block }
-  | { kind: "remove"; pos: Vec3 };
-
-export type ActionEvent =
+// Ordered union of actions + assertions on a tick. Matches `TickEvent` in
+// `crates/flint-viz/src/replay/model.rs`.
+export type TickEvent =
   | { kind: "place"; pos: Vec3; block: Block }
   | { kind: "place_each"; placements: BlockPlacement[] }
   | { kind: "fill"; region: Aabb; block: Block }
@@ -126,35 +128,22 @@ export type ActionEvent =
       item: string | null;
       count: number;
     }
-  | { kind: "select_hotbar"; slot: number };
+  | { kind: "select_hotbar"; slot: number }
+  | { kind: "assert"; views: AssertionView[] };
 
+// One check inside a `TickEvent::Assert`. BlockSpec::Multiple alternatives
+// expand to one `block` view per alternative; all share the same parent event.
 export type AssertionView =
-  | { kind: "block"; position: Vec3; expected: Block }
+  | {
+      kind: "block";
+      position: Vec3;
+      expected: Block;
+      // Appended to the parent event's `source_map` pointer when the original
+      // check used `BlockSpec::Multiple` (e.g. "/is/1"). Absent for Single.
+      pointer_suffix?: string;
+    }
   | { kind: "inventory"; slot: PlayerSlot; expected: Item | null }
   | { kind: "other"; description: string };
-
-export interface SlotChange {
-  slot: PlayerSlot;
-  item: Item | null;
-  previous: Item | null;
-}
-
-export interface HotbarChange {
-  slot: number;
-  previous: number;
-}
-
-export interface GameModeChange {
-  mode: GameMode;
-  previous: GameMode;
-}
-
-// All three fields are omitted (not null) when absent.
-export interface PlayerDelta {
-  slots?: SlotChange[];
-  selected_hotbar?: HotbarChange;
-  game_mode?: GameModeChange;
-}
 
 export interface PlayerSnapshot {
   inventory: Partial<Record<PlayerSlot, Item>>;
@@ -175,10 +164,7 @@ export interface ReplayError {
 
 export interface TickFrame {
   tick: number;
-  actions: ActionEvent[];
-  block_diff: BlockChange[];
-  inventory_diff: PlayerDelta | null;
-  assertions: AssertionView[];
+  events: TickEvent[];
 }
 
 export interface Replay {

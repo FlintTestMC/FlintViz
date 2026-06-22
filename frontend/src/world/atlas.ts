@@ -8,6 +8,8 @@ import {
   type TextureAtlasProvider,
 } from "deepslate";
 import JSZip from "jszip";
+
+import { type BlockDefaults, loadBlockDefaults } from "./blockDefaults";
 import {
   CanvasTexture,
   NearestFilter,
@@ -21,6 +23,9 @@ export interface BlockProviders {
   atlas: TextureAtlasProvider;
   atlasTexture: Texture;
   atlasSize: number;
+  // Default block-state properties (#0048), keyed `minecraft:<id>`. Merged
+  // underneath user props in `instancing.ts` so tests can omit properties.
+  defaults: BlockDefaults;
 }
 
 const ASSETS_URL = "/mc-assets.zip";
@@ -55,13 +60,11 @@ export function loadBlockProviders(): Promise<BlockProviders> {
   return cached;
 }
 
-// Reset cache — used by the gallery's reload button and by tests.
-export function resetBlockProviders(): void {
-  cached = null;
-  zipPromise = null;
-}
-
 async function doLoad(): Promise<BlockProviders> {
+  // Kick off the defaults fetch in parallel with the (much larger) asset zip
+  // so "renderer ready" stays a single async boundary — no second loading
+  // state in components.
+  const defaultsPromise = loadBlockDefaults();
   const zip = await loadAssetZip();
 
   const textureBlobs: { [id: string]: Blob } = {};
@@ -171,6 +174,7 @@ async function doLoad(): Promise<BlockProviders> {
     atlas,
     atlasTexture,
     atlasSize: atlasImage.width,
+    defaults: await defaultsPromise,
   };
 }
 

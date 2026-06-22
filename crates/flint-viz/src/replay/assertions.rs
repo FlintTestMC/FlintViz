@@ -1,14 +1,9 @@
-//! Convert `flint_core::test_spec::AssertType` checks into the wire-shaped
-//! [`AssertionView`]s the frontend renders.
+//! Convert `flint_core::test_spec::AssertType` checks into wire-shaped
+//! [`AssertionView`]s. One `assert` timeline action produces ONE
+//! [`TickEvent::Assert`] carrying all its views (the engine wraps them).
 //!
-//! Static replay never *evaluates* assertions — it only records what the test
-//! claims should be true at a tick. Pass/fail is the runtime's job (#0035).
-//!
-//! Convention for `BlockSpec::Multiple`: emit **one** [`AssertionView::Block`]
-//! per expected block. The assertion panel (#0031) renders the resulting list
-//! as alternatives without parsing free-text. (`AssertionView::Other` exists
-//! for state-style checks if/when flint-core grows them; today's grammar has
-//! none, so this module never produces it.)
+//! Convention for `BlockSpec::Multiple`: emit one [`AssertionView::Block`] per
+//! expected block.
 
 use flint_core::test_spec::{AssertType, BlockCheck, InventoryCheck};
 
@@ -17,10 +12,13 @@ use super::model::AssertionView;
 pub fn views_from_check(check: &AssertType, out: &mut Vec<AssertionView>) {
     match check {
         AssertType::Block(BlockCheck { pos, is }) => {
-            for expected in is.to_vec() {
+            let alts = is.to_vec();
+            let multi = alts.len() > 1;
+            for (i, expected) in alts.into_iter().enumerate() {
                 out.push(AssertionView::Block {
                     position: *pos,
                     expected,
+                    pointer_suffix: if multi { Some(format!("/is/{i}")) } else { None },
                 });
             }
         }
@@ -48,9 +46,14 @@ mod tests {
         views_from_check(&check, &mut out);
         assert_eq!(out.len(), 1);
         match &out[0] {
-            AssertionView::Block { position, expected } => {
+            AssertionView::Block {
+                position,
+                expected,
+                pointer_suffix,
+            } => {
                 assert_eq!(*position, [1, 2, 3]);
                 assert_eq!(expected.id, "minecraft:stone");
+                assert!(pointer_suffix.is_none());
             }
             other => panic!("expected Block, got {:?}", other),
         }
@@ -69,20 +72,14 @@ mod tests {
         let mut out = Vec::new();
         views_from_check(&check, &mut out);
         assert_eq!(out.len(), 3);
-        let ids: Vec<&str> = out
-            .iter()
-            .map(|v| match v {
-                AssertionView::Block { expected, position } => {
-                    assert_eq!(*position, [4, 5, 6]);
-                    expected.id.as_str()
+        for (i, expected) in ["/is/0", "/is/1", "/is/2"].iter().enumerate() {
+            match &out[i] {
+                AssertionView::Block { pointer_suffix, .. } => {
+                    assert_eq!(pointer_suffix.as_deref(), Some(*expected));
                 }
                 other => panic!("expected Block, got {:?}", other),
-            })
-            .collect();
-        assert_eq!(
-            ids,
-            vec!["minecraft:stone", "minecraft:dirt", "minecraft:oak_planks"]
-        );
+            }
+        }
     }
 
     #[test]

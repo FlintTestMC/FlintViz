@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "../api/client";
 import { showToast } from "../components/toastStore";
+import { isEffectivelyReadOnly } from "../store/config";
 import { useCrosslinkStore, ticksAtOffset } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
+import { formatJsonText } from "./formatJson";
 import { MARKER_OWNER, parseErrorsToMarkers } from "./markers";
 import { registerFlintSchema } from "./registerSchema";
 
@@ -50,6 +52,10 @@ export default function Editor() {
       ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
         const { testId, source } = useReplayStore.getState();
         if (!testId) return;
+        if (isEffectivelyReadOnly()) {
+          showToast({ kind: "info", message: "Read-only mode — not saved" });
+          return;
+        }
         void api.saveTest(testId, source).then((result) => {
           if (!result.ok) {
             showToast({ kind: "error", message: `Save failed: ${result.err}` });
@@ -134,6 +140,36 @@ export default function Editor() {
     lastErrorRef.current = null;
   }, []);
 
+  // Format the current buffer with FracturedJson and write it back to disk.
+  // setValue feeds through the normal onChange path, so the store + debounced
+  // replay update themselves; we just save in parallel.
+  const handleFormat = useCallback(async () => {
+    const { source: currentSource, testId: currentTestId } =
+      useReplayStore.getState();
+    if (!currentTestId) return;
+    const result = formatJsonText(currentSource);
+    if (!result.ok) {
+      showToast({ kind: "error", message: `Format failed: ${result.error}` });
+      return;
+    }
+    const ed = editorRef.current;
+    if (ed && ed.getValue() !== result.text) {
+      const position = ed.getPosition();
+      ed.setValue(result.text);
+      if (position) ed.setPosition(position);
+    }
+    if (isEffectivelyReadOnly()) {
+      showToast({ kind: "info", message: "Formatted (read-only, not saved)" });
+      return;
+    }
+    const saveResult = await api.saveTest(currentTestId, result.text);
+    if (!saveResult.ok) {
+      showToast({ kind: "error", message: `Save failed: ${saveResult.err}` });
+    } else {
+      showToast({ kind: "info", message: "Formatted and saved" });
+    }
+  }, []);
+
   const handleChange = useCallback(
     (value: string | undefined) => {
       if (value === undefined) return;
@@ -181,6 +217,15 @@ export default function Editor() {
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b border-neutral-800 px-3 py-2 text-sm font-medium">
         <span>Editor</span>
+        <button
+          type="button"
+          onClick={() => void handleFormat()}
+          title="Format JSON and save"
+          aria-label="Format JSON and save"
+          className="rounded px-2 py-0.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-neutral-100"
+        >
+          Format
+        </button>
       </header>
       <div className="flex-1">
         <MonacoEditor

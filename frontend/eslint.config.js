@@ -23,6 +23,19 @@ export default [
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // TypeScript already resolves identifiers/types; core `no-undef` only
+      // produces false positives for DOM/TS-only names. Defer unused checks to
+      // the TS-aware rule, with `_`-prefix as the intentional-unused escape.
+      "no-undef": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
+      ],
     },
+  },
+  {
+    files: ["scripts/**/*.{ts,tsx}"],
+    languageOptions: { globals: globals.node },
   },
 ];

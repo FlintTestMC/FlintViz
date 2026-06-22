@@ -26,12 +26,20 @@ spinning up a real Minecraft server.
 git clone https://github.com/FlintTestMC/FlintViz
 cd FlintViz
 cargo xtask build           # builds the frontend, then a release binary with assets embedded
-./target/release/flint-viz serve ./path/to/tests --open
+./target/x86_64-unknown-linux-gnu/release/flint-viz serve ./path/to/tests --open
 ```
 
-`cargo xtask build` runs `npm ci && npm run build` in `frontend/`, then
+`cargo xtask build` defaults to Linux. Use `cargo xtask build linux` or
+`cargo xtask build windows` to pick an OS explicitly, or pass
+`--target <triple>` to override the default target. Every variant runs
+`npm ci`, `npm run assets`, and `npm run build` in `frontend/`, then
 `cargo build -p flint-viz --features embed-frontend --release`. It bails with a
 clear error if `npm` is missing. Pass `--debug` to skip `--release`.
+
+The default targets are:
+
+- Linux: `x86_64-unknown-linux-gnu`
+- Windows: `x86_64-pc-windows-gnu`
 
 ### `cargo install`
 
@@ -58,7 +66,10 @@ flint-viz serve <PATH>
 - `<PATH>` — directory to scan (recursively) for Flint test JSON. Defaults to
   the current directory. Must exist and be a directory; `flint-viz` exits with
   a `hint:` line if not.
-- `-p, --port <N>` — bind port on `127.0.0.1` (default `7878`).
+- `--host <IP>` — bind address (default `127.0.0.1`). Use `0.0.0.0` to expose
+  the server outside the host, e.g. when running in Docker:
+  `docker run -p 7878:7878 flint-viz --host 0.0.0.0`.
+- `-p, --port <N>` — bind port (default `7878`).
 - `--open` — open the URL in the system browser after start.
 
 Open <http://localhost:7878>. The sidebar lists every test under `<PATH>`;
@@ -178,12 +189,20 @@ Set `RUST_LOG` for more verbose tracing:
 RUST_LOG=flint_viz=debug,tower_http=debug cargo run -p flint-viz -- serve .
 ```
 
+### Maintainer docs
+
+For code-review and implementation context, see [docs/README.md](docs/README.md).
+Those docs describe the current architecture, API contract, replay contract,
+frontend data flow, and development workflows. The `plan/` directory is kept as
+historical planning material.
+
 ### Layout
 
 ```
 crates/flint-viz/   axum server, CLI, replay engine, embed
 frontend/           Vite + React + R3F SPA
 xtask/              cargo xtask build
+docs/               current maintainer docs
 plan/               per-issue plan; see plan/README.md
 ```
 

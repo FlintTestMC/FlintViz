@@ -2,19 +2,43 @@
 name = "flint-viz"
 version = "0.1.0"
 edition = "2024"
+description = "Web-based 3D visualizer for Flint Minecraft tests"
+license = "GPL-2.0-only"
+authors = ["JunkyDeveloper <junkydeveloper@gmail.com"]
+homepage = "https://github.com/FlintTestMC/FlintVisulizer"
+repository = "https://github.com/FlintTestMC/FlintVisulizer"
+readme = "../../README.md"
 
 [features]
 default = []
 embed-frontend = ["dep:rust-embed", "dep:mime_guess"]
+
+[package.metadata.deb]
+maintainer = "JunkyDeveloper <junkydeveloper@gmail.com"
+copyright = "2026, JunkyDeveloper. Licensed under GPL-2.0-only."
+section = "utility"
+priority = "optional"
+extended-description = """
+flint-viz is a local web server and 3D viewer for inspecting Flint Minecraft
+framework test outputs. It watches a directory of test JSON files and renders
+block placements, entity state, and assertions in the browser at
+http://localhost:7878.
+"""
+depends = "$auto"
+assets = [
+    ["target/release/flint-viz", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/flint-viz/README", "644"],
+    ["../../LICENSE", "usr/share/doc/flint-viz/copyright", "644"],
+]
 
 [dependencies]
 axum = "0.8"
 clap = { version = "4", features = ["derive"] }
 # Local checkout while the viz_link module (issue #0035) is in flight; switch
 # back to the git tag once a release including viz_link ships.
-flint-core = { path = "../../../flint-core" }
+flint-core = { git = "https://github.com/FlintTestMC/flint-core.git" }
 mime_guess = { version = "2", optional = true }
-notify = "6"
+notify = "8"
 rust-embed = { version = "8", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

@@ -1,6 +1,11 @@
 import flintSchema from "./flint.schema.json";
 
 const SCHEMA_URI = "flint://schemas/flint-test.json";
+// Alias for the `$schema` URL embedded in `newTestTemplate.ts`. Monaco's JSON
+// worker has no HTTP schema-request service, so without this entry every new
+// test file marks "No schema request service available" against that URL.
+const REMOTE_SCHEMA_URL =
+  "https://raw.githubusercontent.com/FlintTestMC/flint-core/refs/heads/main/flint-content/test_spec_schema.json";
 
 let registered = false;
 
@@ -18,12 +23,18 @@ export function registerFlintSchema(monaco: typeof import("monaco-editor")) {
     allowComments: false,
     schemaValidation: "error",
     schemas: [
-      ...(existing.schemas ?? []).filter((s) => s.uri !== SCHEMA_URI),
+      ...(existing.schemas ?? []).filter(
+        (s) => s.uri !== SCHEMA_URI && s.uri !== REMOTE_SCHEMA_URL,
+      ),
       {
         uri: SCHEMA_URI,
         // Match every JSON file in the workspace — Monaco's JSON service treats
         // the inline editor model as a virtual file, so we glob broadly.
         fileMatch: ["*"],
+        schema: flintSchema,
+      },
+      {
+        uri: REMOTE_SCHEMA_URL,
         schema: flintSchema,
       },
     ],

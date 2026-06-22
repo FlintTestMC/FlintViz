@@ -7,7 +7,7 @@ export interface TreeFolder {
   children: TreeNode[];
 }
 
-export interface TreeFile {
+interface TreeFile {
   kind: "file";
   name: string;
   path: string;

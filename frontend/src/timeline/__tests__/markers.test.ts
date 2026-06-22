@@ -1,17 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { Replay, TickFrame } from "../../api/types";
+import type { Replay, TickEvent, TickFrame } from "../../api/types";
 import { buildMarkers, summariseFrame } from "../markers";
 
-function frame(overrides: Partial<TickFrame>): TickFrame {
-  return {
-    tick: 0,
-    actions: [],
-    block_diff: [],
-    inventory_diff: null,
-    assertions: [],
-    ...overrides,
-  };
+function frame(tick: number, events: TickEvent[]): TickFrame {
+  return { tick, events };
 }
 
 function replay(frames: TickFrame[], breakpoints: number[] = []): Replay {
@@ -33,17 +26,22 @@ describe("buildMarkers", () => {
 
   it("emits one marker per event-bearing tick", () => {
     const r = replay([
-      frame({
-        tick: 1,
-        actions: [{ kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } }],
-      }),
-      frame({ tick: 2 }), // empty — no marker (defensive: this won't normally land in `frames`)
-      frame({
-        tick: 3,
-        assertions: [
-          { kind: "block", position: [0, 0, 0], expected: { id: "minecraft:stone" } },
-        ],
-      }),
+      frame(1, [
+        { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
+      ]),
+      frame(2, []),
+      frame(3, [
+        {
+          kind: "assert",
+          views: [
+            {
+              kind: "block",
+              position: [0, 0, 0],
+              expected: { id: "minecraft:stone" },
+            },
+          ],
+        },
+      ]),
     ]);
     const markers = buildMarkers(r);
     expect(markers).toHaveLength(2);
@@ -55,65 +53,88 @@ describe("buildMarkers", () => {
 
   it("classifies a frame with both actions and assertions as action", () => {
     const r = replay([
-      frame({
-        tick: 5,
-        actions: [{ kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } }],
-        assertions: [
-          { kind: "block", position: [0, 0, 0], expected: { id: "minecraft:stone" } },
-        ],
-      }),
+      frame(5, [
+        { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
+        {
+          kind: "assert",
+          views: [
+            {
+              kind: "block",
+              position: [0, 0, 0],
+              expected: { id: "minecraft:stone" },
+            },
+          ],
+        },
+      ]),
     ]);
-    expect(buildMarkers(r)[0]?.kind).toBe("action");
+    const m = buildMarkers(r)[0]!;
+    expect(m.kind).toBe("action");
+    expect(m.hasMultipleEvents).toBe(true);
+  });
+
+  it("flags single-event ticks as not multi-event", () => {
+    const r = replay([
+      frame(1, [
+        { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
+      ]),
+    ]);
+    expect(buildMarkers(r)[0]?.hasMultipleEvents).toBe(false);
   });
 });
 
 describe("summariseFrame", () => {
   it("formats place actions", () => {
     const text = summariseFrame(
-      frame({
-        tick: 1,
-        actions: [{ kind: "place", pos: [0, 100, 0], block: { id: "minecraft:stone" } }],
-      }),
+      frame(1, [
+        { kind: "place", pos: [0, 100, 0], block: { id: "minecraft:stone" } },
+      ]),
     );
     expect(text).toBe("place stone @ (0,100,0)");
   });
 
   it("groups BlockSpec::Multiple assertions at the same position", () => {
     const text = summariseFrame(
-      frame({
-        tick: 1,
-        assertions: [
-          { kind: "block", position: [0, 0, 0], expected: { id: "minecraft:stone" } },
-          { kind: "block", position: [0, 0, 0], expected: { id: "minecraft:dirt" } },
-        ],
-      }),
+      frame(1, [
+        {
+          kind: "assert",
+          views: [
+            {
+              kind: "block",
+              position: [0, 0, 0],
+              expected: { id: "minecraft:stone" },
+            },
+            {
+              kind: "block",
+              position: [0, 0, 0],
+              expected: { id: "minecraft:dirt" },
+            },
+          ],
+        },
+      ]),
     );
     expect(text).toBe("expect stone OR dirt @ (0,0,0)");
   });
 
   it("formats inventory empty assertions", () => {
     const text = summariseFrame(
-      frame({
-        tick: 1,
-        assertions: [
-          { kind: "inventory", slot: "hotbar2", expected: null },
-        ],
-      }),
+      frame(1, [
+        {
+          kind: "assert",
+          views: [{ kind: "inventory", slot: "hotbar2", expected: null }],
+        },
+      ]),
     );
     expect(text).toBe("expect empty @ hotbar2");
   });
 
   it("collapses long action lists", () => {
     const text = summariseFrame(
-      frame({
-        tick: 1,
-        actions: [
-          { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
-          { kind: "place", pos: [1, 0, 0], block: { id: "minecraft:stone" } },
-          { kind: "place", pos: [2, 0, 0], block: { id: "minecraft:stone" } },
-          { kind: "place", pos: [3, 0, 0], block: { id: "minecraft:stone" } },
-        ],
-      }),
+      frame(1, [
+        { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
+        { kind: "place", pos: [1, 0, 0], block: { id: "minecraft:stone" } },
+        { kind: "place", pos: [2, 0, 0], block: { id: "minecraft:stone" } },
+        { kind: "place", pos: [3, 0, 0], block: { id: "minecraft:stone" } },
+      ]),
     );
     expect(text).toContain("+2 more");
   });

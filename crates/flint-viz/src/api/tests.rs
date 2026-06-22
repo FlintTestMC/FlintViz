@@ -23,7 +23,10 @@ const SAVE_BODY_LIMIT: usize = 1024 * 1024;
 pub fn router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/tests", get(list_tests))
-        .route("/api/tests/{*id}", get(get_test).put(save_test))
+        .route(
+            "/api/tests/{*id}",
+            get(get_test).put(save_test).post(create_test),
+        )
         .layer(DefaultBodyLimit::max(SAVE_BODY_LIMIT))
 }
 
@@ -42,7 +45,9 @@ pub struct TestSummary {
 }
 
 async fn list_tests(State(state): State<Arc<AppState>>) -> Json<Vec<TestSummary>> {
-    let root = state.test_root.clone();
+    let Some(root) = state.test_root.clone() else {
+        return Json(Vec::new());
+    };
     let summaries = tokio::task::spawn_blocking(move || walk(&root))
         .await
         .unwrap_or_default();
@@ -116,7 +121,9 @@ async fn get_test(
     State(state): State<Arc<AppState>>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Json<TestDetail>, (StatusCode, &'static str)> {
-    let root = state.test_root.clone();
+    let Some(root) = state.test_root.clone() else {
+        return Err((StatusCode::NOT_FOUND, "no test root"));
+    };
     tokio::task::spawn_blocking(move || load_test(&root, &id))
         .await
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "task join failed"))?
@@ -150,7 +157,12 @@ async fn save_test(
     AxumPath(id): AxumPath<String>,
     body: String,
 ) -> Result<StatusCode, (StatusCode, &'static str)> {
-    let root = state.test_root.clone();
+    if state.readonly {
+        return Err((StatusCode::FORBIDDEN, "server is read-only"));
+    }
+    let Some(root) = state.test_root.clone() else {
+        return Err((StatusCode::NOT_FOUND, "no test root"));
+    };
     tokio::task::spawn_blocking(move || write_test(&root, &id, &body))
         .await
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "task join failed"))?
@@ -184,6 +196,69 @@ fn resolve_under_root(root: &Path, id: &str) -> Result<PathBuf, (StatusCode, &'s
         return Err((StatusCode::BAD_REQUEST, "id escapes test root"));
     }
     Ok(canonical)
+}
+
+async fn create_test(
+    State(state): State<Arc<AppState>>,
+    AxumPath(id): AxumPath<String>,
+    body: String,
+) -> Result<StatusCode, (StatusCode, &'static str)> {
+    if state.readonly {
+        return Err((StatusCode::FORBIDDEN, "server is read-only"));
+    }
+    let Some(root) = state.test_root.clone() else {
+        return Err((StatusCode::NOT_FOUND, "no test root"));
+    };
+    tokio::task::spawn_blocking(move || write_new_test(&root, &id, &body))
+        .await
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "task join failed"))?
+}
+
+fn write_new_test(
+    root: &Path,
+    id: &str,
+    content: &str,
+) -> Result<StatusCode, (StatusCode, &'static str)> {
+    let resolved = resolve_new_under_root(root, id)?;
+    if resolved.exists() {
+        return Err((StatusCode::CONFLICT, "file already exists"));
+    }
+    std::fs::write(&resolved, content)
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "write failed"))?;
+    Ok(StatusCode::CREATED)
+}
+
+/// Resolve a *new* file id against `root`. Unlike `resolve_under_root`, the
+/// target file is not expected to exist yet — only the parent directory must
+/// exist. Rejects empty ids, `..` segments, non-`.json` extensions, and any
+/// path that escapes `root` after canonicalizing the parent.
+fn resolve_new_under_root(root: &Path, id: &str) -> Result<PathBuf, (StatusCode, &'static str)> {
+    if id.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "id must not be empty"));
+    }
+    if id.split('/').any(|seg| seg == ".." || seg.is_empty()) {
+        return Err((StatusCode::BAD_REQUEST, "id contains invalid segment"));
+    }
+    if !id.ends_with(".json") {
+        return Err((StatusCode::BAD_REQUEST, "id must end with .json"));
+    }
+
+    let candidate = root.join(id);
+    let parent = candidate
+        .parent()
+        .ok_or((StatusCode::BAD_REQUEST, "id has no parent"))?;
+    let file_name = candidate
+        .file_name()
+        .ok_or((StatusCode::BAD_REQUEST, "id has no file name"))?;
+
+    let canonical_parent = parent
+        .canonicalize()
+        .map_err(|_| (StatusCode::NOT_FOUND, "parent directory not found"))?;
+    if !canonical_parent.starts_with(root) {
+        return Err((StatusCode::BAD_REQUEST, "id escapes test root"));
+    }
+
+    Ok(canonical_parent.join(file_name))
 }
 
 #[cfg(test)]
@@ -305,5 +380,163 @@ mod tests {
 
         let detail = load_test(&root, "sub/./a.json").unwrap();
         assert_eq!(detail.id, "sub/a.json");
+    }
+
+    #[tokio::test]
+    async fn save_test_rejects_when_readonly() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        fs::write(root.join("a.json"), r#"{"name":"x","timeline":[]}"#).unwrap();
+
+        let state = AppState::new(Some(root.clone()), true);
+        let err = save_test(
+            State(state),
+            AxumPath("a.json".to_string()),
+            r#"{"name":"y","timeline":[]}"#.to_string(),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+
+        // File on disk should be untouched.
+        let after = fs::read_to_string(root.join("a.json")).unwrap();
+        assert_eq!(after, r#"{"name":"x","timeline":[]}"#);
+    }
+
+    #[tokio::test]
+    async fn list_tests_empty_when_no_root() {
+        let state = AppState::new(None, true);
+        let Json(summaries) = list_tests(State(state)).await;
+        assert!(summaries.is_empty());
+    }
+
+    #[tokio::test]
+    async fn create_test_writes_new_file() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let state = AppState::new(Some(root.clone()), false);
+
+        let body = r#"{"name":"new","timeline":[]}"#;
+        let status = create_test(
+            State(state),
+            AxumPath("new.json".to_string()),
+            body.to_string(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(status, StatusCode::CREATED);
+
+        let on_disk = fs::read_to_string(root.join("new.json")).unwrap();
+        assert_eq!(on_disk, body);
+    }
+
+    #[tokio::test]
+    async fn create_test_rejects_when_readonly() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let state = AppState::new(Some(root.clone()), true);
+
+        let err = create_test(
+            State(state),
+            AxumPath("new.json".to_string()),
+            "{}".to_string(),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+        assert!(!root.join("new.json").exists());
+    }
+
+    #[tokio::test]
+    async fn create_test_returns_conflict_when_file_exists() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        fs::write(root.join("dupe.json"), r#"{"name":"existing","timeline":[]}"#).unwrap();
+
+        let state = AppState::new(Some(root.clone()), false);
+        let err = create_test(
+            State(state),
+            AxumPath("dupe.json".to_string()),
+            r#"{"name":"replaced","timeline":[]}"#.to_string(),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::CONFLICT);
+
+        // Original file must not be overwritten.
+        let on_disk = fs::read_to_string(root.join("dupe.json")).unwrap();
+        assert_eq!(on_disk, r#"{"name":"existing","timeline":[]}"#);
+    }
+
+    #[tokio::test]
+    async fn create_test_rejects_traversal() {
+        let outer = TempDir::new().unwrap();
+        let outer_path = outer.path().canonicalize().unwrap();
+        fs::create_dir(outer_path.join("root")).unwrap();
+        let root = outer_path.join("root");
+
+        let state = AppState::new(Some(root.clone()), false);
+        let err = create_test(
+            State(state),
+            AxumPath("../escape.json".to_string()),
+            "{}".to_string(),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert!(!outer_path.join("escape.json").exists());
+    }
+
+    #[tokio::test]
+    async fn create_test_rejects_non_json_extension() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let state = AppState::new(Some(root.clone()), false);
+
+        let err = create_test(
+            State(state),
+            AxumPath("foo.txt".to_string()),
+            "{}".to_string(),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn create_test_returns_not_found_for_missing_parent() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let state = AppState::new(Some(root.clone()), false);
+
+        let err = create_test(
+            State(state),
+            AxumPath("nope/foo.json".to_string()),
+            "{}".to_string(),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn create_test_writes_into_subdirectory() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        fs::create_dir(root.join("sub")).unwrap();
+        let state = AppState::new(Some(root.clone()), false);
+
+        let body = r#"{"name":"sub_new","timeline":[]}"#;
+        let status = create_test(
+            State(state),
+            AxumPath("sub/sub_new.json".to_string()),
+            body.to_string(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(status, StatusCode::CREATED);
+
+        let on_disk = fs::read_to_string(root.join("sub/sub_new.json")).unwrap();
+        assert_eq!(on_disk, body);
     }
 }

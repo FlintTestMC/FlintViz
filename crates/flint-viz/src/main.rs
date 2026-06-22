@@ -7,6 +7,7 @@ mod state;
 mod util;
 mod watch;
 
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -26,7 +27,12 @@ async fn main() -> ExitCode {
 
     let cli = Cli::parse();
     match cli.command {
-        Command::Serve { path, port, open } => match run_serve(path, port, open).await {
+        Command::Serve {
+            path,
+            host,
+            port,
+            open,
+        } => match run_serve(path, host, port, open).await {
             Ok(()) => ExitCode::SUCCESS,
             Err(err) => {
                 eprintln!("error: {err}");
@@ -38,19 +44,28 @@ async fn main() -> ExitCode {
 
 async fn run_serve(
     path: Option<PathBuf>,
+    host: IpAddr,
     port: u16,
     open: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let test_root = resolve_test_root(path.as_deref())?;
-    tracing::info!("test root: {}", test_root.display());
+    let readonly = test_root.is_none();
+    match &test_root {
+        Some(root) => tracing::info!("test root: {}", root.display()),
+        None => tracing::info!(
+            "no path given — running in read-only mode (failure-URL viewer only)"
+        ),
+    }
 
-    let state = AppState::new(test_root);
+    let state = AppState::new(test_root.clone(), readonly);
 
-    let _watcher = match watch::spawn(state.clone()) {
-        Ok(guard) => guard,
-        Err(err) => {
-            return Err(format!("failed to start file watcher: {err}").into());
-        }
+    let _watcher = if let Some(root) = test_root {
+        Some(
+            watch::spawn(state.clone(), root)
+                .map_err(|err| format!("failed to start file watcher: {err}"))?,
+        )
+    } else {
+        None
     };
 
     let api = Router::new()
@@ -63,23 +78,28 @@ async fn run_serve(
     #[cfg(not(feature = "embed-frontend"))]
     let app = api;
 
-    let addr = format!("127.0.0.1:{port}");
+    let addr = SocketAddr::new(host, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    let url = format!("http://{addr}");
-    tracing::info!("flint-viz listening on {url}");
+    let display_host = if host.is_unspecified() {
+        IpAddr::V4(Ipv4Addr::LOCALHOST)
+    } else {
+        host
+    };
+    let url = format!("http://{}", SocketAddr::new(display_host, port));
+    tracing::info!("flint-viz listening on {url} (bound to {addr})");
 
-    if open {
-        if let Err(err) = webbrowser::open(&url) {
-            tracing::warn!("failed to open browser: {err}");
-        }
+    if open && let Err(err) = webbrowser::open(&url) {
+        tracing::warn!("failed to open browser: {err}");
     }
 
     axum::serve(listener, app).await?;
     Ok(())
 }
 
-fn resolve_test_root(path: Option<&Path>) -> Result<PathBuf, String> {
-    let raw = path.unwrap_or_else(|| Path::new("."));
+fn resolve_test_root(path: Option<&Path>) -> Result<Option<PathBuf>, String> {
+    let Some(raw) = path else {
+        return Ok(None);
+    };
     if !raw.exists() {
         return Err(format!(
             "test path `{}` does not exist.\n\
@@ -95,13 +115,15 @@ fn resolve_test_root(path: Option<&Path>) -> Result<PathBuf, String> {
             raw.display()
         ));
     }
-    raw.canonicalize().map_err(|err| {
-        format!(
-            "failed to canonicalize test path `{}`: {err}.\n\
-             hint: check directory permissions or that the path is reachable.",
-            raw.display()
-        )
-    })
+    raw.canonicalize()
+        .map(Some)
+        .map_err(|err| {
+            format!(
+                "failed to canonicalize test path `{}`: {err}.\n\
+                 hint: check directory permissions or that the path is reachable.",
+                raw.display()
+            )
+        })
 }
 
 async fn healthz(State(_state): State<Arc<AppState>>) -> &'static str {

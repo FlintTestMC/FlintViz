@@ -1,0 +1,139 @@
+name: release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      build_deb:
+        description: "Also build the Ubuntu .deb (off by default — flip on once we want to ship it)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64-musl
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-musl
+            artifact: flint-viz-linux-x86_64
+          - name: macos-x86_64
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            artifact: flint-viz-macos-x86_64
+          - name: macos-aarch64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            artifact: flint-viz-macos-aarch64
+          - name: windows-x86_64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: flint-viz-windows-x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install musl tools (linux only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build (xtask)
+        run: cargo xtask build --target ${{ matrix.target }}
+
+      - name: Package binary (unix)
+        if: runner.os != 'Windows'
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf "dist/${{ matrix.artifact }}.tar.gz" \
+            -C "target/${{ matrix.target }}/release" flint-viz
+
+      - name: Package binary (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive `
+            -Path "target/${{ matrix.target }}/release/flint-viz.exe" `
+            -DestinationPath "dist/${{ matrix.artifact }}.zip"
+
+      - name: Upload to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+      - name: Upload workflow artifact (manual runs)
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/*
+
+  # Ubuntu .deb. Off by default — only fires on a manual workflow_dispatch with
+  # build_deb=true. Kept here so it's a one-flag flip once we want releases to
+  # ship a .deb. Standalone job: doesn't reuse the matrix build's target dir
+  # since artifacts aren't piped between jobs; rebuilds against the musl target.
+  deb:
+    name: linux-x86_64-musl .deb
+    if: github.event_name == 'workflow_dispatch' && inputs.build_deb
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: x86_64-unknown-linux-musl-deb
+
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deb
+
+      - name: Build .deb (xtask)
+        run: cargo xtask deb --target x86_64-unknown-linux-musl
+
+      - name: Stage .deb
+        run: |
+          mkdir -p dist
+          cp target/x86_64-unknown-linux-musl/debian/*.deb dist/
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flint-viz-deb
+          path: dist/*.deb

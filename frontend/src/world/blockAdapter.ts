@@ -34,12 +34,6 @@ export function getSharedMaterial(providers: BlockProviders): Material {
   return sharedMaterial;
 }
 
-// Resets the cached shared material — used by tests / hot reload.
-export function resetSharedMaterial(): void {
-  sharedMaterial?.dispose();
-  sharedMaterial = null;
-}
-
 export function buildBlockMesh(
   blockId: string,
   properties: Record<string, string>,

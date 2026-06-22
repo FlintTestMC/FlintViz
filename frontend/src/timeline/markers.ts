@@ -1,42 +1,56 @@
 import type {
-  ActionEvent,
   AssertionView,
   Replay,
+  TickEvent,
   TickFrame,
   Vec3,
 } from "../api/types";
 
 // One marker per event-bearing tick. `kind === "assertion"` is reserved for
-// assert-only ticks (no actions on the frame); a frame with both actions and
-// assertions is rendered with the action style — actions are the "primary"
-// event (#0028 status note).
+// assert-only ticks (no non-assert events on the frame); a frame with mixed
+// events is rendered with the action style — actions are the "primary" event.
 export interface Marker {
   tick: number;
   kind: "action" | "assertion";
   summary: string;
+  // True iff the frame has ≥ 2 events — the scrubber picker UI (#0040) is
+  // available for these markers.
+  hasMultipleEvents: boolean;
+}
+
+function isAssertion(e: TickEvent): boolean {
+  return e.kind === "assert";
 }
 
 export function buildMarkers(replay: Replay | null): Marker[] {
   if (!replay) return [];
   const out: Marker[] = [];
   for (const frame of replay.frames) {
-    if (frame.actions.length === 0 && frame.assertions.length === 0) continue;
-    const kind: Marker["kind"] =
-      frame.actions.length > 0 ? "action" : "assertion";
-    out.push({ tick: frame.tick, kind, summary: summariseFrame(frame) });
+    if (frame.events.length === 0) continue;
+    const hasAction = frame.events.some((e) => !isAssertion(e));
+    out.push({
+      tick: frame.tick,
+      kind: hasAction ? "action" : "assertion",
+      summary: summariseFrame(frame),
+      hasMultipleEvents: frame.events.length >= 2,
+    });
   }
   return out;
 }
 
-// Tooltip text. Renders the action(s) on this tick, falling back to an
-// assertion summary for assert-only ticks. The `BlockSpec::Multiple` grouping
-// rule from the issue status note is mirrored from AssertionGhosts: assertions
-// at the same position collapse into one "expect A OR B @ pos" line.
+// Tooltip text. Renders the non-assert events on this tick, falling back to an
+// assertion summary for assert-only ticks. Block assertions at the same
+// position collapse into one "expect A OR B @ pos" line.
 export function summariseFrame(frame: TickFrame): string {
   const parts: string[] = [];
-  for (const a of frame.actions) parts.push(summariseAction(a));
+  const actions = frame.events.filter((e) => !isAssertion(e));
+  for (const a of actions) parts.push(summariseEvent(a));
   if (parts.length === 0) {
-    const grouped = groupAssertions(frame.assertions);
+    const allViews: AssertionView[] = [];
+    for (const e of frame.events) {
+      if (e.kind === "assert") allViews.push(...e.views);
+    }
+    const grouped = groupAssertions(allViews);
     for (const g of grouped) parts.push(g);
   }
   if (parts.length === 0) return `tick ${frame.tick}`;
@@ -45,34 +59,44 @@ export function summariseFrame(frame: TickFrame): string {
   return `${parts.slice(0, 2).join(" • ")} • +${parts.length - 2} more`;
 }
 
-function summariseAction(action: ActionEvent): string {
-  switch (action.kind) {
+function summariseEvent(event: TickEvent): string {
+  switch (event.kind) {
     case "place":
-      return `place ${shortBlockId(action.block.id)} @ ${pos(action.pos)}`;
+      return `place ${shortBlockId(event.block.id)} @ ${pos(event.pos)}`;
     case "place_each":
-      return `place_each ×${action.placements.length}`;
+      return `place_each ×${event.placements.length}`;
     case "fill": {
-      const dx = action.region.max[0] - action.region.min[0] + 1;
-      const dy = action.region.max[1] - action.region.min[1] + 1;
-      const dz = action.region.max[2] - action.region.min[2] + 1;
-      return `fill ${dx}×${dy}×${dz} ${shortBlockId(action.block.id)}`;
+      const dx = event.region.max[0] - event.region.min[0] + 1;
+      const dy = event.region.max[1] - event.region.min[1] + 1;
+      const dz = event.region.max[2] - event.region.min[2] + 1;
+      return `fill ${dx}×${dy}×${dz} ${shortBlockId(event.block.id)}`;
     }
     case "remove":
-      return `remove ${pos(action.pos)}`;
+      return `remove ${pos(event.pos)}`;
     case "use_item_on":
-      return `use ${action.item ? shortItemId(action.item) : "(empty hand)"} @ ${pos(action.pos)} ${action.face}`;
+      return `use ${event.item ? shortItemId(event.item) : "(empty hand)"} @ ${pos(event.pos)} ${event.face}`;
     case "set_slot":
-      return `set_slot ${action.slot} = ${action.item ? `${shortItemId(action.item)}×${action.count}` : "empty"}`;
+      return `set_slot ${event.slot} = ${event.item ? `${shortItemId(event.item)}×${event.count}` : "empty"}`;
     case "select_hotbar":
-      return `select_hotbar ${action.slot}`;
+      return `select_hotbar ${event.slot}`;
+    case "assert": {
+      const lines = groupAssertions(event.views);
+      if (lines.length === 0) return "assert";
+      if (lines.length === 1) return lines[0]!;
+      return `${lines[0]} • +${lines.length - 1} more`;
+    }
   }
 }
 
-function groupAssertions(assertions: AssertionView[]): string[] {
-  // Group block-kind assertions by position; produce one line per group.
+// Short label used by the picker popup: just the event kind.
+export function eventKindLabel(event: TickEvent): string {
+  return event.kind;
+}
+
+function groupAssertions(views: AssertionView[]): string[] {
   const blocksByPos = new Map<string, { pos: Vec3; ids: string[] }>();
   const others: string[] = [];
-  for (const v of assertions) {
+  for (const v of views) {
     if (v.kind === "block") {
       const key = `${v.position[0]},${v.position[1]},${v.position[2]}`;
       const existing = blocksByPos.get(key);

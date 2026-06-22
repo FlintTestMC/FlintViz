@@ -28,7 +28,10 @@ export default function World() {
   const worldState = useReplayStore((s) => s.worldState);
   const providers = useBlockProviders();
 
-  const groups = useMemo(() => groupByState(worldState), [worldState]);
+  const groups = useMemo(
+    () => groupByState(worldState, providers?.defaults),
+    [worldState, providers],
+  );
 
   // Click → editor reveal (#0032). Compute the position-source map lazily on
   // click using the *current* tick, mirroring the engine's forward-application
