@@ -12,8 +12,17 @@ import { useBlockProvidersState } from "./useBlockProviders";
 // cleanup wireframe, action highlights, assertion ghosts) render directly in
 // world space; the camera orbits via mouse (OrbitControls).
 export default function Scene() {
-  const { error: assetError } = useBlockProvidersState();
+  const { providers, error: assetError, status } = useBlockProvidersState();
   if (assetError) return <AssetMissingPanel error={assetError} />;
+  if (status.kind === "eula_prompt") {
+    return <EulaPromptPanel onAccept={status.onAccept} />;
+  }
+  if (status.kind === "loading") {
+    return <AssetLoadingPanel progress={status.message} />;
+  }
+  if (!providers) {
+    return <AssetLoadingPanel progress="Initializing WebGL..." />;
+  }
   return (
     <Canvas
       camera={{ position: [6, 6, 6], fov: 50 }}
@@ -30,6 +39,49 @@ export default function Scene() {
       <AssertionGhosts />
       <FailureOverlay />
     </Canvas>
+  );
+}
+
+function AssetLoadingPanel({ progress }: { progress: string }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-neutral-950 p-6 text-sm text-neutral-400">
+      <div className="flex flex-col items-center gap-3 text-center max-w-sm">
+        <div className="animate-spin h-6 w-6 border-2 border-neutral-700 border-t-blue-500 rounded-full" />
+        <div className="font-medium text-neutral-200">Loading 3D Scene Assets</div>
+        <p className="text-xs text-neutral-500 whitespace-pre-wrap">{progress}</p>
+      </div>
+    </div>
+  );
+}
+
+function EulaPromptPanel({ onAccept }: { onAccept: () => void }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-neutral-950 p-6 text-sm text-neutral-400">
+      <div className="max-w-md rounded-md bg-neutral-900 p-5 text-sm text-neutral-200 ring-1 ring-neutral-800">
+        <div className="mb-2 font-semibold">Minecraft Assets Download</div>
+        <p className="mb-4 text-xs text-neutral-400 leading-relaxed">
+          FlintVisualizer renders block geometries using official Minecraft models and textures. 
+          To visualize the 3D scene, we need to download the client jar (~36 MB) directly from Mojang's servers and extract them.
+        </p>
+        <p className="mb-5 text-xs text-neutral-500 leading-relaxed">
+          By clicking <strong>Agree & Download</strong>, you acknowledge that you possess a valid license and agree to the{" "}
+          <a
+            href="https://www.minecraft.net/eula"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center"
+          >
+            Minecraft End User License Agreement (EULA)
+          </a>.
+        </p>
+        <button
+          onClick={onAccept}
+          className="w-full rounded bg-blue-600 hover:bg-blue-500 px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer"
+        >
+          Agree & Download
+        </button>
+      </div>
+    </div>
   );
 }
 

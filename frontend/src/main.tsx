@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
@@ -12,7 +13,13 @@ if (!rootEl) throw new Error("missing #root element");
 // pulling in react-router.
 function Root() {
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
-  if (path === "/failure" || path.startsWith("/failure/")) {
+  const hash = typeof window !== "undefined" ? window.location.hash : "";
+  if (
+    path === "/failure" ||
+    path.startsWith("/failure/") ||
+    hash.startsWith("#/failure") ||
+    hash.startsWith("#/share")
+  ) {
     return <FailureView />;
   }
   return <App />;

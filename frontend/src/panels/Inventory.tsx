@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Item, PlayerSlot } from "../api/types";
 import { useReplayStore } from "../store/replay";
 import { loadItemIcons } from "./itemIcons";
+import { slotLabel } from "./slotLabel";
 
 const HOTBAR_SLOTS: PlayerSlot[] = [
   "hotbar1",
@@ -17,27 +18,6 @@ const HOTBAR_SLOTS: PlayerSlot[] = [
   "hotbar9",
 ];
 const ARMOR_SLOTS: PlayerSlot[] = ["helmet", "chestplate", "leggings", "boots"];
-
-export function slotLabel(slot: PlayerSlot): string {
-  switch (slot) {
-    case "off_hand":
-      return "Off-hand";
-    case "helmet":
-      return "Helmet";
-    case "chestplate":
-      return "Chestplate";
-    case "leggings":
-      return "Leggings";
-    case "boots":
-      return "Boots";
-    default: {
-      // hotbar1..hotbar9 — display as the 1..9 number; users read these as
-      // the visible hotbar slot index.
-      const m = /^hotbar(\d)$/.exec(slot);
-      return m ? `Hotbar ${m[1]}` : slot;
-    }
-  }
-}
 
 function selectedHotbarSlot(n: number): PlayerSlot | null {
   if (n < 1 || n > 9) return null;

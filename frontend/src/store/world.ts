@@ -107,18 +107,60 @@ function applyForward(
   }
 }
 
-// Rebuild full state at `targetTick` from the initial player snapshot. O(N)
-// where N is the number of events with tick <= targetTick.
+interface Checkpoint {
+  tick: number;
+  world: Map<PosKey, Block>;
+  player: PlayerSnapshot;
+}
+
+const checkpointCache = new WeakMap<Replay, Checkpoint[]>();
+const CHECKPOINT_INTERVAL = 50;
+
+// Rebuild full state at `targetTick` from the initial player snapshot. Optimized
+// to use a lazy checkpoint cache (WeakMap-backed) so scrubbing or stepping backward
+// does not trigger a full O(N) rebuild from tick 0.
 export function rebuildAt(
   replay: Replay,
   targetTick: number,
 ): { world: Map<PosKey, Block>; player: PlayerSnapshot } {
-  const world = new Map<PosKey, Block>();
-  const player = clonePlayer(replay.initial_player);
+  let checkpoints = checkpointCache.get(replay);
+  if (!checkpoints) {
+    checkpoints = [
+      {
+        tick: -1,
+        world: new Map<PosKey, Block>(),
+        player: clonePlayer(replay.initial_player),
+      },
+    ];
+    checkpointCache.set(replay, checkpoints);
+  }
+
+  // Find the closest checkpoint <= targetTick
+  let best = checkpoints[0]!;
+  for (const cp of checkpoints) {
+    if (cp.tick <= targetTick && cp.tick > best.tick) {
+      best = cp;
+    }
+  }
+
+  const world = new Map(best.world);
+  const player = clonePlayer(best.player);
+
   for (const frame of replay.frames) {
+    if (frame.tick <= best.tick) continue;
     if (frame.tick > targetTick) break;
     applyForward(world, player, frame);
   }
+
+  // Lazily save a checkpoint if we scanned a significant distance
+  if (targetTick - best.tick >= CHECKPOINT_INTERVAL) {
+    checkpoints.push({
+      tick: targetTick,
+      world: new Map(world),
+      player: clonePlayer(player),
+    });
+  }
+
   return { world, player };
 }
 

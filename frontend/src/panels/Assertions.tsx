@@ -14,7 +14,7 @@ import { useReplayStore } from "../store/replay";
 import { pointerForEvent } from "../store/sourceMap";
 import { posKey } from "../store/world";
 import { useCameraStore } from "../world/cameraStore";
-import { slotLabel } from "./Inventory";
+import { slotLabel } from "./slotLabel";
 
 // Current-tick assertion list. Reads the assert-kind entries from
 // `frame.events`. Block-position rows expose a 📍 button that publishes a

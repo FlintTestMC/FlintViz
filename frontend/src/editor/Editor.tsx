@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "../api/client";
 import { showToast } from "../components/toastStore";
-import { isEffectivelyReadOnly } from "../store/config";
+import { isEffectivelyReadOnly, useConfigStore } from "../store/config";
 import { useCrosslinkStore, ticksAtOffset } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
 import { formatJsonText } from "./formatJson";
@@ -17,6 +17,7 @@ export default function Editor() {
   const source = useReplayStore((s) => s.source);
   const testId = useReplayStore((s) => s.testId);
   const parseErrors = useReplayStore((s) => s.parseErrors);
+  const standalone = useConfigStore((s) => s.standalone);
 
   const editorRef = useRef<monacoEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
@@ -52,7 +53,7 @@ export default function Editor() {
       ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
         const { testId, source } = useReplayStore.getState();
         if (!testId) return;
-        if (isEffectivelyReadOnly()) {
+        if (isEffectivelyReadOnly() && !standalone) {
           showToast({ kind: "info", message: "Read-only mode — not saved" });
           return;
         }
@@ -60,7 +61,7 @@ export default function Editor() {
           if (!result.ok) {
             showToast({ kind: "error", message: `Save failed: ${result.err}` });
           } else {
-            showToast({ kind: "info", message: "Saved" });
+            showToast({ kind: "info", message: standalone ? "Saved to browser storage" : "Saved" });
           }
         });
       });
@@ -158,7 +159,7 @@ export default function Editor() {
       ed.setValue(result.text);
       if (position) ed.setPosition(position);
     }
-    if (isEffectivelyReadOnly()) {
+    if (isEffectivelyReadOnly() && !standalone) {
       showToast({ kind: "info", message: "Formatted (read-only, not saved)" });
       return;
     }
@@ -166,7 +167,47 @@ export default function Editor() {
     if (!saveResult.ok) {
       showToast({ kind: "error", message: `Save failed: ${saveResult.err}` });
     } else {
-      showToast({ kind: "info", message: "Formatted and saved" });
+      showToast({
+        kind: "info",
+        message: standalone ? "Formatted and saved to browser storage" : "Formatted and saved",
+      });
+    }
+  }, [standalone]);
+
+  const handleShare = useCallback(async () => {
+    const currentSource = useReplayStore.getState().source;
+    if (!currentSource) return;
+
+    let parsedSpec: any;
+    try {
+      parsedSpec = JSON.parse(currentSource);
+    } catch (e: any) {
+      showToast({
+        kind: "error",
+        message: `Cannot share: invalid JSON (${e.message || String(e)})`,
+      });
+      return;
+    }
+
+    try {
+      const payload = {
+        version: 1,
+        spec: parsedSpec,
+        source_path: null,
+        failures: [],
+        total_ticks: 0,
+      };
+
+      const encoded = await api.encodeFailure(payload);
+      const url = `${window.location.origin}${window.location.pathname}#/share#data=${encoded}`;
+      
+      await navigator.clipboard.writeText(url);
+      showToast({ kind: "info", message: "Shareable link copied to clipboard!" });
+    } catch (e: any) {
+      showToast({
+        kind: "error",
+        message: `Failed to create shareable link: ${e.message || String(e)}`,
+      });
     }
   }, []);
 
@@ -216,16 +257,46 @@ export default function Editor() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b border-neutral-800 px-3 py-2 text-sm font-medium">
-        <span>Editor</span>
-        <button
-          type="button"
-          onClick={() => void handleFormat()}
-          title="Format JSON and save"
-          aria-label="Format JSON and save"
-          className="rounded px-2 py-0.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-neutral-100"
-        >
-          Format
-        </button>
+        <span>Editor {standalone && "(Offline)"}</span>
+        <div className="flex gap-2">
+          {standalone && (
+            <button
+              type="button"
+              onClick={() => {
+                const blob = new Blob([source], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = testId || "test.json";
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast({ kind: "info", message: "Downloaded test JSON" });
+              }}
+              title="Download JSON to your computer"
+              className="rounded px-2 py-0.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-neutral-100 cursor-pointer"
+            >
+              Export
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => void handleFormat()}
+            title={standalone ? "Format JSON" : "Format JSON and save"}
+            aria-label={standalone ? "Format JSON" : "Format JSON and save"}
+            className="rounded px-2 py-0.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-neutral-100 cursor-pointer"
+          >
+            Format
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleShare()}
+            title="Create a shareable link to this test"
+            aria-label="Create a shareable link to this test"
+            className="rounded px-2 py-0.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-neutral-100 cursor-pointer"
+          >
+            Share
+          </button>
+        </div>
       </header>
       <div className="flex-1">
         <MonacoEditor

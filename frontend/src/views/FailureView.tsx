@@ -76,10 +76,10 @@ async function boot(signal: AbortSignal): Promise<void> {
 }
 
 function readEncodedFromHash(): string | null {
-  const hash = window.location.hash.replace(/^#/, "");
+  const hash = window.location.hash;
   if (!hash) return null;
-  const params = new URLSearchParams(hash);
-  return params.get("data");
+  const dataMatch = /data=([^&]+)/.exec(hash);
+  return dataMatch && dataMatch[1] ? decodeURIComponent(dataMatch[1]) : null;
 }
 
 async function loadIntoReplayStore(
@@ -141,19 +141,21 @@ function earliestFailingTick(payload: FailurePayload): number | null {
 }
 
 function BootSplash() {
+  const isShare = typeof window !== "undefined" && window.location.hash.includes("share");
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-neutral-950 text-sm text-neutral-400">
-      Loading failure…
+      {isShare ? "Loading shared test…" : "Loading failure…"}
     </div>
   );
 }
 
 function BootErrorView({ message }: { message: string }) {
+  const isShare = typeof window !== "undefined" && window.location.hash.includes("share");
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-neutral-950 p-6">
       <div className="max-w-lg rounded-md bg-neutral-900 p-4 text-sm text-neutral-200 ring-1 ring-red-900/60">
         <div className="mb-2 font-semibold text-red-400">
-          Could not open failure URL
+          {isShare ? "Could not open shared link" : "Could not open failure URL"}
         </div>
         <p className="whitespace-pre-wrap text-xs text-neutral-400">{message}</p>
       </div>

@@ -1,0 +1,415 @@
+import type {
+  AssertionView,
+  Item,
+  PlayerSlot,
+  PlayerSnapshot,
+  Replay,
+  ReplayError,
+  ReplayResponse,
+  SourceSpan,
+  TestSpec,
+  TickFrame,
+} from "./types";
+
+function offsetToLineCol(text: string, offset: number): { line: number; col: number } {
+  let line = 1;
+  let col = 1;
+  for (let i = 0; i < Math.min(offset, text.length); i++) {
+    if (text[i] === "\n") {
+      line++;
+      col = 1;
+    } else {
+      col++;
+    }
+  }
+  return { line, col };
+}
+
+export function localReplay(source: string): ReplayResponse {
+  let spec: any;
+  try {
+    spec = JSON.parse(source);
+  } catch (err: any) {
+    const message = err.message || String(err);
+    let line = 1;
+    let col = 1;
+
+    // Try to extract position from "at position 123"
+    const posMatch = message.match(/at position (\d+)/i) || message.match(/position (\d+)/i);
+    if (posMatch) {
+      const pos = parseInt(posMatch[1], 10);
+      const loc = offsetToLineCol(source, pos);
+      line = loc.line;
+      col = loc.col;
+    } else {
+      // Try Firefox style "at line 12 column 3"
+      const lineColMatch =
+        message.match(/line (\d+)\s+column\s+(\d+)/i) ||
+        message.match(/line (\d+)\s+col\s+(\d+)/i);
+      if (lineColMatch) {
+        line = parseInt(lineColMatch[1], 10);
+        col = parseInt(lineColMatch[2], 10);
+      }
+    }
+
+    return {
+      spec: null,
+      errors: [{ line, col, message }],
+      replay: null,
+    };
+  }
+
+  if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
+    return {
+      spec: null,
+      errors: [{ line: 1, col: 1, message: "JSON root must be an object." }],
+      replay: null,
+    };
+  }
+  if (typeof spec.name !== "string") {
+    return {
+      spec: null,
+      errors: [{ line: 1, col: 1, message: "Missing or invalid 'name' field." }],
+      replay: null,
+    };
+  }
+  if (!Array.isArray(spec.timeline)) {
+    return {
+      spec: null,
+      errors: [{ line: 1, col: 1, message: "Missing or invalid 'timeline' field." }],
+      replay: null,
+    };
+  }
+
+  try {
+    const replay = buildReplayFromSpec(spec);
+    return {
+      spec: spec as TestSpec,
+      errors: [],
+      replay,
+    };
+  } catch (err: any) {
+    return {
+      spec: spec as TestSpec,
+      errors: [
+        {
+          line: 1,
+          col: 1,
+          message: `Replay build error: ${err.message || String(err)}`,
+        },
+      ],
+      replay: null,
+    };
+  }
+}
+
+function buildReplayFromSpec(spec: any): Replay {
+  const cleanupRegion = spec.setup?.cleanup?.region
+    ? {
+        min: spec.setup.cleanup.region[0],
+        max: spec.setup.cleanup.region[1],
+      }
+    : null;
+
+  const initialPlayer: PlayerSnapshot = {
+    inventory: {},
+    selected_hotbar: 1,
+    game_mode: "Creative",
+  };
+
+  if (spec.setup?.player) {
+    const p = spec.setup.player;
+    if (p.selected_hotbar !== undefined) {
+      initialPlayer.selected_hotbar = p.selected_hotbar;
+    }
+    if (p.game_mode !== undefined) {
+      initialPlayer.game_mode = p.game_mode;
+    }
+    if (p.inventory) {
+      for (const [slot, item] of Object.entries(p.inventory)) {
+        if (item && typeof item === "object") {
+          initialPlayer.inventory[slot as PlayerSlot] = {
+            id: (item as any).id,
+            count: (item as any).count ?? 1,
+            ...item,
+          } as Item;
+        }
+      }
+    }
+  }
+
+  // Calculate maxTick
+  let maxTick = 0;
+  if (spec.timeline) {
+    for (const entry of spec.timeline) {
+      if (typeof entry.at === "number") {
+        maxTick = Math.max(maxTick, entry.at);
+      } else if (Array.isArray(entry.at)) {
+        for (const t of entry.at) {
+          maxTick = Math.max(maxTick, t);
+        }
+      }
+    }
+  }
+  if (spec.breakpoints) {
+    for (const t of spec.breakpoints) {
+      maxTick = Math.max(maxTick, t);
+    }
+  }
+
+  const framesMap = new Map<number, TickFrame>();
+  const errors: ReplayError[] = [];
+  const snapshot: PlayerSnapshot = {
+    ...initialPlayer,
+    inventory: { ...initialPlayer.inventory },
+  };
+  const pendingSpans: Array<{
+    tick: number;
+    timelineIdx: number;
+    localIdx: number;
+  }> = [];
+
+  const timeline = spec.timeline || [];
+  for (let timelineIdx = 0; timelineIdx < timeline.length; timelineIdx++) {
+    const entry = timeline[timelineIdx];
+    if (!entry || typeof entry !== "object") continue;
+
+    // Resolve ticks
+    let ticks: number[] = [];
+    if (typeof entry.at === "number") {
+      ticks = [entry.at];
+    } else if (Array.isArray(entry.at)) {
+      ticks = entry.at;
+    }
+
+    for (const tick of ticks) {
+      let frame = framesMap.get(tick);
+      if (!frame) {
+        frame = { tick, events: [] };
+        framesMap.set(tick, frame);
+      }
+      const eventsBefore = frame.events.length;
+
+      applyActionLocal(frame, entry, snapshot, errors);
+
+      for (let localIdx = eventsBefore; localIdx < frame.events.length; localIdx++) {
+        pendingSpans.push({
+          tick,
+          timelineIdx,
+          localIdx,
+        });
+      }
+    }
+  }
+
+  // Filter out empty frames and sort by tick
+  const filteredFrames: TickFrame[] = Array.from(framesMap.values())
+    .filter((f) => f.events.length > 0)
+    .sort((a, b) => a.tick - b.tick);
+
+  // Construct source map
+  const sourceMap: SourceSpan[] = pendingSpans.map((p) => ({
+    tick: p.tick,
+    event_index: p.localIdx,
+    json_pointer: `/timeline/${p.timelineIdx}`,
+  }));
+
+  return {
+    name: spec.name,
+    cleanup_region: cleanupRegion,
+    initial_player: initialPlayer,
+    max_tick: maxTick,
+    frames: filteredFrames,
+    breakpoints: spec.breakpoints || [],
+    errors,
+    source_map: sourceMap,
+  };
+}
+
+function applyActionLocal(
+  frame: TickFrame,
+  entry: any,
+  snapshot: PlayerSnapshot,
+  errors: ReplayError[],
+) {
+  const actionType = entry.do;
+  if (!actionType) return;
+
+  switch (actionType) {
+    case "place": {
+      if (entry.pos && entry.block) {
+        frame.events.push({
+          kind: "place",
+          pos: entry.pos,
+          block: entry.block,
+        });
+      }
+      break;
+    }
+    case "fill": {
+      if (entry.region && entry.with) {
+        const min = entry.region[0];
+        const max = entry.region[1];
+        const dx = max[0] - min[0] + 1;
+        const dy = max[1] - min[1] + 1;
+        const dz = max[2] - min[2] + 1;
+        const volume = dx * dy * dz;
+
+        if (dx <= 0 || dy <= 0 || dz <= 0) {
+          errors.push({
+            tick: frame.tick,
+            message: `fill at tick ${frame.tick} has an inverted region (min > max on some axis); skipped`,
+          });
+          return;
+        }
+
+        const MAX_FILL_BLOCKS = 100000;
+        if (volume > MAX_FILL_BLOCKS) {
+          errors.push({
+            tick: frame.tick,
+            message: `fill at tick ${frame.tick} would emit ${volume} block changes (cap is ${MAX_FILL_BLOCKS}); visualization may degrade`,
+          });
+        }
+
+        frame.events.push({
+          kind: "fill",
+          region: { min, max },
+          block: entry.with,
+        });
+      }
+      break;
+    }
+    case "place_each": {
+      if (Array.isArray(entry.blocks)) {
+        frame.events.push({
+          kind: "place_each",
+          placements: entry.blocks,
+        });
+      }
+      break;
+    }
+    case "remove": {
+      if (entry.pos) {
+        frame.events.push({
+          kind: "remove",
+          pos: entry.pos,
+        });
+      }
+      break;
+    }
+    case "set_slot": {
+      const slot = entry.slot as PlayerSlot;
+      const item = entry.item;
+      const count = entry.count ?? 1;
+
+      frame.events.push({
+        kind: "set_slot",
+        slot,
+        item,
+        count,
+      });
+
+      if (item == null) {
+        delete snapshot.inventory[slot];
+      } else {
+        snapshot.inventory[slot] = {
+          id: item,
+          count,
+        } as Item;
+      }
+      break;
+    }
+    case "use_item_on": {
+      const pos = entry.pos;
+      const face = entry.face;
+      const item = entry.item || null;
+
+      let resolved_item: Item | null = null;
+      if (item) {
+        resolved_item = { id: item, count: 1 };
+      } else {
+        const slotName = `hotbar${snapshot.selected_hotbar}` as PlayerSlot;
+        const activeItem = snapshot.inventory[slotName];
+        if (activeItem) {
+          resolved_item = { ...activeItem };
+        }
+      }
+
+      frame.events.push({
+        kind: "use_item_on",
+        pos,
+        face,
+        item,
+        resolved_item,
+      });
+      break;
+    }
+    case "select_hotbar": {
+      const slot = entry.slot;
+      frame.events.push({
+        kind: "select_hotbar",
+        slot,
+      });
+      if (slot < 1 || slot > 9) {
+        errors.push({
+          tick: frame.tick,
+          message: `select_hotbar at tick ${frame.tick} has slot ${slot} out of range (1..=9); skipped`,
+        });
+        return;
+      }
+      snapshot.selected_hotbar = slot;
+      break;
+    }
+    case "assert": {
+      if (Array.isArray(entry.checks)) {
+        const views: AssertionView[] = [];
+        for (const check of entry.checks) {
+          if (!check || typeof check !== "object") continue;
+          if (check.pos && check.is !== undefined) {
+            // Block Check
+            if (Array.isArray(check.is)) {
+              // Multiple check
+              for (let i = 0; i < check.is.length; i++) {
+                views.push({
+                  kind: "block",
+                  position: check.pos,
+                  expected: check.is[i],
+                  pointer_suffix: `/is/${i}`,
+                });
+              }
+            } else {
+              // Single check
+              views.push({
+                kind: "block",
+                position: check.pos,
+                expected: check.is,
+              });
+            }
+          } else if (check.slot !== undefined) {
+            // Inventory check
+            let expected: Item | null = null;
+            if (check.is && typeof check.is === "object" && check.is.id) {
+              expected = {
+                id: check.is.id,
+                count: check.is.count ?? 1,
+                ...check.is,
+              } as Item;
+            }
+            views.push({
+              kind: "inventory",
+              slot: check.slot,
+              expected,
+            });
+          }
+        }
+        if (views.length > 0) {
+          frame.events.push({
+            kind: "assert",
+            views,
+          });
+        }
+      }
+      break;
+    }
+  }
+}

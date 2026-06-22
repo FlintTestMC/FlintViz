@@ -20,6 +20,7 @@ import BlockGallery from "./world/__debug__/BlockGallery";
 
 export default function App() {
   const readonly = useConfigStore((s) => s.readonly);
+  const standalone = useConfigStore((s) => s.standalone);
   const testId = useReplayStore((s) => s.testId);
   useEffect(() => {
     void useConfigStore.getState().fetch();
@@ -43,11 +44,11 @@ export default function App() {
     return <BootSplash />;
   }
 
-  if (readonly && testId === null) {
+  if (readonly && testId === null && !standalone) {
     return <ReadOnlyLanding />;
   }
 
-  const sidebar = readonly
+  const sidebar = (readonly && !standalone)
     ? undefined
     : (
         <ErrorBoundary label="Sidebar">
