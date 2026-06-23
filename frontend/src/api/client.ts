@@ -223,7 +223,7 @@ export const api = {
     return request<TestDetail>(`/api/tests/${encodeId(id)}`, { signal });
   },
 
-  replay(
+  async replay(
     source: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<ReplayResponse>> {
@@ -231,12 +231,21 @@ export const api = {
       const response = localReplay(source);
       return Promise.resolve({ ok: true, status: 200, body: response });
     }
-    return request<ReplayResponse>("/api/replay", {
+    const result = await request<ReplayResponse>("/api/replay", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: source,
       signal,
     });
+    if (!result.ok && !result.aborted) {
+      try {
+        const response = localReplay(source);
+        return { ok: true, status: 200, body: response };
+      } catch (e: any) {
+        return result;
+      }
+    }
+    return result;
   },
 
   async saveTest(

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { StrictMode } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import FailureView from "./views/FailureView";
@@ -12,15 +12,34 @@ if (!rootEl) throw new Error("missing #root element");
 // `/failure` view from #0035), so a switch on `pathname` is simpler than
 // pulling in react-router.
 function Root() {
-  const path = typeof window !== "undefined" ? window.location.pathname : "/";
-  const hash = typeof window !== "undefined" ? window.location.hash : "";
+  const [currentPath, setCurrentPath] = useState(
+    typeof window !== "undefined" ? window.location.pathname : "/"
+  );
+  const [currentHash, setCurrentHash] = useState(
+    typeof window !== "undefined" ? window.location.hash : ""
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleNavigation = () => {
+      setCurrentPath(window.location.pathname);
+      setCurrentHash(window.location.hash);
+    };
+    window.addEventListener("popstate", handleNavigation);
+    window.addEventListener("hashchange", handleNavigation);
+    return () => {
+      window.removeEventListener("popstate", handleNavigation);
+      window.removeEventListener("hashchange", handleNavigation);
+    };
+  }, []);
+
   if (
-    path === "/failure" ||
-    path.startsWith("/failure/") ||
-    hash.startsWith("#/failure") ||
-    hash.startsWith("#/share")
+    currentPath === "/failure" ||
+    currentPath.startsWith("/failure/") ||
+    currentHash.startsWith("#/failure") ||
+    currentHash.startsWith("#/share")
   ) {
-    return <FailureView />;
+    return <FailureView key={currentPath + currentHash} />;
   }
   return <App />;
 }
@@ -30,3 +49,4 @@ createRoot(rootEl).render(
     <Root />
   </StrictMode>,
 );
+
