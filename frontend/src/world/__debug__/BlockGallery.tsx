@@ -1,9 +1,9 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useState } from "react";
-import type { Material } from "three";
 
 import { loadBlockProviders, type BlockProviders } from "../atlas";
+import { BlockMeshLayers } from "../BlockMeshLayers";
 import { buildBlockMesh, type BlockMesh } from "../blockAdapter";
 
 interface SampleBlock {
@@ -147,7 +147,7 @@ function Sample({
   return (
     <group position={position}>
       {built ? (
-        <mesh geometry={built.geometry} material={built.material as Material} />
+        <BlockMeshLayers mesh={built} />
       ) : (
         <mesh>
           <boxGeometry args={[0.9, 0.9, 0.9]} />

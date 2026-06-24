@@ -19,6 +19,7 @@ import { failureCoordinate, useFailureStore } from "../store/failure";
 import { useReplayStore } from "../store/replay";
 import { buildBlockMesh, getSharedMaterial } from "./blockAdapter";
 import type { BlockProviders } from "./atlas";
+import { BlockMeshLayers, blockMeshGeometries } from "./BlockMeshLayers";
 import { useBlockProviders } from "./useBlockProviders";
 
 interface OverlayItem {
@@ -130,16 +131,15 @@ function FailureMark({
   }, [item.actual, providers]);
 
   // Geometries we own — dispose on unmount / re-key.
-  const expectedGeomRef = useRef<BufferGeometry | null>(null);
-  const actualGeomRef = useRef<BufferGeometry | null>(null);
-  expectedGeomRef.current = expectedMesh?.geometry ?? null;
-  actualGeomRef.current = actualMesh?.geometry ?? null;
+  const geomRef = useRef<BufferGeometry[]>([]);
+  geomRef.current = [
+    ...blockMeshGeometries(expectedMesh),
+    ...blockMeshGeometries(actualMesh),
+  ];
   useEffect(() => {
-    const eg = expectedGeomRef.current;
-    const ag = actualGeomRef.current;
+    const geoms = geomRef.current;
     return () => {
-      eg?.dispose();
-      ag?.dispose();
+      for (const g of geoms) g.dispose();
     };
   }, [expectedMesh, actualMesh]);
 
@@ -155,29 +155,17 @@ function FailureMark({
   useEffect(() => () => outlineEdges.dispose(), [outlineEdges]);
 
   const ghostMat = getGhostMaterial(providers);
-  const sharedMat = getSharedMaterial(providers);
   const [x, y, z] = item.pos;
 
   return (
     <group position={[x, y, z]}>
-      {/* Expected — translucent ghost at full unit cube. */}
       {expectedMesh ? (
-        <mesh
-          geometry={expectedMesh.geometry}
-          material={ghostMat}
-          dispose={null}
-        />
+        <BlockMeshLayers mesh={expectedMesh} material={ghostMat} />
       ) : null}
-      {/* Actual — solid, scaled down 15% so it sits visibly inside the ghost
-          and z-fighting between the two passes is avoided. */}
       {actualMesh ? (
         <group position={[0.5, 0.5, 0.5]} scale={[0.85, 0.85, 0.85]}>
           <group position={[-0.5, -0.5, -0.5]}>
-            <mesh
-              geometry={actualMesh.geometry}
-              material={sharedMat}
-              dispose={null}
-            />
+            <BlockMeshLayers mesh={actualMesh} />
           </group>
         </group>
       ) : null}

@@ -2,14 +2,19 @@ import {
   BlockDefinition,
   BlockModel,
   Identifier,
-  TextureAtlas,
   type BlockDefinitionProvider,
   type BlockModelProvider,
   type TextureAtlasProvider,
 } from "deepslate";
 import JSZip from "jszip";
 
+import {
+  ASSETS_URL,
+  clearCachedAssetZip,
+  parseAssetZipBytes,
+} from "./assetZip";
 import { type BlockDefaults, loadBlockDefaults } from "./blockDefaults";
+import { buildBlockTextureAtlas } from "./buildTextureAtlas";
 import {
   CanvasTexture,
   NearestFilter,
@@ -28,7 +33,6 @@ export interface BlockProviders {
   defaults: BlockDefaults;
 }
 
-const ASSETS_URL = `${import.meta.env.BASE_URL}mc-assets.zip`;
 const BLOCKSTATE_PREFIX = "assets/minecraft/blockstates/";
 const MODEL_PREFIX = "assets/minecraft/models/";
 const TEXTURE_PREFIX = "assets/minecraft/textures/";
@@ -188,70 +192,63 @@ export function resetAssetLoad(): void {
 
 export function loadAssetZip(): Promise<JSZip> {
   if (zipPromise) return zipPromise;
-  zipPromise = (async () => {
-    // 1. Try server-side first
-    setAssetStatus({ kind: "loading", message: "Checking server for pre-built asset bundle..." });
-    try {
-      const res = await fetch(ASSETS_URL);
-      if (res.ok) {
-        setAssetStatus({ kind: "loading", message: "Loading asset bundle from server..." });
-        const zipBytes = new Uint8Array(await res.arrayBuffer());
-        const zip = await JSZip.loadAsync(zipBytes);
-        setAssetStatus({ kind: "loaded" });
-        return zip;
-      }
-    } catch (e) {
-      console.log("Failed to fetch assets from server, falling back to cache/download", e);
-    }
-
-    // 2. Try browser cache
-    setAssetStatus({ kind: "loading", message: "Checking browser cache for assets..." });
-    try {
-      const cache = await caches.open("flint-viz-assets");
-      const cachedResponse = await cache.match(ASSETS_URL);
-      if (cachedResponse) {
-        setAssetStatus({ kind: "loading", message: "Loading assets from browser cache..." });
-        const zipBytes = new Uint8Array(await cachedResponse.arrayBuffer());
-        const zip = await JSZip.loadAsync(zipBytes);
-        setAssetStatus({ kind: "loaded" });
-        return zip;
-      }
-    } catch (e) {
-      console.warn("Browser cache access failed", e);
-    }
-
-    // 3. Ask for EULA acceptance
-    let acceptEulaResolver: (() => void) | null = null;
-    setAssetStatus({
-      kind: "eula_prompt",
-      onAccept: () => {
-        if (acceptEulaResolver) {
-          acceptEulaResolver();
-          acceptEulaResolver = null;
-        }
-      },
-    });
-
-    await new Promise<void>((resolve) => {
-      acceptEulaResolver = resolve;
-    });
-
-    // 4. Download and extract client-side
-    try {
-      const zip = await downloadAndExtractAssetsClientSide();
-      setAssetStatus({ kind: "loaded" });
-      return zip;
-    } catch (err: any) {
-      setAssetStatus({ kind: "error", error: err });
-      throw err;
-    }
-  })();
+  zipPromise = loadAssetZipInner().catch((err) => {
+    zipPromise = null;
+    throw err;
+  });
   return zipPromise;
+}
+
+async function loadAssetZipInner(): Promise<JSZip> {
+  // Assets come from the Mojang client jar — either browser cache (previous
+  // EULA download) or a fresh client-side extraction. No server-side bundle.
+  setAssetStatus({ kind: "loading", message: "Checking browser cache for assets..." });
+  try {
+    const cache = await caches.open("flint-viz-assets");
+    const cachedResponse = await cache.match(ASSETS_URL);
+    if (cachedResponse) {
+      setAssetStatus({ kind: "loading", message: "Loading assets from browser cache..." });
+      const zipBytes = new Uint8Array(await cachedResponse.arrayBuffer());
+      const zip = await parseAssetZipBytes(zipBytes, "browser cache");
+      if (zip) return zip;
+      await clearCachedAssetZip();
+    }
+  } catch (e) {
+    console.warn("Browser cache access failed", e);
+  }
+
+  // 3. Ask for EULA acceptance
+  let acceptEulaResolver: (() => void) | null = null;
+  setAssetStatus({
+    kind: "eula_prompt",
+    onAccept: () => {
+      if (acceptEulaResolver) {
+        acceptEulaResolver();
+        acceptEulaResolver = null;
+      }
+    },
+  });
+
+  await new Promise<void>((resolve) => {
+    acceptEulaResolver = resolve;
+  });
+
+  // 4. Download and extract client-side
+  try {
+    return downloadAndExtractAssetsClientSide();
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    setAssetStatus({ kind: "error", error });
+    throw error;
+  }
 }
 
 export function loadBlockProviders(): Promise<BlockProviders> {
   if (cached) return cached;
-  cached = doLoad();
+  cached = doLoad().catch((err) => {
+    cached = null;
+    throw err;
+  });
   return cached;
 }
 
@@ -313,26 +310,6 @@ async function doLoad(): Promise<BlockProviders> {
 
   await Promise.all(tasks);
 
-  // Preflight `createImageBitmap` on every block texture so a single
-  // undecodable PNG doesn't sink the whole atlas. deepslate's
-  // `TextureAtlas.fromBlobs` runs all decodes inside one `Promise.all`, so
-  // when one blob fails the rejection bubbles out as the browser's generic
-  // "The source image could not be decoded" with no clue which file. Doing
-  // the decode ourselves lets us log the offending id and continue with the
-  // rest — the bad texture just renders as the magenta-checker fallback.
-  const decodableBlobs: { [id: string]: Blob } = {};
-  await Promise.all(
-    Object.entries(textureBlobs).map(async ([id, blob]) => {
-      try {
-        const bmp = await createImageBitmap(blob);
-        bmp.close();
-        decodableBlobs[id] = blob;
-      } catch (err) {
-        console.warn(`atlas: skipping undecodable texture ${id}`, err);
-      }
-    }),
-  );
-
   const models = new Map<string, BlockModel>();
   for (const [id, json] of modelEntries) {
     models.set(id.toString(), BlockModel.fromJson(json));
@@ -344,9 +321,32 @@ async function doLoad(): Promise<BlockProviders> {
     },
   };
 
+  setAssetStatus({ kind: "loading", message: "Processing block models..." });
+  let flattened = 0;
   for (const model of models.values()) {
     model.flatten(blockModels);
+    flattened++;
+    if (flattened % 200 === 0) {
+      setAssetStatus({
+        kind: "loading",
+        message: `Processing block models (${flattened}/${models.size})...`,
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    }
   }
+
+  const textureTotal = Object.keys(textureBlobs).length;
+  setAssetStatus({
+    kind: "loading",
+    message: `Building texture atlas (0/${textureTotal})...`,
+  });
+
+  const { atlas, canvas } = await buildBlockTextureAtlas(textureBlobs, (done, total) => {
+    setAssetStatus({
+      kind: "loading",
+      message: `Building texture atlas (${done}/${total})...`,
+    });
+  });
 
   const definitions = new Map<string, BlockDefinition>();
   for (const [id, json] of stateEntries) {
@@ -359,16 +359,16 @@ async function doLoad(): Promise<BlockProviders> {
     },
   };
 
-  const atlas = await TextureAtlas.fromBlobs(decodableBlobs);
-  const atlasImage = atlas.getTextureAtlas();
-  const atlasTexture = imageDataToTexture(atlasImage);
+  const atlasTexture = canvasToTexture(canvas);
+
+  setAssetStatus({ kind: "loaded" });
 
   return {
     blockModels,
     blockDefinitions,
     atlas,
     atlasTexture,
-    atlasSize: atlasImage.width,
+    atlasSize: canvas.width,
     defaults: await defaultsPromise,
   };
 }
@@ -427,13 +427,7 @@ function normaliseModelJson(json: unknown): unknown {
   return model;
 }
 
-function imageDataToTexture(img: ImageData): Texture {
-  const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("atlas: 2d context unavailable");
-  ctx.putImageData(img, 0, 0);
+function canvasToTexture(canvas: HTMLCanvasElement): Texture {
   const tex = new CanvasTexture(canvas);
   tex.magFilter = NearestFilter;
   tex.minFilter = NearestFilter;

@@ -8,6 +8,8 @@ import {
   type AssetLoadStatus,
   type BlockProviders,
 } from "./atlas";
+import { resetSharedMaterials } from "./blockAdapter";
+import { resetBlockDefaults } from "./blockDefaults";
 
 // Shared loader for the deepslate block providers. `loadBlockProviders` is a
 // cached singleton so multiple call sites coexist; centralising here keeps
@@ -33,6 +35,8 @@ export function useBlockProvidersState(): BlockProvidersState {
 
   const retry = useCallback(() => {
     resetAssetLoad();
+    resetSharedMaterials();
+    resetBlockDefaults();
     resetItemIcons();
     setProviders(null);
     setError(null);

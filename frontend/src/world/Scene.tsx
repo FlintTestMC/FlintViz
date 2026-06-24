@@ -16,6 +16,31 @@ export default function Scene() {
   if (status.kind === "eula_prompt") {
     return <EulaPromptPanel onAccept={status.onAccept} />;
   }
+  if (assetError || status.kind === "error") {
+    const err =
+      assetError ??
+      (status.kind === "error" ? status.error : new Error("Asset load failed"));
+    return <AssetMissingPanel error={err} onRetry={retry} />;
+  }
+  if (providers) {
+    return (
+      <Canvas
+        camera={{ position: [6, 6, 6], fov: 50 }}
+        className="h-full w-full"
+      >
+        <color attach="background" args={["#2d2d2d"]} />
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[8, 12, 6]} intensity={0.8} />
+        <directionalLight position={[-6, 4, -8]} intensity={0.3} />
+        <Camera />
+        <World />
+        <CleanupOverlay />
+        <Highlights />
+        <AssertionGhosts />
+        <FailureOverlay />
+      </Canvas>
+    );
+  }
   if (status.kind === "loading" || status.kind === "idle") {
     return (
       <AssetLoadingPanel
@@ -25,32 +50,7 @@ export default function Scene() {
       />
     );
   }
-  if (assetError || status.kind === "error") {
-    const err =
-      assetError ??
-      (status.kind === "error" ? status.error : new Error("Asset load failed"));
-    return <AssetMissingPanel error={err} onRetry={retry} />;
-  }
-  if (!providers) {
-    return <AssetLoadingPanel progress="Building block atlas..." />;
-  }
-  return (
-    <Canvas
-      camera={{ position: [6, 6, 6], fov: 50 }}
-      className="h-full w-full"
-    >
-      <color attach="background" args={["#2d2d2d"]} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[8, 12, 6]} intensity={0.8} />
-      <directionalLight position={[-6, 4, -8]} intensity={0.3} />
-      <Camera />
-      <World />
-      <CleanupOverlay />
-      <Highlights />
-      <AssertionGhosts />
-      <FailureOverlay />
-    </Canvas>
-  );
+  return <AssetLoadingPanel progress="Building block atlas..." />;
 }
 
 function AssetLoadingPanel({ progress }: { progress: string }) {
