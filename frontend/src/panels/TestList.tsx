@@ -31,7 +31,8 @@ export default function TestList() {
   const [menu, setMenu] = useState<ContextMenu | null>(null);
 
   const readonly = useConfigStore((s) => s.readonly);
-  const canCreate = readonly !== true;
+  const standalone = useConfigStore((s) => s.standalone);
+  const canCreate = readonly !== true || standalone;
 
   const testId = useReplayStore((s) => s.testId);
   const testIdRef = useRef(testId);
@@ -177,10 +178,50 @@ export default function TestList() {
   return (
     <div className="flex h-full flex-col bg-neutral-950">
       <header
-        className="border-b border-neutral-800 px-3 py-2 text-sm font-medium"
+        className="flex items-center justify-between border-b border-neutral-800 px-3 py-2 text-sm font-medium"
         onContextMenu={(e) => openContextMenu(e, "")}
       >
-        Tests
+        <span>Tests {standalone && "(Offline)"}</span>
+        {standalone && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".json";
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = async (evt) => {
+                    const text = evt.target?.result as string;
+                    const name = file.name;
+                    const res = await api.createTest(name, text);
+                    if (res.ok) {
+                      showToast({ kind: "info", message: `Imported ${name}` });
+                      void openTest(name);
+                    } else {
+                      showToast({ kind: "error", message: `Failed to import: ${res.err}` });
+                    }
+                  };
+                  reader.readAsText(file);
+                };
+                input.click();
+              }}
+              className="text-xs text-neutral-400 hover:text-neutral-200 cursor-pointer"
+              title="Import JSON file"
+            >
+              Import
+            </button>
+            <button
+              onClick={() => startCreate("")}
+              className="text-xs text-neutral-400 hover:text-neutral-200 cursor-pointer"
+              title="New test file"
+            >
+              + New
+            </button>
+          </div>
+        )}
       </header>
       <div className="flex-1 overflow-auto py-1 text-sm">
         {!listFailed && summaries.length === 0 && creatingAt !== "" && (

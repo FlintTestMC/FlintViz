@@ -6,10 +6,25 @@ import type {
   TestSummary,
 } from "./types";
 import { subscribeEvents, type EventsListener } from "./events";
+import { decodeFailurePayload, encodeFailurePayload } from "./failurePayload";
+import {
+  isStandalone,
+  setStandalone,
+  standaloneCreateTest,
+  standaloneDecodeFailure,
+  standaloneEncodeFailure,
+  standaloneGetTest,
+  standaloneListTests,
+  standaloneReplay,
+  standaloneSaveTest,
+  standaloneSubscribeEvents,
+} from "./standalone";
 
 export type ApiResult<T> =
   | { ok: true; status: number; body: T }
   | { ok: false; status: number; aborted: boolean; err: string };
+
+export { setStandalone };
 
 function encodeId(id: string): string {
   return id.split("/").map(encodeURIComponent).join("/");
@@ -27,7 +42,6 @@ async function request<T>(
   try {
     res = await fetch(input, init);
   } catch (err) {
-    // Network failure or abort — no HTTP status is available, so use 0.
     return {
       ok: false,
       status: 0,
@@ -63,23 +77,56 @@ export const api = {
   },
 
   listTests(signal?: AbortSignal): Promise<ApiResult<TestSummary[]>> {
+    if (isStandalone()) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        body: standaloneListTests(),
+      });
+    }
     return request<TestSummary[]>("/api/tests", { signal });
   },
 
   getTest(id: string, signal?: AbortSignal): Promise<ApiResult<TestDetail>> {
+    if (isStandalone()) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        body: standaloneGetTest(id),
+      });
+    }
     return request<TestDetail>(`/api/tests/${encodeId(id)}`, { signal });
   },
 
-  replay(
+  async replay(
     source: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<ReplayResponse>> {
-    return request<ReplayResponse>("/api/replay", {
+    if (isStandalone()) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        body: standaloneReplay(source),
+      });
+    }
+    const result = await request<ReplayResponse>("/api/replay", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: source,
       signal,
     });
+    if (!result.ok && !result.aborted) {
+      try {
+        return {
+          ok: true,
+          status: 200,
+          body: standaloneReplay(source),
+        };
+      } catch {
+        return result;
+      }
+    }
+    return result;
   },
 
   async saveTest(
@@ -87,6 +134,10 @@ export const api = {
     source: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<null>> {
+    if (isStandalone()) {
+      standaloneSaveTest(id, source);
+      return Promise.resolve({ ok: true, status: 204, body: null });
+    }
     let res: Response;
     try {
       res = await fetch(`/api/tests/${encodeId(id)}`, {
@@ -120,6 +171,18 @@ export const api = {
     source: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<null>> {
+    if (isStandalone()) {
+      const result = standaloneCreateTest(id, source);
+      if (!result.ok) {
+        return Promise.resolve({
+          ok: false,
+          status: result.status,
+          aborted: false,
+          err: result.err,
+        });
+      }
+      return Promise.resolve({ ok: true, status: 201, body: null });
+    }
     let res: Response;
     try {
       res = await fetch(`/api/tests/${encodeId(id)}`, {
@@ -149,18 +212,49 @@ export const api = {
   },
 
   events(onEvent: EventsListener): () => void {
+    if (isStandalone()) {
+      return standaloneSubscribeEvents(onEvent);
+    }
     return subscribeEvents(onEvent);
   },
 
-  decodeFailure(
+  async decodeFailure(
     encoded: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<FailurePayload>> {
-    return request<FailurePayload>("/api/failure/decode", {
+    if (isStandalone()) {
+      const result = await standaloneDecodeFailure(encoded);
+      if (!result.ok) {
+        return {
+          ok: false,
+          status: 400,
+          aborted: false,
+          err: result.err,
+        };
+      }
+      return { ok: true, status: 200, body: result.body };
+    }
+    const result = await request<FailurePayload>("/api/failure/decode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ encoded }),
       signal,
     });
+    if (!result.ok && !result.aborted) {
+      try {
+        const payload = await decodeFailurePayload(encoded);
+        return { ok: true, status: 200, body: payload };
+      } catch {
+        return result;
+      }
+    }
+    return result;
+  },
+
+  async encodeFailure(payload: FailurePayload): Promise<string> {
+    if (isStandalone()) {
+      return standaloneEncodeFailure(payload);
+    }
+    return encodeFailurePayload(payload);
   },
 };

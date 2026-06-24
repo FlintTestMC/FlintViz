@@ -7,13 +7,15 @@
 // the test in the same split-pane layout, with a `FailureBanner` above the
 // timeline and the `FailureOverlay` painted in the 3D scene.
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
-import App from "../App";
 import { api } from "../api/client";
+import BootSplash from "../components/BootSplash";
 import type { FailurePayload } from "../api/types";
 import { useFailureStore } from "../store/failure";
 import { useReplayStore } from "../store/replay";
+
+const App = lazy(() => import("../App"));
 
 export default function FailureView() {
   const [bootError, setBootError] = useState<string | null>(null);
@@ -34,14 +36,26 @@ export default function FailureView() {
     return <BootErrorView message={bootError} />;
   }
   if (status.kind === "idle" || status.kind === "loading") {
-    return <BootSplash />;
+    return (
+      <BootSplash
+        message={
+          typeof window !== "undefined" && window.location.hash.includes("share")
+            ? "Loading shared test…"
+            : "Loading failure…"
+        }
+      />
+    );
   }
   if (status.kind === "error") {
     return <BootErrorView message={status.message} />;
   }
   // Loaded — render the standard app shell. The replay store is already
   // populated; FailureBanner + FailureOverlay are mounted from inside App.
-  return <App />;
+  return (
+    <Suspense fallback={<BootSplash />}>
+      <App />
+    </Suspense>
+  );
 }
 
 async function boot(signal: AbortSignal): Promise<void> {
@@ -76,10 +90,10 @@ async function boot(signal: AbortSignal): Promise<void> {
 }
 
 function readEncodedFromHash(): string | null {
-  const hash = window.location.hash.replace(/^#/, "");
+  const hash = window.location.hash;
   if (!hash) return null;
-  const params = new URLSearchParams(hash);
-  return params.get("data");
+  const dataMatch = /data=([^&]+)/.exec(hash);
+  return dataMatch && dataMatch[1] ? decodeURIComponent(dataMatch[1]) : null;
 }
 
 async function loadIntoReplayStore(
@@ -140,20 +154,13 @@ function earliestFailingTick(payload: FailurePayload): number | null {
   return earliest;
 }
 
-function BootSplash() {
-  return (
-    <div className="flex h-screen w-screen items-center justify-center bg-neutral-950 text-sm text-neutral-400">
-      Loading failure…
-    </div>
-  );
-}
-
 function BootErrorView({ message }: { message: string }) {
+  const isShare = typeof window !== "undefined" && window.location.hash.includes("share");
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-neutral-950 p-6">
       <div className="max-w-lg rounded-md bg-neutral-900 p-4 text-sm text-neutral-200 ring-1 ring-red-900/60">
         <div className="mb-2 font-semibold text-red-400">
-          Could not open failure URL
+          {isShare ? "Could not open shared link" : "Could not open failure URL"}
         </div>
         <p className="whitespace-pre-wrap text-xs text-neutral-400">{message}</p>
       </div>

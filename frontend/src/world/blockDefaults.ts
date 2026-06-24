@@ -187,11 +187,11 @@ let cache: Promise<BlockDefaults> | null = null;
 
 export function loadBlockDefaults(): Promise<BlockDefaults> {
   if (cache) return cache;
-  cache = fetch("/blocks.json")
+  cache = fetch(`${import.meta.env.BASE_URL}blocks.json`)
     .then((r) => {
       if (!r.ok) {
         throw new Error(
-          `Failed to load /blocks.json (${r.status}). Run the extractor mod to regenerate it.`,
+          `Failed to load ${import.meta.env.BASE_URL}blocks.json (${r.status}). Run the extractor mod to regenerate it.`,
         );
       }
       return r.json() as Promise<RawBlocksFile>;

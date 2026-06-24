@@ -108,14 +108,14 @@ through the API.
 
 ## Asset bundle
 
-bash command:
-```
-./frontend/scripts/fetch-assets.bash
-```
+The 3D view renders blocks using vanilla Minecraft textures and models. These are **not** bundled in the repo (license-sensitive, gitignored, ~2 MB). 
 
-The 3D view renders blocks using vanilla Minecraft textures and models. These
-are **not** bundled in the repo (license-sensitive, gitignored, ~2 MB) — you
-generate them once locally from a vanilla client jar:
+### How assets are resolved (automatic):
+1. **Source Builds:** The build tool (`cargo xtask build`) automatically executes `npm run assets` for you to download and bundle the assets inside the release binary. No manual step is required.
+2. **Browser Fallback:** If you run the frontend in development mode (`npm run dev`) or host it as a static page without the bundle, the 3D visualizer will display a browser EULA prompt. Once accepted, it downloads the client jar and extracts/caches the assets **entirely client-side in the browser**.
+
+### Manual Asset Generation (Optional):
+If you want to manually pre-build the assets folder (for example, to support offline local development):
 
 ```bash
 cd frontend
@@ -123,7 +123,7 @@ npm install        # first time only
 npm run assets     # downloads the jar and writes public/mc-assets.zip
 ```
 
-What it does:
+What the script does:
 
 1. Fetches Mojang's launcher version manifest.
 2. Looks up the version (default `26.1.2`) and its `client.jar` URL.
@@ -131,7 +131,7 @@ What it does:
 4. Extracts only `assets/minecraft/{blockstates,models,textures/block,textures/item}/...`.
 5. Re-zips into `frontend/public/mc-assets.zip` (~2 MB).
 
-Re-run only if you bump the MC version:
+Re-run only if you want to bump the MC version:
 
 ```bash
 MC_VERSION=1.21.4 npm run assets
@@ -143,9 +143,7 @@ is only intended to be run by developers with a valid Minecraft license.
 
 ## Troubleshooting
 
-- **"Asset bundle missing" panel in the 3D pane.** The card explains how to
-  fetch `mc-assets.zip` (`npm run assets` in `frontend/`); follow the
-  instructions in the panel. The rest of the UI keeps working without it.
+- **EULA Prompt in 3D Pane:** If the server is started without a pre-bundled `mc-assets.zip`, the 3D pane will ask you to accept the Minecraft EULA to fetch and extract assets client-side. Accept the prompt to load the textures. The rest of the UI keeps working without it.
 - **Amber "stale" badge on the canvas.** The JSON has a parse error. The 3D
   view freezes on the last good state, the editor squiggles point at the
   problem, and the badge clears once the JSON parses again. The view is not

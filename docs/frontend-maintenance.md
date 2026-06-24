@@ -43,25 +43,26 @@ Behavior:
 - If no test is loaded, `ReadOnlyLanding` is shown.
 - The intended entry path is a flint-steel failure URL.
 
-### Failure URL Mode
+### Failure & Share URL Mode
 
-Used for `/failure#data=...`.
+Used for `/failure#data=...` (failing runs) and `/#/share#data=...` (generic test sharing).
 
 Owner: `frontend/src/views/FailureView.tsx`.
 
 Flow:
 
-1. Read encoded data from the URL hash.
+1. Read encoded data from the URL hash (using regex to parse the data parameter).
 2. POST it to `/api/failure/decode`.
-3. Try to resolve the source file from disk.
-4. If disk source loads, open it as a normal test.
-5. Otherwise serialize the inline `FailurePayload.spec` and open that.
-6. Store failure context in `useFailureStore`.
-7. Seek to the earliest failing tick.
-8. Render the normal `App`.
+3. **Fallback:** If the API POST fails (e.g., HTTP 500/404) or the app is standalone, decode the base64-gzip payload client-side in the browser.
+4. Try to resolve the source file from disk (if `source_path` is present).
+5. If disk source loads, open it as a normal test.
+6. Otherwise serialize the inline `FailurePayload.spec` and open that (e.g. for shared links).
+7. Store failure context in `useFailureStore` (hidden if the failures array is empty).
+8. Seek to the earliest failing tick (if any).
+9. Render the normal `App`.
 
-Inline failure payloads are effectively read-only because there is no reliable
-file path to save to.
+Inline failure/share payloads are effectively read-only because there is no reliable
+file path to save to (though edits compile live in-memory).
 
 ## Store Ownership
 
@@ -216,10 +217,14 @@ Asset loading is cached. `loadAssetZip()` and `loadBlockProviders()` are
 singletons for one app load, so multiple consumers do not repeatedly parse the
 asset zip.
 
-## Asset Failure Behavior
+## Asset Loading & Failure Behavior
 
-If `/mc-assets.zip` is missing, the 3D pane should show a useful missing-assets
-state while the rest of the app remains usable.
+Assets (`mc-assets.zip` and `blocks.json`) are fetched relative to `import.meta.env.BASE_URL` to support subfolder hosting (such as GitHub Pages).
+
+If pre-built assets are missing from the server:
+- The app displays a EULA prompt in the 3D pane.
+- Once accepted, the app fetches the vanilla client jar from Mojang, extracts the assets, and stores them in browser `CacheStorage` client-side.
+- If this client-side extraction also fails, the 3D pane shows a fallback missing-assets warning card.
 
 Texture/model parsing is defensive:
 

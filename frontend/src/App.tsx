@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
+import BootSplash from "./components/BootSplash";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PaneFallback from "./components/PaneFallback";
 import StaleBadge from "./components/StaleBadge";
 import Toast from "./components/Toast";
-import Editor from "./editor/Editor";
 import SplitLayout from "./layout/SplitLayout";
 import Assertions from "./panels/Assertions";
 import Inventory from "./panels/Inventory";
@@ -13,28 +14,19 @@ import { useReplayStore } from "./store/replay";
 import Controls from "./timeline/Controls";
 import FailureBanner from "./timeline/FailureBanner";
 import Scrubber from "./timeline/Scrubber";
-import CompassGizmo from "./world/CompassGizmo";
-import Scene from "./world/Scene";
 import SceneToolbar from "./world/SceneToolbar";
-import BlockGallery from "./world/__debug__/BlockGallery";
+
+const Editor = lazy(() => import("./editor/Editor"));
+const Scene = lazy(() => import("./world/Scene"));
+const CompassGizmo = lazy(() => import("./world/CompassGizmo"));
 
 export default function App() {
   const readonly = useConfigStore((s) => s.readonly);
+  const standalone = useConfigStore((s) => s.standalone);
   const testId = useReplayStore((s) => s.testId);
   useEffect(() => {
     void useConfigStore.getState().fetch();
   }, []);
-
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("debug") === "blocks") {
-      return (
-        <div className="h-screen w-screen">
-          <BlockGallery />
-        </div>
-      );
-    }
-  }
 
   // Wait for /api/config before picking a layout. Switching SplitLayout between
   // its 3-pane and 2-pane structures *after* mount unmounts the 3D Canvas, and
@@ -43,11 +35,11 @@ export default function App() {
     return <BootSplash />;
   }
 
-  if (readonly && testId === null) {
+  if (readonly && testId === null && !standalone) {
     return <ReadOnlyLanding />;
   }
 
-  const sidebar = readonly
+  const sidebar = (readonly && !standalone)
     ? undefined
     : (
         <ErrorBoundary label="Sidebar">
@@ -71,13 +63,17 @@ export default function App() {
               <Controls />
             </header>
             <ErrorBoundary label="3D view">
-              <div className="relative flex-1 min-h-0">
-                <Scene />
-                <StaleBadge />
-                <ErrorBoundary label="Compass">
-                  <CompassGizmo />
-                </ErrorBoundary>
-              </div>
+              <Suspense fallback={<PaneFallback label="3D view" />}>
+                <div className="relative flex-1 min-h-0">
+                  <Scene />
+                  <StaleBadge />
+                  <ErrorBoundary label="Compass">
+                    <Suspense fallback={null}>
+                      <CompassGizmo />
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
+              </Suspense>
             </ErrorBoundary>
             <ErrorBoundary label="Failure banner">
               <FailureBanner />
@@ -104,20 +100,14 @@ export default function App() {
         }
         right={
           <ErrorBoundary label="Editor">
-            <Editor />
+            <Suspense fallback={<PaneFallback label="editor" />}>
+              <Editor />
+            </Suspense>
           </ErrorBoundary>
         }
       />
       <Toast />
     </>
-  );
-}
-
-function BootSplash() {
-  return (
-    <div className="flex h-screen w-screen items-center justify-center bg-neutral-950 text-sm text-neutral-500">
-      Loading…
-    </div>
   );
 }
 

@@ -28,28 +28,216 @@ export interface BlockProviders {
   defaults: BlockDefaults;
 }
 
-const ASSETS_URL = "/mc-assets.zip";
+const ASSETS_URL = `${import.meta.env.BASE_URL}mc-assets.zip`;
 const BLOCKSTATE_PREFIX = "assets/minecraft/blockstates/";
 const MODEL_PREFIX = "assets/minecraft/models/";
 const TEXTURE_PREFIX = "assets/minecraft/textures/";
 
+const MC_VERSION = "26.1.2";
+const VERSION_MANIFEST_URL = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json";
+const KEEP_PATH_RE = /^assets\/minecraft\/(blockstates|models|textures\/block|textures\/item)\//;
+
+export type AssetLoadStatus =
+  | { kind: "idle" }
+  | { kind: "eula_prompt"; onAccept: () => void }
+  | { kind: "loading"; message: string }
+  | { kind: "loaded" }
+  | { kind: "error"; error: Error };
+
+type StatusListener = (status: AssetLoadStatus) => void;
+const statusListeners = new Set<StatusListener>();
+let currentStatus: AssetLoadStatus = { kind: "idle" };
+
+export function subscribeAssetStatus(listener: StatusListener): () => void {
+  statusListeners.add(listener);
+  listener(currentStatus);
+  return () => {
+    statusListeners.delete(listener);
+  };
+}
+
+function setAssetStatus(status: AssetLoadStatus) {
+  currentStatus = status;
+  for (const listener of statusListeners) {
+    try {
+      listener(status);
+    } catch (e) {
+      // ignore
+    }
+  }
+}
+
+async function downloadAndExtractAssetsClientSide(): Promise<JSZip> {
+  setAssetStatus({ kind: "loading", message: "Fetching Minecraft version manifest..." });
+  const manifestRes = await fetch(VERSION_MANIFEST_URL);
+  if (!manifestRes.ok) {
+    throw new Error(`Failed to fetch version manifest: HTTP ${manifestRes.status}`);
+  }
+  const manifest = await manifestRes.json();
+  const entry = manifest.versions.find((v: any) => v.id === MC_VERSION);
+  if (!entry) {
+    throw new Error(`Version ${MC_VERSION} not found in Minecraft manifest.`);
+  }
+
+  setAssetStatus({ kind: "loading", message: `Fetching version info for ${MC_VERSION}...` });
+  const versionRes = await fetch(entry.url);
+  if (!versionRes.ok) {
+    throw new Error(`Failed to fetch version info: HTTP ${versionRes.status}`);
+  }
+  const versionDoc = await versionRes.json();
+  const { url, size } = versionDoc.downloads.client;
+
+  setAssetStatus({
+    kind: "loading",
+    message: `Downloading Minecraft client.jar (${(size / 1024 / 1024).toFixed(1)} MB)...`,
+  });
+
+  const jarRes = await fetch(url);
+  if (!jarRes.ok) {
+    throw new Error(`Failed to download client.jar: HTTP ${jarRes.status}`);
+  }
+
+  const reader = jarRes.body?.getReader();
+  const contentLength = size;
+
+  if (!reader) {
+    throw new Error("Failed to read client.jar download stream.");
+  }
+
+  let receivedLength = 0;
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    receivedLength += value.length;
+    const pct = ((receivedLength / contentLength) * 100).toFixed(0);
+    setAssetStatus({
+      kind: "loading",
+      message: `Downloading client.jar: ${pct}% (${(receivedLength / 1024 / 1024).toFixed(1)} / ${(contentLength / 1024 / 1024).toFixed(1)} MB)`,
+    });
+  }
+
+  setAssetStatus({ kind: "loading", message: "Reading downloaded client.jar..." });
+  const jarBytes = new Uint8Array(receivedLength);
+  let position = 0;
+  for (const chunk of chunks) {
+    jarBytes.set(chunk, position);
+    position += chunk.length;
+  }
+
+  setAssetStatus({ kind: "loading", message: "Extracting asset files (this may take a few seconds)..." });
+  const inZip = await JSZip.loadAsync(jarBytes);
+  const outZip = new JSZip();
+
+  let kept = 0;
+  const entries = Object.keys(inZip.files);
+  const totalEntries = entries.length;
+  let processed = 0;
+
+  for (const path of entries) {
+    processed++;
+    if (processed % 1000 === 0) {
+      setAssetStatus({
+        kind: "loading",
+        message: `Extracting assets: ${((processed / totalEntries) * 100).toFixed(0)}%`,
+      });
+    }
+
+    const file = inZip.files[path];
+    if (!file || file.dir) continue;
+    if (!KEEP_PATH_RE.test(path)) continue;
+
+    const data = await file.async("uint8array");
+    outZip.file(path, data);
+    kept++;
+  }
+
+  setAssetStatus({ kind: "loading", message: `Generating optimized asset bundle (${kept} files)...` });
+  const outBytes = await outZip.generateAsync({
+    type: "uint8array",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 },
+  });
+
+  setAssetStatus({ kind: "loading", message: "Caching asset bundle in browser storage..." });
+  try {
+    const cache = await caches.open("flint-viz-assets");
+    await cache.put(
+      ASSETS_URL,
+      new Response(outBytes as any, {
+        headers: { "Content-Type": "application/zip" },
+      }),
+    );
+  } catch (e) {
+    console.warn("Failed to write bundle to browser CacheStorage", e);
+  }
+
+  return outZip;
+}
+
 let cached: Promise<BlockProviders> | null = null;
 let zipPromise: Promise<JSZip> | null = null;
 
-// Shared parsed-zip singleton. Both `world/atlas.ts` and `panels/itemIcons.ts`
-// (#0030) consume it so the asset zip is parsed exactly once per app load even
-// though the browser would otherwise cache the HTTP response.
 export function loadAssetZip(): Promise<JSZip> {
   if (zipPromise) return zipPromise;
   zipPromise = (async () => {
-    const res = await fetch(ASSETS_URL);
-    if (!res.ok) {
-      throw new Error(
-        `Failed to load ${ASSETS_URL} (${res.status}). Run \`npm run assets\` to generate it.`,
-      );
+    // 1. Try server-side first
+    setAssetStatus({ kind: "loading", message: "Checking server for pre-built asset bundle..." });
+    try {
+      const res = await fetch(ASSETS_URL);
+      if (res.ok) {
+        setAssetStatus({ kind: "loading", message: "Loading asset bundle from server..." });
+        const zipBytes = new Uint8Array(await res.arrayBuffer());
+        const zip = await JSZip.loadAsync(zipBytes);
+        setAssetStatus({ kind: "loaded" });
+        return zip;
+      }
+    } catch (e) {
+      console.log("Failed to fetch assets from server, falling back to cache/download", e);
     }
-    const zipBytes = new Uint8Array(await res.arrayBuffer());
-    return JSZip.loadAsync(zipBytes);
+
+    // 2. Try browser cache
+    setAssetStatus({ kind: "loading", message: "Checking browser cache for assets..." });
+    try {
+      const cache = await caches.open("flint-viz-assets");
+      const cachedResponse = await cache.match(ASSETS_URL);
+      if (cachedResponse) {
+        setAssetStatus({ kind: "loading", message: "Loading assets from browser cache..." });
+        const zipBytes = new Uint8Array(await cachedResponse.arrayBuffer());
+        const zip = await JSZip.loadAsync(zipBytes);
+        setAssetStatus({ kind: "loaded" });
+        return zip;
+      }
+    } catch (e) {
+      console.warn("Browser cache access failed", e);
+    }
+
+    // 3. Ask for EULA acceptance
+    let acceptEulaResolver: (() => void) | null = null;
+    setAssetStatus({
+      kind: "eula_prompt",
+      onAccept: () => {
+        if (acceptEulaResolver) {
+          acceptEulaResolver();
+          acceptEulaResolver = null;
+        }
+      },
+    });
+
+    await new Promise<void>((resolve) => {
+      acceptEulaResolver = resolve;
+    });
+
+    // 4. Download and extract client-side
+    try {
+      const zip = await downloadAndExtractAssetsClientSide();
+      setAssetStatus({ kind: "loaded" });
+      return zip;
+    } catch (err: any) {
+      setAssetStatus({ kind: "error", error: err });
+      throw err;
+    }
   })();
   return zipPromise;
 }
