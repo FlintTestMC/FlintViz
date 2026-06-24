@@ -3,6 +3,7 @@ import type { editor as monacoEditor, IDisposable } from "monaco-editor";
 import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "../api/client";
+import type { TestSpec } from "../api/types";
 import { showToast } from "../components/toastStore";
 import { isEffectivelyReadOnly, useConfigStore } from "../store/config";
 import { useCrosslinkStore, ticksAtOffset } from "../store/crosslink";
@@ -178,13 +179,13 @@ export default function Editor() {
     const currentSource = useReplayStore.getState().source;
     if (!currentSource) return;
 
-    let parsedSpec: any;
+    let parsedSpec: TestSpec;
     try {
-      parsedSpec = JSON.parse(currentSource);
-    } catch (e: any) {
+      parsedSpec = JSON.parse(currentSource) as TestSpec;
+    } catch (err) {
       showToast({
         kind: "error",
-        message: `Cannot share: invalid JSON (${e.message || String(e)})`,
+        message: `Cannot share: invalid JSON (${err instanceof Error ? err.message : String(err)})`,
       });
       return;
     }
@@ -203,10 +204,10 @@ export default function Editor() {
       
       await navigator.clipboard.writeText(url);
       showToast({ kind: "info", message: "Shareable link copied to clipboard!" });
-    } catch (e: any) {
+    } catch (err) {
       showToast({
         kind: "error",
-        message: `Failed to create shareable link: ${e.message || String(e)}`,
+        message: `Failed to create shareable link: ${err instanceof Error ? err.message : String(err)}`,
       });
     }
   }, []);

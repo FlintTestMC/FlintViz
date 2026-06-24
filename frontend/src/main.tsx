@@ -1,9 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
-import { StrictMode, useEffect, useState } from "react";
+import { lazy, StrictMode, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import FailureView from "./views/FailureView";
+import BootSplash from "./components/BootSplash";
+import { isBlockGalleryDebugRoute, isFailureOrShareRoute } from "./routing";
 import "./index.css";
+
+const App = lazy(() => import("./App"));
+const FailureView = lazy(() => import("./views/FailureView"));
+const BlockGallery = lazy(() => import("./world/__debug__/BlockGallery"));
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("missing #root element");
@@ -33,15 +37,27 @@ function Root() {
     };
   }, []);
 
-  if (
-    currentPath === "/failure" ||
-    currentPath.startsWith("/failure/") ||
-    currentHash.startsWith("#/failure") ||
-    currentHash.startsWith("#/share")
-  ) {
-    return <FailureView key={currentPath + currentHash} />;
+  if (isBlockGalleryDebugRoute()) {
+    return (
+      <Suspense fallback={<BootSplash message="Loading block gallery…" />}>
+        <div className="h-screen w-screen">
+          <BlockGallery />
+        </div>
+      </Suspense>
+    );
   }
-  return <App />;
+  if (isFailureOrShareRoute(currentPath, currentHash)) {
+    return (
+      <Suspense fallback={<BootSplash />}>
+        <FailureView key={currentPath + currentHash} />
+      </Suspense>
+    );
+  }
+  return (
+    <Suspense fallback={<BootSplash />}>
+      <App />
+    </Suspense>
+  );
 }
 
 createRoot(rootEl).render(
@@ -49,4 +65,3 @@ createRoot(rootEl).render(
     <Root />
   </StrictMode>,
 );
-

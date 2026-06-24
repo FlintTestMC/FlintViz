@@ -132,14 +132,19 @@ describe("localReplay", () => {
     // assertion view check
     expect(replay.frames[5]!.tick).toBe(6);
     expect(replay.frames[5]!.events[0]!.kind).toBe("assert");
-    const assertEvent = replay.frames[5]!.events[0] as any;
-    expect(assertEvent.views.length).toBe(2);
-    expect(assertEvent.views[0]).toEqual({
+    const event = replay.frames[5]!.events[0];
+    expect(event).toBeDefined();
+    expect(event!.kind).toBe("assert");
+    if (!event || event.kind !== "assert") {
+      throw new Error("expected assert event");
+    }
+    expect(event.views.length).toBe(2);
+    expect(event.views[0]).toEqual({
       kind: "block",
       position: [1, 2, 3],
       expected: { id: "minecraft:stone" },
     });
-    expect(assertEvent.views[1]).toEqual({
+    expect(event.views[1]).toEqual({
       kind: "inventory",
       slot: "hotbar4",
       expected: { id: "minecraft:dirt", count: 10 },
