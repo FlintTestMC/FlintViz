@@ -11,6 +11,7 @@ import { activeAltIndex, useAssertionsStore } from "../store/assertions";
 import { useReplayStore } from "../store/replay";
 import { posKey } from "../store/world";
 import type { BlockProviders } from "./atlas";
+import { BlockMeshLayers, blockMeshGeometries } from "./BlockMeshLayers";
 import { buildBlockMesh, getSharedMaterial } from "./blockAdapter";
 import { useBlockProviders } from "./useBlockProviders";
 
@@ -148,14 +149,12 @@ function Ghost({
     [expected, providers],
   );
 
-  // Track the geometry we own and dispose it on unmount / change. The material
-  // is shared (cached above) so we never dispose it here.
-  const geomRef = useRef<BufferGeometry | null>(null);
-  geomRef.current = built?.geometry ?? null;
+  const geomRef = useRef<BufferGeometry[]>([]);
+  geomRef.current = blockMeshGeometries(built);
   useEffect(() => {
-    const g = geomRef.current;
+    const geoms = geomRef.current;
     return () => {
-      g?.dispose();
+      for (const g of geoms) g.dispose();
     };
   }, [built]);
 
@@ -166,13 +165,7 @@ function Ghost({
 
   return (
     <group position={[group.pos[0], group.pos[1], group.pos[2]]}>
-      <mesh
-        geometry={built.geometry}
-        material={ghostMat}
-        // Owning material lives outside R3F's disposal — keep it alive across
-        // unmounts. Geometry disposal is handled by the effect above.
-        dispose={null}
-      />
+      <BlockMeshLayers mesh={built} material={ghostMat} />
       <Html
         position={[0.5, 1.1, 0.5]}
         center

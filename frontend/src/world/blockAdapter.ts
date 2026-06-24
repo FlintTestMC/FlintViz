@@ -1,4 +1,11 @@
-import { Cull, Identifier, type Mesh as DeepslateMesh } from "deepslate";
+import {
+  BlockState,
+  Cull,
+  Identifier,
+  Mesh,
+  SpecialRenderers,
+  type Mesh as DeepslateMesh,
+} from "deepslate";
 import {
   BufferAttribute,
   BufferGeometry,
@@ -10,9 +17,14 @@ import {
 
 import type { BlockProviders } from "./atlas";
 
-export interface BlockMesh {
+export interface BlockMeshLayer {
   geometry: BufferGeometry;
   material: Material;
+}
+
+export interface BlockMesh {
+  opaque: BlockMeshLayer | null;
+  transparent: BlockMeshLayer | null;
   // Pre-baked transform from MC block-space (16 units / block) to scene-space
   // (1 unit / block). Geometry already has this baked in, so identity for now;
   // exposed for #0023 instancing where the per-instance translation goes here.
@@ -20,6 +32,14 @@ export interface BlockMesh {
 }
 
 let sharedMaterial: Material | null = null;
+let sharedTransparentMaterial: Material | null = null;
+
+export function resetSharedMaterials(): void {
+  sharedMaterial?.dispose();
+  sharedTransparentMaterial?.dispose();
+  sharedMaterial = null;
+  sharedTransparentMaterial = null;
+}
 
 export function getSharedMaterial(providers: BlockProviders): Material {
   if (sharedMaterial) return sharedMaterial;
@@ -34,34 +54,88 @@ export function getSharedMaterial(providers: BlockProviders): Material {
   return sharedMaterial;
 }
 
+export function getSharedTransparentMaterial(
+  providers: BlockProviders,
+): Material {
+  if (sharedTransparentMaterial) return sharedTransparentMaterial;
+  sharedTransparentMaterial = new MeshStandardMaterial({
+    map: providers.atlasTexture,
+    vertexColors: true,
+    transparent: true,
+    opacity: 1,
+    depthWrite: false,
+    side: DoubleSide,
+    metalness: 0,
+    roughness: 1,
+  });
+  return sharedTransparentMaterial;
+}
+
 export function buildBlockMesh(
   blockId: string,
   properties: Record<string, string>,
   providers: BlockProviders,
 ): BlockMesh | null {
   const id = Identifier.parse(blockId);
-  const definition = providers.blockDefinitions.getBlockDefinition(id);
-  if (!definition) return null;
+  const state = new BlockState(blockId, properties);
+  const cull = Cull.none();
 
-  let mesh: DeepslateMesh;
-  try {
-    mesh = definition.getMesh(
-      id,
-      properties,
-      providers.atlas,
-      providers.blockModels,
-      Cull.none(),
-    );
-  } catch (err) {
-    console.warn(`blockAdapter: getMesh failed for ${blockId}`, err);
-    return null;
+  const opaqueParts = new Mesh();
+  const transparentParts = new Mesh();
+
+  const definition = providers.blockDefinitions.getBlockDefinition(id);
+  if (definition && !state.isFluid()) {
+    try {
+      opaqueParts.merge(
+        definition.getMesh(
+          id,
+          properties,
+          providers.atlas,
+          providers.blockModels,
+          cull,
+        ),
+      );
+    } catch (err) {
+      console.warn(`blockAdapter: getMesh failed for ${blockId}`, err);
+    }
   }
 
-  if (mesh.quads.length === 0) return null;
+  try {
+    const special = SpecialRenderers.getBlockMesh(
+      state,
+      undefined,
+      providers.atlas,
+      cull,
+    );
+    if (!special.isEmpty()) {
+      // Fluids and waterlogged overlays are semi-transparent; chests, signs,
+      // beds, etc. stay in the opaque bucket (mirrors deepslate ChunkBuilder).
+      if (state.isFluid() || state.isWaterlogged()) {
+        transparentParts.merge(special);
+      } else {
+        opaqueParts.merge(special);
+      }
+    }
+  } catch (err) {
+    console.warn(`blockAdapter: special mesh failed for ${blockId}`, err);
+  }
 
-  const geometry = meshToBufferGeometry(mesh);
-  const material = getSharedMaterial(providers);
-  return { geometry, material, transform: new Matrix4() };
+  const opaque = layerFromMesh(opaqueParts, getSharedMaterial(providers));
+  const transparent = layerFromMesh(
+    transparentParts,
+    getSharedTransparentMaterial(providers),
+  );
+  if (!opaque && !transparent) return null;
+
+  return { opaque, transparent, transform: new Matrix4() };
+}
+
+function layerFromMesh(
+  mesh: DeepslateMesh,
+  material: Material,
+): BlockMeshLayer | null {
+  if (mesh.isEmpty()) return null;
+  return { geometry: meshToBufferGeometry(mesh), material };
 }
 
 function meshToBufferGeometry(mesh: DeepslateMesh): BufferGeometry {

@@ -87,7 +87,8 @@ function InstanceGroupMesh({
   // Dispose geometry we own when the group disappears or its key changes.
   useEffect(() => {
     return () => {
-      built?.geometry.dispose();
+      built?.opaque?.geometry.dispose();
+      built?.transparent?.geometry.dispose();
     };
   }, [built]);
 
@@ -102,16 +103,29 @@ function InstanceGroupMesh({
   if (!built) return null;
 
   return (
-    <InstancedNode
-      // Remount when the capacity bucket changes; the underlying geometry and
-      // material survive because we keep our own refs to them.
-      key={capacity}
-      geometry={built.geometry}
-      material={built.material}
-      capacity={capacity}
-      positions={group.positions}
-      onInstanceClick={onInstanceClick}
-    />
+    <>
+      {built.opaque ? (
+        <InstancedNode
+          key={`${capacity}-opaque`}
+          geometry={built.opaque.geometry}
+          material={built.opaque.material}
+          capacity={capacity}
+          positions={group.positions}
+          onInstanceClick={onInstanceClick}
+        />
+      ) : null}
+      {built.transparent ? (
+        <InstancedNode
+          key={`${capacity}-transparent`}
+          geometry={built.transparent.geometry}
+          material={built.transparent.material}
+          capacity={capacity}
+          positions={group.positions}
+          onInstanceClick={onInstanceClick}
+          renderOrder={1}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -121,12 +135,14 @@ function InstancedNode({
   capacity,
   positions,
   onInstanceClick,
+  renderOrder = 0,
 }: {
   geometry: BufferGeometry;
   material: Material;
   capacity: number;
   positions: Vec3[];
   onInstanceClick: (position: Vec3) => void;
+  renderOrder?: number;
 }) {
   const ref = useRef<InstancedMesh>(null);
 
@@ -161,6 +177,7 @@ function InstancedNode({
     <instancedMesh
       ref={ref}
       args={[geometry, material, capacity]}
+      renderOrder={renderOrder}
       // R3F's default disposal would also drop our shared geometry/material on
       // unmount. We manage their lifetimes manually above.
       dispose={null}
