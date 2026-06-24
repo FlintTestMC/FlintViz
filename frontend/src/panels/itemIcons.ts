@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { loadAssetZip } from "../world/atlas";
 
 // Pragmatic item-icon pipeline. The plan called for deepslate's `ItemRenderer`
@@ -23,6 +25,45 @@ interface IconIndex {
 }
 
 let cached: Promise<IconIndex> | null = null;
+let iconIndexState: IconIndex | null = null;
+const subscribers = new Set<() => void>();
+let loadStarted = false;
+
+export function resetItemIcons(): void {
+  cached = null;
+  loadStarted = false;
+  iconIndexState = null;
+  ensureIconsLoaded();
+}
+
+function ensureIconsLoaded(): void {
+  if (loadStarted) return;
+  loadStarted = true;
+  loadItemIcons()
+    .then((idx) => {
+      iconIndexState = idx;
+      for (const fn of subscribers) fn();
+    })
+    .catch((err) => {
+      console.warn("itemIcons: failed to load", err);
+      loadStarted = false;
+    });
+}
+
+export function useItemIcon(id: string): string | null {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    ensureIconsLoaded();
+    const fn = () => setTick((n) => n + 1);
+    subscribers.add(fn);
+    return () => {
+      subscribers.delete(fn);
+    };
+  }, []);
+  if (!iconIndexState) return null;
+  if (id.includes(":")) return iconIndexState.byId.get(id) ?? null;
+  return iconIndexState.byId.get(`minecraft:${id}`) ?? null;
+}
 
 export function loadItemIcons(): Promise<IconIndex> {
   if (cached) return cached;

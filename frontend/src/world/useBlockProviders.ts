@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { resetItemIcons } from "../panels/itemIcons";
 import {
   loadBlockProviders,
+  resetAssetLoad,
   subscribeAssetStatus,
   type AssetLoadStatus,
   type BlockProviders,
@@ -12,19 +14,30 @@ import {
 // state ownership clear once #0027 (AssertionGhosts) and #0023 (World) both
 // need it.
 //
-// Returns `{ providers, error, status }` so callers can render either the world geometry,
-// a loader spinner with progress, or a "missing assets" panel. The original surface
-// returning just `BlockProviders | null` is preserved for backwards compatibility.
+// Returns `{ providers, error, status, retry }` so callers can render either
+// the world geometry, a loader spinner with progress, or a retryable error
+// panel. The original surface returning just `BlockProviders | null` is
+// preserved for backwards compatibility.
 export interface BlockProvidersState {
   providers: BlockProviders | null;
   error: Error | null;
   status: AssetLoadStatus;
+  retry: () => void;
 }
 
 export function useBlockProvidersState(): BlockProvidersState {
   const [providers, setProviders] = useState<BlockProviders | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [status, setStatus] = useState<AssetLoadStatus>({ kind: "idle" });
+  const [attempt, setAttempt] = useState(0);
+
+  const retry = useCallback(() => {
+    resetAssetLoad();
+    resetItemIcons();
+    setProviders(null);
+    setError(null);
+    setAttempt((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,12 +64,11 @@ export function useBlockProvidersState(): BlockProvidersState {
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+  }, [attempt]);
 
-  return { providers, error, status };
+  return { providers, error, status, retry };
 }
 
 export function useBlockProviders(): BlockProviders | null {
   return useBlockProvidersState().providers;
 }
-

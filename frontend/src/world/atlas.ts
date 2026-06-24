@@ -179,6 +179,13 @@ async function downloadAndExtractAssetsClientSide(): Promise<JSZip> {
 let cached: Promise<BlockProviders> | null = null;
 let zipPromise: Promise<JSZip> | null = null;
 
+/** Clears cached zip/providers so a failed load can be retried without reload. */
+export function resetAssetLoad(): void {
+  cached = null;
+  zipPromise = null;
+  setAssetStatus({ kind: "idle" });
+}
+
 export function loadAssetZip(): Promise<JSZip> {
   if (zipPromise) return zipPromise;
   zipPromise = (async () => {

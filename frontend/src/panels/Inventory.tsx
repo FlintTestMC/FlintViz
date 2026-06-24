@@ -1,9 +1,9 @@
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { Item, PlayerSlot } from "../api/types";
 import { useReplayStore } from "../store/replay";
-import { loadItemIcons } from "./itemIcons";
+import { useItemIcon } from "./itemIcons";
 import { slotLabel } from "./slotLabel";
 
 const HOTBAR_SLOTS: PlayerSlot[] = [
@@ -172,41 +172,6 @@ function ItemSprite({ id }: { id: string }) {
       }}
     />
   );
-}
-
-// Shared icon index — loads the asset zip once on first call. Items resolved
-// before the index is ready render as the text fallback above; once the
-// promise resolves React re-runs the hook with the populated map.
-let iconIndexState: { byId: Map<string, string> } | null = null;
-const subscribers = new Set<() => void>();
-let loadStarted = false;
-
-function ensureIconsLoaded() {
-  if (loadStarted) return;
-  loadStarted = true;
-  loadItemIcons()
-    .then((idx) => {
-      iconIndexState = idx;
-      for (const fn of subscribers) fn();
-    })
-    .catch((err) => {
-      console.warn("itemIcons: failed to load", err);
-    });
-}
-
-function useItemIcon(id: string): string | null {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    ensureIconsLoaded();
-    const fn = () => setTick((n) => n + 1);
-    subscribers.add(fn);
-    return () => {
-      subscribers.delete(fn);
-    };
-  }, []);
-  if (!iconIndexState) return null;
-  if (id.includes(":")) return iconIndexState.byId.get(id) ?? null;
-  return iconIndexState.byId.get(`minecraft:${id}`) ?? null;
 }
 
 function shortItemId(id: string): string {

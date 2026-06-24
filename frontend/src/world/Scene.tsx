@@ -12,16 +12,27 @@ import { useBlockProvidersState } from "./useBlockProviders";
 // cleanup wireframe, action highlights, assertion ghosts) render directly in
 // world space; the camera orbits via mouse (OrbitControls).
 export default function Scene() {
-  const { providers, error: assetError, status } = useBlockProvidersState();
-  if (assetError) return <AssetMissingPanel error={assetError} />;
+  const { providers, error: assetError, status, retry } = useBlockProvidersState();
   if (status.kind === "eula_prompt") {
     return <EulaPromptPanel onAccept={status.onAccept} />;
   }
-  if (status.kind === "loading") {
-    return <AssetLoadingPanel progress={status.message} />;
+  if (status.kind === "loading" || status.kind === "idle") {
+    return (
+      <AssetLoadingPanel
+        progress={
+          status.kind === "loading" ? status.message : "Initializing WebGL..."
+        }
+      />
+    );
+  }
+  if (assetError || status.kind === "error") {
+    const err =
+      assetError ??
+      (status.kind === "error" ? status.error : new Error("Asset load failed"));
+    return <AssetMissingPanel error={err} onRetry={retry} />;
   }
   if (!providers) {
-    return <AssetLoadingPanel progress="Initializing WebGL..." />;
+    return <AssetLoadingPanel progress="Building block atlas..." />;
   }
   return (
     <Canvas
@@ -85,24 +96,27 @@ function EulaPromptPanel({ onAccept }: { onAccept: () => void }) {
   );
 }
 
-// Rendered in place of the canvas when `loadBlockProviders` rejects. Surfaces
-// the loader's pre-baked instruction string verbatim (#0033 handoff from
-// #0023) — that string already points at the right `npm run assets` command.
-function AssetMissingPanel({ error }: { error: Error }) {
+function AssetMissingPanel({
+  error,
+  onRetry,
+}: {
+  error: Error;
+  onRetry: () => void;
+}) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-neutral-950 p-6">
       <div className="max-w-md rounded-md bg-neutral-900 p-4 text-sm text-neutral-200 ring-1 ring-neutral-800">
-        <div className="mb-2 font-semibold">Block assets missing</div>
-        <p className="mb-3 whitespace-pre-wrap text-xs text-neutral-400">
+        <div className="mb-2 font-semibold">Failed to load block assets</div>
+        <p className="mb-4 whitespace-pre-wrap text-xs text-neutral-400">
           {error.message}
         </p>
-        <p className="text-xs text-neutral-500">
-          The 3D view needs <code>frontend/public/mc-assets.zip</code>. Run{" "}
-          <code className="rounded bg-neutral-800 px-1 py-0.5 text-neutral-200">
-            npm run assets
-          </code>{" "}
-          in the <code>frontend/</code> directory and reload.
-        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="w-full rounded bg-blue-600 hover:bg-blue-500 px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer"
+        >
+          Try again
+        </button>
       </div>
     </div>
   );
