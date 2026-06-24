@@ -34,8 +34,4 @@ export default [
       ],
     },
   },
-  {
-    files: ["scripts/**/*.{ts,tsx}"],
-    languageOptions: { globals: globals.node },
-  },
 ];

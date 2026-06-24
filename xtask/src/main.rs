@@ -46,9 +46,6 @@ fn build_project(debug: bool, target: Option<String>) -> Result<(), String> {
     println!("xtask: npm ci  ({})", frontend.display());
     run(npm_cmd(), &["ci"], &frontend)?;
 
-    println!("xtask: npm run assets  ({})", frontend.display());
-    run(npm_cmd(), &["run", "assets"], &frontend)?;
-
     println!("xtask: npm run build  ({})", frontend.display());
     run(npm_cmd(), &["run", "build"], &frontend)?;
 

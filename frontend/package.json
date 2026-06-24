@@ -9,8 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "assets": "tsx scripts/fetch-assets.ts"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -44,7 +43,6 @@
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
     "tailwindcss": "^4.0.0",
-    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vitest": "^4.1.5"
