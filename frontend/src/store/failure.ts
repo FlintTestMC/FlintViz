@@ -46,9 +46,24 @@ export const useFailureStore = create<FailureState>((set) => ({
 export function failureCoordinate(
   failure: AssertFailure,
 ): [number, number, number] | null {
-  if ("Coordinate" in failure.position) {
-    const c = failure.position.Coordinate;
-    return [c.x, c.y, c.z];
+  if ("Block" in failure) return failure.Block.position;
+  if ("Entity" in failure && Array.isArray(failure.Entity.expected.pos)) {
+    const [x, y, z] = failure.Entity.expected.pos;
+    if (typeof x === "number" && typeof y === "number" && typeof z === "number") return [x, y, z];
   }
   return null;
+}
+
+export function failureTick(failure: AssertFailure): number {
+  if ("Block" in failure) return failure.Block.tick;
+  if ("Inventory" in failure) return failure.Inventory.tick;
+  if ("Time" in failure) return failure.Time.tick;
+  return failure.Entity.tick;
+}
+
+export function failureMessage(failure: AssertFailure): string {
+  if ("Block" in failure) return "Block was different";
+  if ("Inventory" in failure) return "Inventory slot content was different";
+  if ("Time" in failure) return `Expected time ${failure.Time.expected}, got ${failure.Time.actual}`;
+  return "Entity state was different";
 }

@@ -56,7 +56,7 @@ async fn decode_handler(Json(req): Json<DecodeRequest>) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use flint_core::results::{AssertFailure, AssertPosition, InfoType};
+    use flint_core::results::AssertFailure;
     use flint_core::test_spec::{Block, TestSpec};
     use flint_core::viz_link::{FailurePayload, encode};
 
@@ -74,14 +74,12 @@ mod tests {
                 breakpoints: Vec::new(),
             },
             None,
-            vec![AssertFailure {
-                tick: 3,
-                error_message: "boom".to_string(),
-                position: AssertPosition::from_array([0, 1, 0]),
-                execution_time_ms: None,
-                expected: InfoType::Block(Block::new("minecraft:stone")),
-                actual: InfoType::Block(Block::new("minecraft:air")),
-            }],
+            vec![AssertFailure::new_block(
+                3,
+                vec![Block::new("minecraft:stone")],
+                Block::new("minecraft:air"),
+                [0, 1, 0],
+            )],
             5,
         )
     }

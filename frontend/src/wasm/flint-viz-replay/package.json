@@ -1,0 +1,17 @@
+{
+  "name": "flint-viz-replay",
+  "type": "module",
+  "description": "Platform-neutral Flint test replay adapter for FlintViz",
+  "version": "0.1.0",
+  "license": "GPL-2.0-only",
+  "files": [
+    "flint_viz_replay_bg.wasm",
+    "flint_viz_replay.js",
+    "flint_viz_replay.d.ts"
+  ],
+  "main": "flint_viz_replay.js",
+  "types": "flint_viz_replay.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

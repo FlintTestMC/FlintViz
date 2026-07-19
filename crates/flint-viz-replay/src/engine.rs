@@ -149,6 +149,17 @@ fn apply_action(
         ActionType::Remove { pos } => {
             frame.events.push(TickEvent::Remove { pos: *pos });
         }
+        ActionType::Summon {
+            entity_alias,
+            entity_type,
+            pos,
+            nbt,
+        } => frame.events.push(TickEvent::Summon {
+            entity_alias: entity_alias.clone(),
+            entity_type: entity_type.clone(),
+            pos: *pos,
+            nbt: nbt.clone(),
+        }),
         ActionType::SetSlot { slot, item, count } => {
             frame.events.push(TickEvent::SetSlot {
                 slot: *slot,
@@ -157,14 +168,20 @@ fn apply_action(
             });
             player::apply_slot_change(snapshot, *slot, item.as_deref(), *count);
         }
-        // `use_item_on` is intentionally a no-op on world + inventory state in
-        // static replay: we cannot know without an MC registry whether the
-        // resolved item is consumable, places a block, etc.
-        ActionType::UseItemOn { pos, face, item } => {
+        ActionType::Tp {
+            entity_alias,
+            pos,
+            rot,
+        } => frame.events.push(TickEvent::Tp {
+            entity_alias: entity_alias.clone(),
+            pos: *pos,
+            rot: *rot,
+        }),
+        // Interactions are event-only: static replay cannot infer Minecraft
+        // side effects without a live registry and world simulation.
+        ActionType::Interact { item } => {
             let resolved_item = player::resolve_active_item(snapshot, item);
-            frame.events.push(TickEvent::UseItemOn {
-                pos: *pos,
-                face: *face,
+            frame.events.push(TickEvent::Interact {
                 item: item.clone(),
                 resolved_item,
             });
@@ -438,8 +455,7 @@ mod tests {
                       "slot": "hotbar1",
                       "item": "minecraft:honeycomb",
                       "count": 7 },
-                    { "at": 4, "do": "use_item_on",
-                      "pos": [0, 0, 0], "face": "top" }
+                    { "at": 4, "do": "interact" }
                 ]
             }"#,
         );
@@ -455,19 +471,19 @@ mod tests {
             }
             other => panic!("expected SetSlot, got {:?}", other),
         }
-        // use_item_on resolves the updated snapshot.
+        // interact resolves the updated snapshot.
         match &replay.frames[1].events[0] {
-            TickEvent::UseItemOn { resolved_item, .. } => {
+            TickEvent::Interact { resolved_item, .. } => {
                 let resolved = resolved_item.as_ref().expect("resolved item");
                 assert_eq!(resolved.id, "minecraft:honeycomb");
                 assert_eq!(resolved.count, 7);
             }
-            other => panic!("expected UseItemOn, got {:?}", other),
+            other => panic!("expected Interact, got {:?}", other),
         }
     }
 
     #[test]
-    fn select_hotbar_updates_snapshot_for_subsequent_use_item_on() {
+    fn select_hotbar_updates_snapshot_for_subsequent_interact() {
         let spec = parse(
             r#"{
                 "name": "select_hotbar_then_use",
@@ -483,8 +499,7 @@ mod tests {
                 },
                 "timeline": [
                     { "at": 0, "do": "select_hotbar", "slot": 4 },
-                    { "at": 1, "do": "use_item_on",
-                      "pos": [0, 1, 0], "face": "top" }
+                    { "at": 1, "do": "interact" }
                 ]
             }"#,
         );
@@ -492,7 +507,7 @@ mod tests {
         let replay = compute(&spec);
         assert!(replay.errors.is_empty());
         match &replay.frames[1].events[0] {
-            TickEvent::UseItemOn { resolved_item, .. } => {
+            TickEvent::Interact { resolved_item, .. } => {
                 let resolved = resolved_item.as_ref().expect("hotbar4 should resolve");
                 assert_eq!(resolved.id, "minecraft:honeycomb");
                 assert_eq!(resolved.count, 6);
@@ -628,12 +643,18 @@ mod tests {
 
         let replay = compute(&spec);
         assert_eq!(replay.frames[0].events.len(), 3);
-        assert!(matches!(replay.frames[0].events[0], TickEvent::Place { .. }));
+        assert!(matches!(
+            replay.frames[0].events[0],
+            TickEvent::Place { .. }
+        ));
         assert!(matches!(
             replay.frames[0].events[1],
             TickEvent::Assert { .. }
         ));
-        assert!(matches!(replay.frames[0].events[2], TickEvent::Place { .. }));
+        assert!(matches!(
+            replay.frames[0].events[2],
+            TickEvent::Place { .. }
+        ));
 
         assert_eq!(replay.source_map.len(), 3);
         assert_eq!(replay.source_map[0].event_index, 0);
@@ -658,5 +679,55 @@ mod tests {
         let replay = compute(&spec);
         assert!(replay.source_map.is_empty());
         assert!(replay.frames.is_empty());
+    }
+
+    #[test]
+    fn latest_entity_actions_and_assertions_are_replayed() {
+        let spec = parse(
+            r#"{
+                "name": "entities-and-time",
+                "setup": { "cleanup": { "region": [[0, 0, 0], [4, 80, 4]] } },
+                "timeline": [
+                    { "at": 0, "do": "summon", "entity_alias": "falling",
+                      "entity_type": "minecraft:falling_block", "pos": [1.5, 64, 2],
+                      "nbt": { "NoGravity": "1b" } },
+                    { "at": 1, "do": "tp", "entity_alias": "falling",
+                      "pos": [2.5, 65, 2], "rot": [90, 0] },
+                    { "at": 2, "do": "interact", "item": "minecraft:bone_meal" },
+                    { "at": 3, "do": "assert", "checks": [
+                      { "time": 6000 },
+                      { "entity_alias": "falling", "is": "minecraft:falling_block",
+                        "pos": [2.5, 65, 2] },
+                      { "is": "minecraft:item", "pos": [1.5, 64, 1.5],
+                        "Item": { "id": "minecraft:diamond", "count": 1 } }
+                    ] }
+                ]
+            }"#,
+        );
+
+        let replay = compute(&spec);
+        assert!(matches!(
+            replay.frames[0].events[0],
+            TickEvent::Summon { .. }
+        ));
+        assert!(matches!(replay.frames[1].events[0], TickEvent::Tp { .. }));
+        assert!(matches!(
+            replay.frames[2].events[0],
+            TickEvent::Interact { .. }
+        ));
+        match &replay.frames[3].events[0] {
+            TickEvent::Assert { views } => {
+                assert!(matches!(views[0], AssertionView::Time { expected: 6000 }));
+                assert!(matches!(views[1], AssertionView::Entity { .. }));
+                match &views[2] {
+                    AssertionView::Entity { expected } => {
+                        assert_eq!(expected.entity_type.as_deref(), Some("minecraft:item"));
+                        assert!(expected.nbt.to_snbt().contains("minecraft:diamond"));
+                    }
+                    other => panic!("expected item entity assertion, got {other:?}"),
+                }
+            }
+            other => panic!("expected Assert, got {other:?}"),
+        }
     }
 }

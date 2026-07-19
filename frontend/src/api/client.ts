@@ -106,7 +106,7 @@ export const api = {
       return Promise.resolve({
         ok: true,
         status: 200,
-        body: standaloneReplay(source),
+        body: await standaloneReplay(source),
       });
     }
     const result = await request<ReplayResponse>("/api/replay", {
@@ -120,7 +120,7 @@ export const api = {
         return {
           ok: true,
           status: 200,
-          body: standaloneReplay(source),
+          body: await standaloneReplay(source),
         };
       } catch {
         return result;

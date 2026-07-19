@@ -7,12 +7,9 @@
 
 use std::sync::Arc;
 
-use axum::{Json, Router, extract::DefaultBodyLimit, routing::post};
-use flint_core::test_spec::TestSpec;
-use serde::Serialize;
-
-use crate::replay::{self, Replay};
 use crate::state::AppState;
+use axum::{Json, Router, extract::DefaultBodyLimit, routing::post};
+use flint_viz_replay::ReplayResponse;
 
 const BODY_LIMIT_BYTES: usize = 1024 * 1024;
 
@@ -22,46 +19,12 @@ pub fn router() -> Router<Arc<AppState>> {
         .layer(DefaultBodyLimit::max(BODY_LIMIT_BYTES))
 }
 
-#[derive(Debug, Serialize)]
-pub struct ReplayResponse {
-    pub spec: Option<TestSpec>,
-    pub errors: Vec<ParseError>,
-    /// Computed by `replay::compute` when the body parses. `None` only if
-    /// parsing failed.
-    pub replay: Option<Replay>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ParseError {
-    pub line: usize,
-    pub col: usize,
-    pub message: String,
-}
-
 async fn replay(body: String) -> Json<ReplayResponse> {
     Json(parse(&body))
 }
 
 fn parse(body: &str) -> ReplayResponse {
-    match serde_json::from_str::<TestSpec>(body) {
-        Ok(spec) => {
-            let replay = replay::compute(&spec);
-            ReplayResponse {
-                spec: Some(spec),
-                errors: Vec::new(),
-                replay: Some(replay),
-            }
-        }
-        Err(err) => ReplayResponse {
-            spec: None,
-            errors: vec![ParseError {
-                line: err.line(),
-                col: err.column(),
-                message: err.to_string(),
-            }],
-            replay: None,
-        },
-    }
+    flint_viz_replay::replay_json(body)
 }
 
 #[cfg(test)]

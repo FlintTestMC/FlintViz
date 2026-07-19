@@ -1,4 +1,4 @@
-import type { Aabb, Block, Vec3 } from "../api/types";
+import type { Aabb, Block, EntitySnapshot, Vec3 } from "../api/types";
 import type { PosKey } from "../store/world";
 
 export interface Framing {
@@ -18,8 +18,9 @@ const MIN_DISTANCE = 4;
 export function computeFraming(
   cleanup: Aabb | null,
   worldState: Map<PosKey, Block>,
+  entityState: Map<string, EntitySnapshot> = new Map(),
 ): Framing | null {
-  const aabb = cleanup ?? blockBounds(worldState);
+  const aabb = cleanup ?? contentBounds(worldState, entityState);
   if (!aabb) return null;
 
   const { min, max } = aabb;
@@ -44,8 +45,11 @@ export function computeFraming(
   };
 }
 
-function blockBounds(worldState: Map<PosKey, Block>): Aabb | null {
-  if (worldState.size === 0) return null;
+function contentBounds(
+  worldState: Map<PosKey, Block>,
+  entityState: Map<string, EntitySnapshot>,
+): Aabb | null {
+  if (worldState.size === 0 && entityState.size === 0) return null;
   let minX = Infinity;
   let minY = Infinity;
   let minZ = Infinity;
@@ -63,6 +67,15 @@ function blockBounds(worldState: Map<PosKey, Block>): Aabb | null {
     if (x > maxX) maxX = x;
     if (y > maxY) maxY = y;
     if (z > maxZ) maxZ = z;
+  }
+  for (const entity of entityState.values()) {
+    const [x, y, z] = entity.pos;
+    minX = Math.min(minX, Math.floor(x - 0.5));
+    minY = Math.min(minY, Math.floor(y));
+    minZ = Math.min(minZ, Math.floor(z - 0.5));
+    maxX = Math.max(maxX, Math.ceil(x + 0.5) - 1);
+    maxY = Math.max(maxY, Math.ceil(y + 1.8) - 1);
+    maxZ = Math.max(maxZ, Math.ceil(z + 0.5) - 1);
   }
   return { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] };
 }

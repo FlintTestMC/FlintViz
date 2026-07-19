@@ -18,10 +18,7 @@ describe("computeFraming", () => {
   });
 
   it("centers on the cleanup region using the inclusive AABB midpoint", () => {
-    const f = computeFraming(
-      { min: [0, 0, 0], max: [3, 3, 3] },
-      new Map(),
-    )!;
+    const f = computeFraming({ min: [0, 0, 0], max: [3, 3, 3] }, new Map())!;
     // (0+3+1)/2 = 2 on every axis.
     expect(f.target).toEqual([2, 2, 2]);
     // Camera sits diagonally outside the region at +x +y +z.
@@ -41,6 +38,28 @@ describe("computeFraming", () => {
     expect(f.target).toEqual([(0 + 4 + 1) / 2, (0 + 2 + 1) / 2, (0 + 2 + 1) / 2]);
   });
 
+  it("falls back to entity bounds when no blocks or cleanup exist", () => {
+    const f = computeFraming(
+      null,
+      new Map(),
+      new Map([
+        [
+          "zombie",
+          {
+            alias: "zombie",
+            entity_type: "minecraft:zombie",
+            pos: [10, 64, -3],
+            rot: null,
+            nbt: null,
+          },
+        ],
+      ]),
+    )!;
+    expect(f.target[0]).toBeCloseTo(10);
+    expect(f.target[1]).toBeCloseTo(65);
+    expect(f.target[2]).toBeCloseTo(-3);
+  });
+
   it("prefers the cleanup region over block bounds", () => {
     const f = computeFraming(
       { min: [-2, -2, -2], max: [2, 2, 2] },
@@ -50,24 +69,15 @@ describe("computeFraming", () => {
   });
 
   it("scales camera distance with the AABB diagonal", () => {
-    const small = computeFraming(
-      { min: [0, 0, 0], max: [1, 1, 1] },
-      new Map(),
-    )!;
-    const big = computeFraming(
-      { min: [0, 0, 0], max: [40, 40, 40] },
-      new Map(),
-    )!;
+    const small = computeFraming({ min: [0, 0, 0], max: [1, 1, 1] }, new Map())!;
+    const big = computeFraming({ min: [0, 0, 0], max: [40, 40, 40] }, new Map())!;
     const smallOffset = small.position[0] - small.target[0];
     const bigOffset = big.position[0] - big.target[0];
     expect(bigOffset).toBeGreaterThan(smallOffset);
   });
 
   it("respects the minimum distance for tiny regions", () => {
-    const f = computeFraming(
-      { min: [0, 0, 0], max: [0, 0, 0] },
-      new Map(),
-    )!;
+    const f = computeFraming({ min: [0, 0, 0], max: [0, 0, 0] }, new Map())!;
     const offset = f.position[0] - f.target[0];
     // Min distance is 4, projected onto the (1,1,1)/√3 direction → 4/√3.
     expect(offset).toBeGreaterThanOrEqual(4 / Math.sqrt(3) - 1e-6);

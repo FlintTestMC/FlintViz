@@ -2,7 +2,6 @@ mod api;
 mod cli;
 #[cfg(feature = "embed-frontend")]
 mod embed;
-mod replay;
 mod state;
 mod util;
 mod watch;

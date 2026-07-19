@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "wasm:build": "wasm-pack build ../crates/flint-viz-replay --target web --out-dir ../../frontend/src/wasm/flint-viz-replay --features wasm",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

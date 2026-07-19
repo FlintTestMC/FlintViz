@@ -77,13 +77,7 @@ export type PlayerSlot =
   | "leggings"
   | "boots";
 
-export type BlockFace =
-  | "top"
-  | "bottom"
-  | "north"
-  | "south"
-  | "east"
-  | "west";
+export type BlockFace = "top" | "bottom" | "north" | "south" | "east" | "west";
 
 export type GameMode = "Survival" | "Creative" | "Adventure" | "Spectator";
 
@@ -116,6 +110,15 @@ export type TickEvent =
   | { kind: "fill"; region: Aabb; block: Block }
   | { kind: "remove"; pos: Vec3 }
   | {
+      kind: "summon";
+      entity_alias: string;
+      entity_type: string;
+      pos: Vec3;
+      nbt: Record<string, unknown> | null;
+    }
+  | { kind: "tp"; entity_alias: string; pos: Vec3; rot: [number, number] | null }
+  | { kind: "interact"; item: string | null; resolved_item: Item | null }
+  | {
       kind: "use_item_on";
       pos: Vec3;
       face: BlockFace;
@@ -143,12 +146,22 @@ export type AssertionView =
       pointer_suffix?: string;
     }
   | { kind: "inventory"; slot: PlayerSlot; expected: Item | null }
+  | { kind: "time"; expected: number }
+  | { kind: "entity"; expected: Record<string, unknown> }
   | { kind: "other"; description: string };
 
 export interface PlayerSnapshot {
   inventory: Partial<Record<PlayerSlot, Item>>;
   selected_hotbar: number;
   game_mode: GameMode;
+}
+
+export interface EntitySnapshot {
+  alias: string;
+  entity_type: string;
+  pos: Vec3;
+  rot: [number, number] | null;
+  nbt: Record<string, unknown> | null;
 }
 
 export interface SourceSpan {
@@ -201,14 +214,17 @@ export type InfoType =
   | { Item: Item }
   | { Slot: PlayerSlot };
 
-export interface AssertFailure {
-  tick: number;
-  error_message: string;
-  position: AssertPosition;
-  execution_time_ms: number | null;
-  expected: InfoType;
-  actual: InfoType;
-}
+export type AssertFailure =
+  | { Block: { tick: number; expected: Block[]; actual: Block; position: Vec3 } }
+  | { Inventory: { tick: number; expected: Item | null; actual: Item | null; slot: PlayerSlot } }
+  | { Time: { tick: number; expected: number; actual: number } }
+  | {
+      Entity: {
+        tick: number;
+        expected: Record<string, unknown>;
+        actual: Record<string, unknown>[];
+      };
+    };
 
 export interface FailurePayload {
   version: number;

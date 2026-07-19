@@ -73,6 +73,12 @@ function summariseEvent(event: TickEvent): string {
     }
     case "remove":
       return `remove ${pos(event.pos)}`;
+    case "summon":
+      return `summon ${event.entity_alias} (${shortItemId(event.entity_type)}) @ ${pos(event.pos)}`;
+    case "tp":
+      return `tp ${event.entity_alias} @ ${pos(event.pos)}`;
+    case "interact":
+      return `interact ${event.item ? shortItemId(event.item) : "(active hand)"}`;
     case "use_item_on":
       return `use ${event.item ? shortItemId(event.item) : "(empty hand)"} @ ${pos(event.pos)} ${event.face}`;
     case "set_slot":
@@ -114,6 +120,11 @@ function groupAssertions(views: AssertionView[]): string[] {
           ? `expect ${shortItemId(v.expected.id)} @ ${v.slot}`
           : `expect empty @ ${v.slot}`,
       );
+    } else if (v.kind === "time") {
+      others.push(`expect time ${v.expected}`);
+    } else if (v.kind === "entity") {
+      const alias = typeof v.expected.entity_alias === "string" ? v.expected.entity_alias : "entity";
+      others.push(`expect ${alias}`);
     } else {
       others.push(v.description);
     }

@@ -4,6 +4,7 @@ import AssertionGhosts from "./AssertionGhosts";
 import Camera from "./Camera";
 import CleanupOverlay from "./CleanupOverlay";
 import FailureOverlay from "./FailureOverlay";
+import Entities from "./Entities";
 import Highlights from "./Highlights";
 import World from "./World";
 import { useBlockProvidersState } from "./useBlockProviders";
@@ -18,22 +19,19 @@ export default function Scene() {
   }
   if (assetError || status.kind === "error") {
     const err =
-      assetError ??
-      (status.kind === "error" ? status.error : new Error("Asset load failed"));
+      assetError ?? (status.kind === "error" ? status.error : new Error("Asset load failed"));
     return <AssetMissingPanel error={err} onRetry={retry} />;
   }
   if (providers) {
     return (
-      <Canvas
-        camera={{ position: [6, 6, 6], fov: 50 }}
-        className="h-full w-full"
-      >
+      <Canvas camera={{ position: [6, 6, 6], fov: 50 }} className="h-full w-full">
         <color attach="background" args={["#2d2d2d"]} />
         <ambientLight intensity={0.6} />
         <directionalLight position={[8, 12, 6]} intensity={0.8} />
         <directionalLight position={[-6, 4, -8]} intensity={0.3} />
         <Camera />
         <World />
+        <Entities />
         <CleanupOverlay />
         <Highlights />
         <AssertionGhosts />
@@ -44,9 +42,7 @@ export default function Scene() {
   if (status.kind === "loading" || status.kind === "idle") {
     return (
       <AssetLoadingPanel
-        progress={
-          status.kind === "loading" ? status.message : "Initializing WebGL..."
-        }
+        progress={status.kind === "loading" ? status.message : "Initializing WebGL..."}
       />
     );
   }
@@ -71,11 +67,13 @@ function EulaPromptPanel({ onAccept }: { onAccept: () => void }) {
       <div className="max-w-md rounded-md bg-neutral-900 p-5 text-sm text-neutral-200 ring-1 ring-neutral-800">
         <div className="mb-2 font-semibold">Minecraft Assets Download</div>
         <p className="mb-4 text-xs text-neutral-400 leading-relaxed">
-          FlintVisualizer renders block geometries using official Minecraft models and textures. 
-          To visualize the 3D scene, we need to download the client jar (~36 MB) directly from Mojang's servers and extract them.
+          FlintVisualizer renders block geometries using official Minecraft models and textures. To
+          visualize the 3D scene, we need to download the client jar (~36 MB) directly from Mojang's
+          servers and extract them.
         </p>
         <p className="mb-5 text-xs text-neutral-500 leading-relaxed">
-          By clicking <strong>Agree & Download</strong>, you acknowledge that you possess a valid license and agree to the{" "}
+          By clicking <strong>Agree & Download</strong>, you acknowledge that you possess a valid
+          license and agree to the{" "}
           <a
             href="https://www.minecraft.net/eula"
             target="_blank"
@@ -83,7 +81,8 @@ function EulaPromptPanel({ onAccept }: { onAccept: () => void }) {
             className="text-blue-400 hover:underline inline-flex items-center"
           >
             Minecraft End User License Agreement (EULA)
-          </a>.
+          </a>
+          .
         </p>
         <button
           onClick={onAccept}
@@ -96,20 +95,12 @@ function EulaPromptPanel({ onAccept }: { onAccept: () => void }) {
   );
 }
 
-function AssetMissingPanel({
-  error,
-  onRetry,
-}: {
-  error: Error;
-  onRetry: () => void;
-}) {
+function AssetMissingPanel({ error, onRetry }: { error: Error; onRetry: () => void }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-neutral-950 p-6">
       <div className="max-w-md rounded-md bg-neutral-900 p-4 text-sm text-neutral-200 ring-1 ring-neutral-800">
         <div className="mb-2 font-semibold">Failed to load block assets</div>
-        <p className="mb-4 whitespace-pre-wrap text-xs text-neutral-400">
-          {error.message}
-        </p>
+        <p className="mb-4 whitespace-pre-wrap text-xs text-neutral-400">{error.message}</p>
         <button
           type="button"
           onClick={onRetry}

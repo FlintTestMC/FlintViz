@@ -13,6 +13,7 @@ import { api } from "../api/client";
 import BootSplash from "../components/BootSplash";
 import type { FailurePayload } from "../api/types";
 import { useFailureStore } from "../store/failure";
+import { failureTick } from "../store/failure";
 import { useReplayStore } from "../store/replay";
 
 const App = lazy(() => import("../App"));
@@ -149,7 +150,8 @@ function candidateIdForSourcePath(source: string | null): string | null {
 function earliestFailingTick(payload: FailurePayload): number | null {
   let earliest: number | null = null;
   for (const f of payload.failures) {
-    if (earliest == null || f.tick < earliest) earliest = f.tick;
+    const tick = failureTick(f);
+    if (earliest == null || tick < earliest) earliest = tick;
   }
   return earliest;
 }

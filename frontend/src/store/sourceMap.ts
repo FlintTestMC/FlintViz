@@ -133,6 +133,11 @@ function writeEventPositions(
     case "use_item_on":
       out.set(posKey(event.pos), { tick, eventIndex });
       return;
+    case "summon":
+    case "tp":
+      out.set(posKey(event.pos.map(Math.floor) as Vec3), { tick, eventIndex });
+      return;
+    case "interact":
     case "set_slot":
     case "select_hotbar":
     case "assert":

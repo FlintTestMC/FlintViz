@@ -41,6 +41,26 @@ http://localhost:5173
 
 Vite proxies `/api` and `/api/events` to the Rust backend.
 
+## Updating flint-core
+
+Replay compatibility lives in `crates/flint-viz-replay`. The native server and
+standalone browser build both use this crate, so action and assertion changes
+only need to be implemented there.
+
+After updating `flint-core`, regenerate the checked-in browser module:
+
+```bash
+cargo update -p flint-core
+rustup target add wasm32-unknown-unknown
+cargo install wasm-pack --locked # first time only
+npm --prefix frontend run wasm:build
+```
+
+Commit the generated files under
+`frontend/src/wasm/flint-viz-replay/` together with the Rust changes. Ordinary
+frontend builds consume these checked-in bindings and do not require a Rust
+toolchain or wasm-pack.
+
 ## Read-Only Failure Viewer
 
 Run without a path:

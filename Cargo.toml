@@ -1,3 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/flint-viz", "xtask"]
+members = ["crates/flint-viz", "crates/flint-viz-replay", "xtask"]
+
+[workspace.dependencies]
+flint-core = { git = "https://github.com/FlintTestMC/flint-core.git" }

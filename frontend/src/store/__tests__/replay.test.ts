@@ -8,9 +8,7 @@ function makeReplay(overrides: Partial<Replay> = {}): Replay {
   const frames: TickFrame[] = [
     {
       tick: 1,
-      events: [
-        { kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } },
-      ],
+      events: [{ kind: "place", pos: [0, 0, 0], block: { id: "minecraft:stone" } }],
     },
     {
       tick: 3,
@@ -56,6 +54,7 @@ function resetStore(): void {
     tick: 0,
     eventIndex: null,
     worldState: new Map(),
+    entityState: new Map(),
     player: { inventory: {}, selected_hotbar: 1, game_mode: "Creative" },
     playback: "paused",
   });
@@ -84,6 +83,86 @@ describe("rebuildAt", () => {
     const { world } = rebuildAt(replay, 5);
     expect(world.has(posKey([0, 0, 0]))).toBe(false);
     expect(world.get(posKey([1, 0, 0]))).toEqual({ id: "minecraft:dirt" });
+  });
+
+  it("tracks summoned entities and teleports by alias", () => {
+    const replay = makeReplay({
+      max_tick: 2,
+      frames: [
+        {
+          tick: 0,
+          events: [
+            {
+              kind: "summon",
+              entity_alias: "falling",
+              entity_type: "minecraft:falling_block",
+              pos: [1.5, 64, 2.5],
+              nbt: { BlockState: { Name: "minecraft:sand" } },
+            },
+          ],
+        },
+        {
+          tick: 2,
+          events: [
+            {
+              kind: "tp",
+              entity_alias: "falling",
+              pos: [3.5, 65, 4.5],
+              rot: [90, 0],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(rebuildAt(replay, 0).entities.get("falling")?.pos).toEqual([1.5, 64, 2.5]);
+    const moved = rebuildAt(replay, 2).entities.get("falling");
+    expect(moved?.pos).toEqual([3.5, 65, 4.5]);
+    expect(moved?.rot).toEqual([90, 0]);
+    expect(moved?.nbt).toEqual({ BlockState: { Name: "minecraft:sand" } });
+  });
+
+  it("creates the reserved player entity on first tp", () => {
+    const replay = makeReplay({
+      max_tick: 1,
+      frames: [
+        {
+          tick: 0,
+          events: [
+            {
+              kind: "tp",
+              entity_alias: "player",
+              pos: [0.5, 64, 0.5],
+              rot: [0, 0],
+            },
+          ],
+        },
+        {
+          tick: 1,
+          events: [
+            {
+              kind: "tp",
+              entity_alias: "player",
+              pos: [1.5, 64, 2.5],
+              rot: [90, 0],
+            },
+          ],
+        },
+      ],
+    });
+
+    const initial = rebuildAt(replay, 0).entities.get("player");
+    expect(initial).toEqual({
+      alias: "player",
+      entity_type: "minecraft:player",
+      pos: [0.5, 64, 0.5],
+      rot: [0, 0],
+      nbt: null,
+    });
+
+    const moved = rebuildAt(replay, 1).entities.get("player");
+    expect(moved?.pos).toEqual([1.5, 64, 2.5]);
+    expect(moved?.rot).toEqual([90, 0]);
   });
 });
 
@@ -186,9 +265,7 @@ describe("setReplay", () => {
     const replay = makeReplay();
     useReplayStore.getState().setReplay(replay, []);
     useReplayStore.getState().setTick(3);
-    useReplayStore.getState().setReplay(null, [
-      { line: 1, col: 1, message: "bad" },
-    ]);
+    useReplayStore.getState().setReplay(null, [{ line: 1, col: 1, message: "bad" }]);
     const { replay: r, parseErrors, tick, worldState } = useReplayStore.getState();
     expect(r).toBeNull();
     expect(parseErrors.length).toBe(1);

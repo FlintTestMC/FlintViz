@@ -47,6 +47,7 @@ export default function Camera() {
 
   const cleanup = useReplayStore((s) => s.replay?.cleanup_region ?? null);
   const worldState = useReplayStore((s) => s.worldState);
+  const entityState = useReplayStore((s) => s.entityState);
   const testId = useReplayStore((s) => s.testId);
 
   const desiredTarget = useRef(new Vector3(0, 0, 0));
@@ -58,8 +59,8 @@ export default function Camera() {
   const positionActive = useRef(false);
 
   const framing = useMemo<Framing | null>(
-    () => computeFraming(cleanup, worldState),
-    [cleanup, worldState],
+    () => computeFraming(cleanup, worldState, entityState),
+    [cleanup, worldState, entityState],
   );
 
   // Hold the latest framing in a ref so the Reset View handler can read the
@@ -107,10 +108,7 @@ export default function Camera() {
           positionActive.current = true;
         }
       }
-      if (
-        state.flyToToken !== prev.flyToToken &&
-        state.flyToTarget
-      ) {
+      if (state.flyToToken !== prev.flyToToken && state.flyToTarget) {
         desiredTarget.current.set(...state.flyToTarget);
         targetActive.current = true;
         positionActive.current = false;
@@ -124,14 +122,20 @@ export default function Camera() {
     const t = 1 - Math.exp(-ANIM_RATE * dt);
     if (targetActive.current) {
       controls.target.lerp(desiredTarget.current, t);
-      if (controls.target.distanceToSquared(desiredTarget.current) < SETTLE_EPSILON * SETTLE_EPSILON) {
+      if (
+        controls.target.distanceToSquared(desiredTarget.current) <
+        SETTLE_EPSILON * SETTLE_EPSILON
+      ) {
         controls.target.copy(desiredTarget.current);
         targetActive.current = false;
       }
     }
     if (positionActive.current) {
       camera.position.lerp(desiredPosition.current, t);
-      if (camera.position.distanceToSquared(desiredPosition.current) < SETTLE_EPSILON * SETTLE_EPSILON) {
+      if (
+        camera.position.distanceToSquared(desiredPosition.current) <
+        SETTLE_EPSILON * SETTLE_EPSILON
+      ) {
         camera.position.copy(desiredPosition.current);
         positionActive.current = false;
       }

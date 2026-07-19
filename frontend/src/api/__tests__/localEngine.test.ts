@@ -2,34 +2,34 @@ import { describe, expect, it } from "vitest";
 import { localReplay } from "../localEngine";
 
 describe("localReplay", () => {
-  it("fails on invalid JSON syntax", () => {
-    const response = localReplay("{ invalid json");
+  it("fails on invalid JSON syntax", async () => {
+    const response = await localReplay("{ invalid json");
     expect(response.replay).toBeNull();
     expect(response.spec).toBeNull();
     expect(response.errors.length).toBe(1);
-    expect(response.errors[0]!.message).toContain("JSON");
+    expect(response.errors[0]!.message.length).toBeGreaterThan(0);
     expect(response.errors[0]!.line).toBe(1);
   });
 
-  it("fails on missing root object type", () => {
-    const response = localReplay("[]");
+  it("fails on missing root object type", async () => {
+    const response = await localReplay("[]");
     expect(response.replay).toBeNull();
-    expect(response.errors[0]!.message).toBe("JSON root must be an object.");
+    expect(response.errors[0]!.message).toContain("TestSpec");
   });
 
-  it("fails on missing name field", () => {
-    const response = localReplay('{"timeline": []}');
+  it("fails on missing name field", async () => {
+    const response = await localReplay('{"timeline": []}');
     expect(response.replay).toBeNull();
-    expect(response.errors[0]!.message).toBe("Missing or invalid 'name' field.");
+    expect(response.errors[0]!.message).toContain("name");
   });
 
-  it("fails on missing timeline field", () => {
-    const response = localReplay('{"name": "test"}');
+  it("fails on missing timeline field", async () => {
+    const response = await localReplay('{"name": "test"}');
     expect(response.replay).toBeNull();
-    expect(response.errors[0]!.message).toBe("Missing or invalid 'timeline' field.");
+    expect(response.errors[0]!.message).toContain("timeline");
   });
 
-  it("parses a valid simple Flint test spec correctly", () => {
+  it("parses a valid simple Flint test spec correctly", async () => {
     const source = JSON.stringify({
       flintVersion: "1.0",
       name: "basic-test",
@@ -61,7 +61,7 @@ describe("localReplay", () => {
           item: "minecraft:dirt",
           count: 10,
         },
-        { at: 5, do: "use_item_on", pos: [1, 1, 1], face: "top" },
+        { at: 5, do: "interact" },
         {
           at: 6,
           do: "assert",
@@ -74,7 +74,7 @@ describe("localReplay", () => {
       breakpoints: [2, 4],
     });
 
-    const response = localReplay(source);
+    const response = await localReplay(source);
     expect(response.errors.length).toBe(0);
     expect(response.spec).not.toBeNull();
     expect(response.replay).not.toBeNull();
@@ -119,12 +119,10 @@ describe("localReplay", () => {
       count: 10,
     });
 
-    // use_item_on should resolve the item from the selected slot (slot 4) which now has dirt
+    // interact resolves the item from the selected slot (slot 4), now dirt.
     expect(replay.frames[4]!.tick).toBe(5);
     expect(replay.frames[4]!.events[0]).toEqual({
-      kind: "use_item_on",
-      pos: [1, 1, 1],
-      face: "top",
+      kind: "interact",
       item: null,
       resolved_item: { id: "minecraft:dirt", count: 10 },
     });
