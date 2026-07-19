@@ -1,13 +1,6 @@
 import { useMemo } from "react";
 
-import type {
-  AssertionView,
-  Block,
-  Item,
-  PlayerSlot,
-  TickEvent,
-  Vec3,
-} from "../api/types";
+import type { AssertionView, Block, Item, PlayerSlot, TickEvent, Vec3 } from "../api/types";
 import { activeAltIndex, useAssertionsStore } from "../store/assertions";
 import { useCrosslinkStore } from "../store/crosslink";
 import { useReplayStore } from "../store/replay";
@@ -55,25 +48,15 @@ export default function Assertions() {
     return groupAssertions(all);
   }, [frames, tick, eventIndex]);
 
-  const onReveal = (entry: {
-    eventIndex: number;
-    pointerSuffix?: string;
-  }) => {
-    const pointer = pointerForEvent(
-      sourceIndices,
-      tick,
-      entry.eventIndex,
-      entry.pointerSuffix,
-    );
+  const onReveal = (entry: { eventIndex: number; pointerSuffix?: string }) => {
+    const pointer = pointerForEvent(sourceIndices, tick, entry.eventIndex, entry.pointerSuffix);
     if (pointer) revealPointer(pointer);
   };
 
   return (
     <div className="flex h-full flex-col bg-neutral-950 p-2 text-xs text-neutral-200">
       <div className="mb-1 flex items-center justify-between">
-        <span className="font-medium uppercase tracking-wider text-neutral-400">
-          Assertions
-        </span>
+        <span className="font-medium uppercase tracking-wider text-neutral-400">Assertions</span>
         <span className="text-xs text-neutral-500">tick {tick}</span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -114,9 +97,7 @@ type AssertionGroup =
     }
   | { kind: "other"; description: string; eventIndex: number };
 
-function groupAssertions(
-  entries: { idx: number; view: AssertionView }[],
-): AssertionGroup[] {
+function groupAssertions(entries: { idx: number; view: AssertionView }[]): AssertionGroup[] {
   const blocksByPos = new Map<
     string,
     {
@@ -148,6 +129,32 @@ function groupAssertions(
         kind: "inventory",
         slot: view.slot,
         expected: view.expected,
+        eventIndex: idx,
+      });
+    } else if (view.kind === "time") {
+      others.push({
+        kind: "other",
+        description: `Expected world time ${view.expected}`,
+        eventIndex: idx,
+      });
+    } else if (view.kind === "entity") {
+      const itemNbt = view.expected.Item ?? view.expected.item;
+      const itemId =
+        itemNbt && typeof itemNbt === "object" && !Array.isArray(itemNbt)
+          ? (itemNbt as Record<string, unknown>).id
+          : null;
+      const alias =
+        typeof view.expected.entity_alias === "string"
+          ? view.expected.entity_alias
+          : typeof view.expected.is === "string"
+            ? view.expected.is
+            : "entity";
+      others.push({
+        kind: "other",
+        description:
+          typeof itemId === "string"
+            ? `Expected item ${itemId.replace(/^minecraft:/, "")}`
+            : `Expected ${alias}`,
         eventIndex: idx,
       });
     } else {
@@ -191,18 +198,14 @@ function Row({
         <InventoryRow
           slot={group.slot}
           expected={group.expected}
-          onReveal={() =>
-            onReveal({ eventIndex: group.eventIndex, pointerSuffix: undefined })
-          }
+          onReveal={() => onReveal({ eventIndex: group.eventIndex, pointerSuffix: undefined })}
         />
       );
     case "other":
       return (
         <OtherRow
           description={group.description}
-          onReveal={() =>
-            onReveal({ eventIndex: group.eventIndex, pointerSuffix: undefined })
-          }
+          onReveal={() => onReveal({ eventIndex: group.eventIndex, pointerSuffix: undefined })}
         />
       );
   }
@@ -257,13 +260,7 @@ function BlockRow({
         {expecteds.map((b, i) => (
           <span key={i}>
             {i > 0 ? <span className="text-neutral-500"> OR </span> : null}
-            <span
-              className={
-                i === active
-                  ? "font-semibold text-neutral-100"
-                  : "text-neutral-400"
-              }
-            >
+            <span className={i === active ? "font-semibold text-neutral-100" : "text-neutral-400"}>
               {shortId(b.id)}
             </span>
           </span>
@@ -329,13 +326,7 @@ function InventoryRow({
   );
 }
 
-function OtherRow({
-  description,
-  onReveal,
-}: {
-  description: string;
-  onReveal: () => void;
-}) {
+function OtherRow({ description, onReveal }: { description: string; onReveal: () => void }) {
   return (
     <li className="flex items-center gap-2 rounded bg-neutral-900 px-2 py-1 ring-1 ring-neutral-800">
       <KindBadge label="other" color="neutral" />
@@ -351,13 +342,7 @@ function OtherRow({
   );
 }
 
-function KindBadge({
-  label,
-  color,
-}: {
-  label: string;
-  color: "amber" | "emerald" | "neutral";
-}) {
+function KindBadge({ label, color }: { label: string; color: "amber" | "emerald" | "neutral" }) {
   const cls = {
     amber: "bg-amber-900/40 text-amber-200 ring-amber-800/60",
     emerald: "bg-emerald-900/40 text-emerald-200 ring-emerald-800/60",

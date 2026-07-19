@@ -12,7 +12,9 @@
 
 use std::collections::HashMap;
 
-use flint_core::test_spec::{Block, BlockFace, BlockPlacement, GameMode, Item, PlayerSlot};
+use flint_core::test_spec::{
+    Block, BlockPlacement, EntityCheck, EntityNbt, GameMode, Item, PlayerSlot,
+};
 use serde::{Deserialize, Serialize};
 
 /// Top-level replay artifact for a single test.
@@ -66,9 +68,18 @@ pub enum TickEvent {
     Remove {
         pos: [i32; 3],
     },
-    UseItemOn {
-        pos: [i32; 3],
-        face: BlockFace,
+    Summon {
+        entity_alias: String,
+        entity_type: String,
+        pos: [f64; 3],
+        nbt: Option<EntityNbt>,
+    },
+    Tp {
+        entity_alias: String,
+        pos: [f64; 3],
+        rot: Option<[f32; 2]>,
+    },
+    Interact {
         item: Option<String>,
         resolved_item: Option<Item>,
     },
@@ -105,6 +116,12 @@ pub enum AssertionView {
     Inventory {
         slot: PlayerSlot,
         expected: Option<Item>,
+    },
+    Time {
+        expected: u64,
+    },
+    Entity {
+        expected: EntityCheck,
     },
     Other {
         description: String,

@@ -18,7 +18,11 @@ pub fn views_from_check(check: &AssertType, out: &mut Vec<AssertionView>) {
                 out.push(AssertionView::Block {
                     position: *pos,
                     expected,
-                    pointer_suffix: if multi { Some(format!("/is/{i}")) } else { None },
+                    pointer_suffix: if multi {
+                        Some(format!("/is/{i}"))
+                    } else {
+                        None
+                    },
                 });
             }
         }
@@ -26,6 +30,16 @@ pub fn views_from_check(check: &AssertType, out: &mut Vec<AssertionView>) {
             out.push(AssertionView::Inventory {
                 slot: *slot,
                 expected: is.clone(),
+            });
+        }
+        AssertType::Time(check) => {
+            out.push(AssertionView::Time {
+                expected: check.time,
+            });
+        }
+        AssertType::Entity(check) => {
+            out.push(AssertionView::Entity {
+                expected: check.clone(),
             });
         }
     }

@@ -1,19 +1,8 @@
 import { create } from "zustand";
 
-import type {
-  Block,
-  ParseError,
-  PlayerSnapshot,
-  Replay,
-} from "../api/types";
+import type { Block, ParseError, PlayerSnapshot, EntitySnapshot, Replay } from "../api/types";
 import { buildSourceIndices, type SourceIndices } from "./sourceMap";
-import {
-  applyEventsUpTo,
-  clonePlayer,
-  rebuildAt,
-  stepForwardTo,
-  type PosKey,
-} from "./world";
+import { applyEventsUpTo, clonePlayer, rebuildAt, stepForwardTo, type PosKey } from "./world";
 
 export type Playback = "paused" | "playing";
 
@@ -33,6 +22,7 @@ export interface ReplayState {
   // the current tick; world/player reflect tick-1 + events[0..=eventIndex].
   eventIndex: number | null;
   worldState: Map<PosKey, Block>;
+  entityState: Map<string, EntitySnapshot>;
   player: PlayerSnapshot;
   playback: Playback;
   sourceIndices: SourceIndices;
@@ -56,6 +46,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
   tick: 0,
   eventIndex: null,
   worldState: new Map(),
+  entityState: new Map(),
   player: { ...DEFAULT_PLAYER, inventory: {} },
   playback: "paused",
   sourceIndices: buildSourceIndices(null),
@@ -69,6 +60,7 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       tick: 0,
       eventIndex: null,
       worldState: new Map(),
+      entityState: new Map(),
       player: { ...DEFAULT_PLAYER, inventory: {} },
       playback: "paused",
       sourceIndices: buildSourceIndices(null),
@@ -84,20 +76,21 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
       set({ replay: null, parseErrors });
       return;
     }
-    const { world, player } = rebuildAt(replay, 0);
+    const { world, player, entities } = rebuildAt(replay, 0);
     set({
       replay,
       parseErrors,
       tick: 0,
       eventIndex: null,
       worldState: world,
+      entityState: entities,
       player,
       sourceIndices: buildSourceIndices(replay),
     });
   },
 
   setTick: (target) => {
-    const { replay, tick, worldState, player } = get();
+    const { replay, tick, worldState, entityState, player } = get();
     if (!replay) {
       set({ tick: Math.max(0, target), eventIndex: null });
       return;
@@ -112,19 +105,22 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
     if (clamped > tick) {
       const nextWorld = new Map(worldState);
       const nextPlayer = clonePlayer(player);
-      stepForwardTo(replay, nextWorld, nextPlayer, tick, clamped);
+      const nextEntities = new Map(entityState);
+      stepForwardTo(replay, nextWorld, nextPlayer, nextEntities, tick, clamped);
       set({
         tick: clamped,
         eventIndex: null,
         worldState: nextWorld,
+        entityState: nextEntities,
         player: nextPlayer,
       });
     } else {
-      const { world, player: rebuilt } = rebuildAt(replay, clamped);
+      const { world, player: rebuilt, entities } = rebuildAt(replay, clamped);
       set({
         tick: clamped,
         eventIndex: null,
         worldState: world,
+        entityState: entities,
         player: rebuilt,
       });
     }
@@ -134,8 +130,8 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
     const { replay, tick } = get();
     if (!replay) return;
     if (idx === null) {
-      const { world, player } = rebuildAt(replay, tick);
-      set({ eventIndex: null, worldState: world, player });
+      const { world, player, entities } = rebuildAt(replay, tick);
+      set({ eventIndex: null, worldState: world, entityState: entities, player });
       return;
     }
     const frame = replay.frames.find((f) => f.tick === tick);
@@ -147,10 +143,11 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
     // Rebuild from initial state to just before this tick, then walk
     // events[0..=clamped] forward.
     const base = rebuildAt(replay, tick === 0 ? -1 : tick - 1);
-    applyEventsUpTo(base.world, base.player, frame, clamped);
+    applyEventsUpTo(base.world, base.player, base.entities, frame, clamped);
     set({
       eventIndex: clamped,
       worldState: base.world,
+      entityState: base.entities,
       player: base.player,
     });
   },
@@ -159,8 +156,8 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
     const { eventIndex, replay, tick } = get();
     if (eventIndex !== null && replay) {
       // Playback always operates on full-tick state; reset the picker first.
-      const { world, player } = rebuildAt(replay, tick);
-      set({ eventIndex: null, worldState: world, player });
+      const { world, player, entities } = rebuildAt(replay, tick);
+      set({ eventIndex: null, worldState: world, entityState: entities, player });
     }
     set({ playback: "playing" });
   },

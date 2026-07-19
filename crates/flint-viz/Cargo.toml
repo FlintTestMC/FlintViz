@@ -36,7 +36,8 @@ axum = "0.8"
 clap = { version = "4", features = ["derive"] }
 # Local checkout while the viz_link module (issue #0035) is in flight; switch
 # back to the git tag once a release including viz_link ships.
-flint-core = { git = "https://github.com/FlintTestMC/flint-core.git" }
+flint-core.workspace = true
+flint-viz-replay = { path = "../flint-viz-replay" }
 mime_guess = { version = "2", optional = true }
 notify = "8"
 rust-embed = { version = "8", optional = true }

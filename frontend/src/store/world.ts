@@ -8,6 +8,7 @@
 
 import type {
   Block,
+  EntitySnapshot,
   Item,
   PlayerSnapshot,
   Replay,
@@ -17,6 +18,7 @@ import type {
 } from "../api/types";
 
 export type PosKey = string;
+export type EntityState = Map<string, EntitySnapshot>;
 
 // Mirrors `MAX_FILL_BLOCKS` in the engine. The backend never expanded fills
 // since #0040 moved the expansion frontend-side; this is where we draw the
@@ -39,6 +41,7 @@ export function clonePlayer(p: PlayerSnapshot): PlayerSnapshot {
 function applyEvent(
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
+  entities: EntityState,
   event: TickEvent,
 ): void {
   switch (event.kind) {
@@ -58,9 +61,7 @@ function applyEvent(
       if (dx <= 0 || dy <= 0 || dz <= 0) return;
       const volume = dx * dy * dz;
       if (volume > MAX_FILL_BLOCKS) {
-        console.warn(
-          `applyEvent: fill volume ${volume} exceeds cap ${MAX_FILL_BLOCKS}; skipped`,
-        );
+        console.warn(`applyEvent: fill volume ${volume} exceeds cap ${MAX_FILL_BLOCKS}; skipped`);
         return;
       }
       for (let x = min[0]; x <= max[0]; x++) {
@@ -75,6 +76,34 @@ function applyEvent(
     case "remove":
       world.delete(posKey(event.pos));
       return;
+    case "summon":
+      entities.set(event.entity_alias, {
+        alias: event.entity_alias,
+        entity_type: event.entity_type,
+        pos: [...event.pos],
+        rot: null,
+        nbt: event.nbt,
+      });
+      return;
+    case "tp": {
+      const entity = entities.get(event.entity_alias);
+      if (entity) {
+        entities.set(event.entity_alias, {
+          ...entity,
+          pos: [...event.pos],
+          rot: event.rot ?? entity.rot,
+        });
+      } else if (event.entity_alias === "player") {
+        entities.set("player", {
+          alias: "player",
+          entity_type: "minecraft:player",
+          pos: [...event.pos],
+          rot: event.rot,
+          nbt: null,
+        });
+      }
+      return;
+    }
     case "set_slot":
       if (event.item == null) {
         delete player.inventory[event.slot];
@@ -91,6 +120,7 @@ function applyEvent(
       }
       return;
     case "use_item_on":
+    case "interact":
     case "assert":
       return;
   }
@@ -100,10 +130,11 @@ function applyEvent(
 function applyForward(
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
+  entities: EntityState,
   frame: TickFrame,
 ): void {
   for (const event of frame.events) {
-    applyEvent(world, player, event);
+    applyEvent(world, player, entities, event);
   }
 }
 
@@ -111,6 +142,7 @@ interface Checkpoint {
   tick: number;
   world: Map<PosKey, Block>;
   player: PlayerSnapshot;
+  entities: EntityState;
 }
 
 const checkpointCache = new WeakMap<Replay, Checkpoint[]>();
@@ -122,7 +154,7 @@ const CHECKPOINT_INTERVAL = 50;
 export function rebuildAt(
   replay: Replay,
   targetTick: number,
-): { world: Map<PosKey, Block>; player: PlayerSnapshot } {
+): { world: Map<PosKey, Block>; player: PlayerSnapshot; entities: EntityState } {
   let checkpoints = checkpointCache.get(replay);
   if (!checkpoints) {
     checkpoints = [
@@ -130,6 +162,7 @@ export function rebuildAt(
         tick: -1,
         world: new Map<PosKey, Block>(),
         player: clonePlayer(replay.initial_player),
+        entities: new Map(),
       },
     ];
     checkpointCache.set(replay, checkpoints);
@@ -145,11 +178,12 @@ export function rebuildAt(
 
   const world = new Map(best.world);
   const player = clonePlayer(best.player);
+  const entities = new Map(best.entities);
 
   for (const frame of replay.frames) {
     if (frame.tick <= best.tick) continue;
     if (frame.tick > targetTick) break;
-    applyForward(world, player, frame);
+    applyForward(world, player, entities, frame);
   }
 
   // Lazily save a checkpoint if we scanned a significant distance
@@ -158,10 +192,11 @@ export function rebuildAt(
       tick: targetTick,
       world: new Map(world),
       player: clonePlayer(player),
+      entities: new Map(entities),
     });
   }
 
-  return { world, player };
+  return { world, player, entities };
 }
 
 // Walk frames in `(currentTick, targetTick]` forward and apply them in place.
@@ -169,13 +204,14 @@ export function stepForwardTo(
   replay: Replay,
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
+  entities: EntityState,
   currentTick: number,
   targetTick: number,
 ): void {
   for (const frame of replay.frames) {
     if (frame.tick <= currentTick) continue;
     if (frame.tick > targetTick) break;
-    applyForward(world, player, frame);
+    applyForward(world, player, entities, frame);
   }
 }
 
@@ -185,11 +221,12 @@ export function stepForwardTo(
 export function applyEventsUpTo(
   world: Map<PosKey, Block>,
   player: PlayerSnapshot,
+  entities: EntityState,
   frame: TickFrame,
   eventIndex: number,
 ): void {
   const upTo = Math.min(eventIndex, frame.events.length - 1);
   for (let i = 0; i <= upTo; i++) {
-    applyEvent(world, player, frame.events[i]!);
+    applyEvent(world, player, entities, frame.events[i]!);
   }
 }

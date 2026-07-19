@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 
-import { failureCoordinate, useFailureStore } from "../store/failure";
+import { failureCoordinate, failureMessage, failureTick, useFailureStore } from "../store/failure";
 import { useReplayStore } from "../store/replay";
 import { useCameraStore } from "../world/cameraStore";
 import type { AssertFailure } from "../api/types";
@@ -75,24 +75,20 @@ export default function FailureBanner() {
 
 function singleHeadline(f: AssertFailure): string {
   const where = positionLabel(f);
-  return `Failed at tick ${f.tick}${where ? ` · ${where}` : ""} — ${f.error_message}`;
+  return `Failed at tick ${failureTick(f)}${where ? ` · ${where}` : ""} — ${failureMessage(f)}`;
 }
 
 function positionLabel(f: AssertFailure): string | null {
-  if ("Coordinate" in f.position) {
-    const c = f.position.Coordinate;
-    return `(${c.x}, ${c.y}, ${c.z})`;
-  }
-  if ("Slot" in f.position) {
-    return `slot ${f.position.Slot.slot}`;
-  }
+  const coord = failureCoordinate(f);
+  if (coord) return `(${coord.join(", ")})`;
+  if ("Inventory" in f) return `slot ${f.Inventory.slot}`;
   return null;
 }
 
 function FailureRow({ failure }: { failure: AssertFailure }) {
   const where = positionLabel(failure);
   const onClick = () => {
-    useReplayStore.getState().setTick(failure.tick);
+    useReplayStore.getState().setTick(failureTick(failure));
     const coord = failureCoordinate(failure);
     if (coord) {
       // Center the camera on the failure cell. `flyTo` handles tweening.
@@ -107,9 +103,9 @@ function FailureRow({ failure }: { failure: AssertFailure }) {
         onClick={onClick}
         className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-[11px] hover:bg-red-900/40"
       >
-        <span className="font-mono text-red-300">tick {failure.tick}</span>
+        <span className="font-mono text-red-300">tick {failureTick(failure)}</span>
         {where ? <span className="text-red-200/80">{where}</span> : null}
-        <span className="truncate text-red-100/90">{failure.error_message}</span>
+        <span className="truncate text-red-100/90">{failureMessage(failure)}</span>
       </button>
     </li>
   );

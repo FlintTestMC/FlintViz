@@ -15,7 +15,7 @@ import {
 } from "three";
 
 import type { Block } from "../api/types";
-import { failureCoordinate, useFailureStore } from "../store/failure";
+import { failureCoordinate, failureTick, useFailureStore } from "../store/failure";
 import { useReplayStore } from "../store/replay";
 import { buildBlockMesh, getSharedMaterial } from "./blockAdapter";
 import type { BlockProviders } from "./atlas";
@@ -45,9 +45,9 @@ export default function FailureOverlay() {
         return {
           index: i,
           pos,
-          tick: f.tick,
-          expected: extractBlock(f.expected),
-          actual: extractBlock(f.actual),
+          tick: failureTick(f),
+          expected: "Block" in f ? (f.Block.expected[0] ?? null) : null,
+          actual: "Block" in f ? f.Block.actual : null,
         };
       })
       .filter((x): x is OverlayItem => x !== null);
@@ -71,12 +71,6 @@ export default function FailureOverlay() {
       )}
     </group>
   );
-}
-
-function extractBlock(info: import("../api/types").InfoType): Block | null {
-  if ("Block" in info) return info.Block;
-  if ("Blocks" in info && info.Blocks.length > 0) return info.Blocks[0]!;
-  return null;
 }
 
 function extractProps(block: Block): Record<string, string> {

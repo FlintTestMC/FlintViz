@@ -115,7 +115,7 @@ export function standaloneGetTest(id: string): TestDetail {
   return { id, source, spec, parse_error };
 }
 
-export function standaloneReplay(source: string): ReplayResponse {
+export function standaloneReplay(source: string): Promise<ReplayResponse> {
   return localReplay(source);
 }
 
