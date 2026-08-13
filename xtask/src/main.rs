@@ -16,10 +16,10 @@ fn main() -> ExitCode {
         Some("build") => build(&rest),
         Some("deb") => deb(&rest),
         Some(other) => Err(format!(
-            "unknown task `{other}`. Try: build [linux|windows] [--debug] [--target <triple>], deb [--target <triple>]"
+            "unknown task `{other}`. Try: build [linux|windows] [--debug] [--target <triple>] [--bun], deb [--target <triple>] [--bun]"
         )),
         None => Err(
-            "no task given. Try: cargo xtask build [linux|windows] [--debug] [--target <triple>]  |  cargo xtask deb [--target <triple>]".into()
+            "no task given. Try: cargo xtask build [linux|windows] [--debug] [--target <triple>] [--bun]  |  cargo xtask deb [--target <triple>] [--bun]".into()
         ),
     };
 
@@ -34,20 +34,22 @@ fn main() -> ExitCode {
 
 fn build(args: &[String]) -> Result<(), String> {
     let config = parse_build_config(args)?;
-    build_project(config.debug, config.target)
+    build_project(config.debug, config.target, config.bun)
 }
 
-fn build_project(debug: bool, target: Option<String>) -> Result<(), String> {
+fn build_project(debug: bool, target: Option<String>, bun: bool) -> Result<(), String> {
     let workspace = workspace_root()?;
     let frontend = workspace.join("frontend");
 
-    ensure_npm()?;
+    let pm = if bun { "bun" } else { npm_cmd() };
+    ensure_pm(pm)?;
 
-    println!("xtask: npm ci  ({})", frontend.display());
-    run(npm_cmd(), &["ci"], &frontend)?;
+    let install_args: &[&str] = if bun { &["install"] } else { &["ci"] };
+    println!("xtask: {pm} {}  ({})", install_args.join(" "), frontend.display());
+    run(pm, install_args, &frontend)?;
 
-    println!("xtask: npm run build  ({})", frontend.display());
-    run(npm_cmd(), &["run", "build"], &frontend)?;
+    println!("xtask: {pm} run build  ({})", frontend.display());
+    run(pm, &["run", "build"], &frontend)?;
 
     let mut cargo_args: Vec<&str> =
         vec!["build", "-p", "flint-viz", "--features", "embed-frontend"];
@@ -75,7 +77,8 @@ fn deb(args: &[String]) -> Result<(), String> {
 
     let workspace = workspace_root()?;
     let target = parse_target(args)?;
-    build_project(false, target.clone())?;
+    let bun = args.iter().any(|a| a == "--bun");
+    build_project(false, target.clone(), bun)?;
 
     let mut deb_args: Vec<&str> = vec!["deb", "-p", "flint-viz", "--no-build", "--no-strip"];
     if let Some(t) = target.as_deref() {
@@ -97,10 +100,12 @@ fn deb(args: &[String]) -> Result<(), String> {
 struct BuildConfig {
     debug: bool,
     target: Option<String>,
+    bun: bool,
 }
 
 fn parse_build_config(args: &[String]) -> Result<BuildConfig, String> {
     let debug = args.iter().any(|a| a == "--debug");
+    let bun = args.iter().any(|a| a == "--bun");
     let target_override = parse_target(args)?;
     let os = parse_build_os(args)?;
     let default_target = match os {
@@ -111,6 +116,7 @@ fn parse_build_config(args: &[String]) -> Result<BuildConfig, String> {
     Ok(BuildConfig {
         debug,
         target: Some(target_override.unwrap_or_else(|| default_target.to_string())),
+        bun,
     })
 }
 
@@ -185,11 +191,11 @@ fn is_windows_target(target: &str) -> bool {
     target.contains("windows")
 }
 
-fn ensure_npm() -> Result<(), String> {
-    Command::new(npm_cmd())
+fn ensure_pm(pm: &str) -> Result<(), String> {
+    Command::new(pm)
         .arg("--version")
         .output()
-        .map_err(|err| format!("npm not found on PATH: {err}"))?;
+        .map_err(|err| format!("{pm} not found on PATH: {err}"))?;
     Ok(())
 }
 
