@@ -9,6 +9,7 @@ import SplitLayout from "./layout/SplitLayout";
 import Assertions from "./panels/Assertions";
 import Inventory from "./panels/Inventory";
 import TestList from "./panels/TestList";
+import { isGithub } from "./api/github";
 import { useConfigStore } from "./store/config";
 import { useReplayStore } from "./store/replay";
 import Controls from "./timeline/Controls";
@@ -35,11 +36,11 @@ export default function App() {
     return <BootSplash />;
   }
 
-  if (readonly && testId === null && !standalone) {
+  if (readonly && testId === null && !standalone && !isGithub()) {
     return <ReadOnlyLanding />;
   }
 
-  const sidebar = (readonly && !standalone)
+  const sidebar = (readonly && !standalone && !isGithub())
     ? undefined
     : (
         <ErrorBoundary label="Sidebar">

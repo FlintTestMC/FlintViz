@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { api } from "../api/client";
+import { githubLabel, isGithub } from "../api/github";
 import { toastOnError } from "../api/toast";
 import type { TestSummary } from "../api/types";
 import { showToast } from "../components/toastStore";
@@ -32,7 +33,7 @@ export default function TestList() {
 
   const readonly = useConfigStore((s) => s.readonly);
   const standalone = useConfigStore((s) => s.standalone);
-  const canCreate = readonly !== true || standalone;
+  const canCreate = !isGithub() && (readonly !== true || standalone);
 
   const testId = useReplayStore((s) => s.testId);
   const testIdRef = useRef(testId);
@@ -181,8 +182,8 @@ export default function TestList() {
         className="flex items-center justify-between border-b border-neutral-800 px-3 py-2 text-sm font-medium"
         onContextMenu={(e) => openContextMenu(e, "")}
       >
-        <span>Tests {standalone && "(Offline)"}</span>
-        {standalone && (
+        <span>Tests {isGithub() ? `(${githubLabel()})` : standalone && "(Offline)"}</span>
+        {standalone && !isGithub() && (
           <div className="flex gap-2">
             <button
               onClick={() => {

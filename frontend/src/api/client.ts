@@ -5,6 +5,12 @@ import type {
   TestDetail,
   TestSummary,
 } from "./types";
+import {
+  githubGetTest,
+  githubListTests,
+  githubSaveTest,
+  isGithub,
+} from "./github";
 import { subscribeEvents, type EventsListener } from "./events";
 import { decodeFailurePayload, encodeFailurePayload } from "./failurePayload";
 import {
@@ -76,7 +82,17 @@ export const api = {
     return request<ServerConfig>("/api/config", { signal });
   },
 
-  listTests(signal?: AbortSignal): Promise<ApiResult<TestSummary[]>> {
+  async listTests(signal?: AbortSignal): Promise<ApiResult<TestSummary[]>> {
+    if (isGithub()) {
+      try {
+        const r = await githubListTests();
+        return r.ok
+          ? { ok: true, status: 200, body: r.body }
+          : { ok: false, status: 0, aborted: false, err: r.err };
+      } catch (err) {
+        return { ok: false, status: 0, aborted: false, err: String(err) };
+      }
+    }
     if (isStandalone()) {
       return Promise.resolve({
         ok: true,
@@ -87,7 +103,17 @@ export const api = {
     return request<TestSummary[]>("/api/tests", { signal });
   },
 
-  getTest(id: string, signal?: AbortSignal): Promise<ApiResult<TestDetail>> {
+  async getTest(id: string, signal?: AbortSignal): Promise<ApiResult<TestDetail>> {
+    if (isGithub()) {
+      try {
+        const r = await githubGetTest(id);
+        return r.ok
+          ? { ok: true, status: 200, body: r.body }
+          : { ok: false, status: r.status, aborted: false, err: r.err };
+      } catch (err) {
+        return { ok: false, status: 0, aborted: false, err: String(err) };
+      }
+    }
     if (isStandalone()) {
       return Promise.resolve({
         ok: true,
@@ -134,6 +160,10 @@ export const api = {
     source: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<null>> {
+    if (isGithub()) {
+      githubSaveTest(id, source);
+      return { ok: true, status: 204, body: null };
+    }
     if (isStandalone()) {
       standaloneSaveTest(id, source);
       return Promise.resolve({ ok: true, status: 204, body: null });
@@ -171,6 +201,14 @@ export const api = {
     source: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<null>> {
+    if (isGithub()) {
+      return {
+        ok: false,
+        status: 405,
+        aborted: false,
+        err: "cannot create tests in GitHub view",
+      };
+    }
     if (isStandalone()) {
       const result = standaloneCreateTest(id, source);
       if (!result.ok) {

@@ -106,6 +106,20 @@ The cross-link uses RFC 6901 JSON pointers, which is mostly an implementation
 detail — but it means assertion failures and source ranges round-trip cleanly
 through the API.
 
+## Review tests from a GitHub branch
+
+Add `?github=` to any build (server, read-only, or the hosted page) to browse
+every `*.json` on a public branch:
+
+```text
+/?github=https://github.com/OWNER/REPO/tree/BRANCH/optional/sub/path
+/?github=OWNER/REPO&ref=BRANCH&path=sub/path
+```
+
+Use `&ref=` for branch names containing `/`. Edits stay in memory and are never
+pushed. Unauthenticated GitHub API limit applies (60 requests/hour; one per
+page load). Private repos are not supported.
+
 ## Asset bundle
 
 The 3D view renders blocks using vanilla Minecraft textures and models. These are **not** bundled in the repo (license-sensitive, gitignored, ~2 MB). 
